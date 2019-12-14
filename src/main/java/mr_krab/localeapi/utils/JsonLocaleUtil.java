@@ -29,7 +29,7 @@ public class JsonLocaleUtil {
 		try {
 			localeNode = configLoader.load();
 		} catch (IOException e) {
-			e.printStackTrace();
+			plugin.getLogger().error(e.getMessage());
 		}
 	}
 
@@ -40,7 +40,7 @@ public class JsonLocaleUtil {
 		try {
 			configLoader.save(localeNode);
 		} catch (IOException e) {
-			e.printStackTrace();
+			plugin.getLogger().error(e.getMessage());
 		}
 	}
 

@@ -30,7 +30,7 @@ public class YamlLocaleUtil {
 		try {
 			localeNode = configLoader.load();
 		} catch (IOException e) {
-			e.printStackTrace();
+			plugin.getLogger().error(e.getMessage());
 		}
 	}
 
@@ -41,7 +41,7 @@ public class YamlLocaleUtil {
 		try {
 			configLoader.save(localeNode);
 		} catch (IOException e) {
-			e.printStackTrace();
+			plugin.getLogger().error(e.getMessage());
 		}
 	}
 
