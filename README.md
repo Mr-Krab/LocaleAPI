@@ -8,7 +8,7 @@ Test plugin -> https://github.com/SawFowl/LocaleTestPlugin/tree/API7
 	version = "version",
 	authors = "authors",
 	dependencies = {
-		@Dependency(id = "localeapi", optional = true)
+		@Dependency(id = "localeapi", optional = false)
 	})
 public class PluginName {
 	// Get API
