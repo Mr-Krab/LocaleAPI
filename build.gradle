@@ -17,6 +17,7 @@ repositories {
     maven {
         name = "Sponge"
         url = "https://repo.spongepowered.org/maven"
+        allowInsecureProtocol = true
     }
 }
 
