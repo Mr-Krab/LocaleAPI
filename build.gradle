@@ -1,50 +1,55 @@
-buildscript {
-    repositories {
-        jcenter()
-        maven { url = "http://files.minecraftforge.net/maven" }
-    }
-    dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
-    }
+plugins {
+    id("java")
+    id("java-library")
+    id("org.spongepowered.gradle.vanilla") version "0.2"
 }
 
-apply plugin: 'net.minecraftforge.gradle.forge'
-
-minecraft {
-    version = "1.12.2-14.23.5.2838"
-    runDir = "run"
-
-    mappings = "snapshot_20180504"
-}
-
-group = "mr_krab.localeapi"
+group = "sawfowl.localeapi"
 version = "${major}.${minor}.${patch}-${api}-${suffix}"
-description = "Locale API for Sponge plugins."
 
-if (System.getenv().BUILD_NUMBER != null) {
-    version += "-${System.getenv().BUILD_NUMBER}"
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
-compileJava {
-    sourceCompatibility = targetCompatibility = "1.8"
+repositories {
+    mavenCentral()
+    maven {
+        name = "Sponge"
+        url = "https://repo.spongepowered.org/maven"
+    }
+    maven { 
+        name = "JitPack"
+        url 'https://jitpack.io' 
+    }
 }
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
 
-repositories {
-    jcenter()
-    maven {
-        name = "Sponge"
-        url = "http://repo.spongepowered.org/maven"
-    }
-    maven {
-        name = "Forge"
-        url = "http://files.minecraftforge.net/maven"
+minecraft {
+    version("1.16.5")
+
+    runs {
+        server()
+        client()
     }
 }
 
 dependencies {
-    compile("org.spongepowered:spongeapi:${spongeapi}")
+    implementation "org.spongepowered:spongeapi:8.0.0-SNAPSHOT"
+    implementation 'org.spongepowered:spongevanilla:1.16.5-8.0.0-RC705:universal@jar'
+}
+
+configurations {
+    doc {
+        transitive false
+    }
+}
+
+javadoc {
+    source configurations.doc.collect { zipTree(it) }
+    include '**/*.java'
+    options.addStringOption('Xdoclint:none', '-quiet')
 }

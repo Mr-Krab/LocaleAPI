@@ -1,50 +1,39 @@
 # LocaleAPI
-API for working with plugin localizations on SpongeAPI7.
-Test plugin -> https://github.com/SawFowl/LocaleTestPlugin/tree/API7
+API for working with plugin localizations on SpongeAPI8. \
+Test plugin -> https://github.com/SawFowl/LocaleTestPlugin/tree/API8 \
+javadoc -> https://sawfowl.github.io/LocaleAPI/
 
 ```JAVA
-@Plugin(id = "pluginid",
-	name = "PluginName",
-	version = "version",
-	authors = "authors",
-	dependencies = {
-		@Dependency(id = "localeapi", optional = false)
-	})
-public class PluginName {
-	// Get API
-	private static LocaleAPI localeAPI;
-	public LocaleAPI getLocaleAPI() {
-		return localeAPI;
+@Plugin("pluginid")
+public class Main {
+	private Main instance;
+	private Logger logger;
+	private static LocaleService api;
+	public LocaleService getLocaleAPI() {
+		return api;
 	}
 
 	@Listener
-	public void onPostInitialization(GamePostInitializationEvent event) {
-		localeAPI = LocaleAPIMain.getInstance().getAPI();
-		localeAPI.saveLocales(this);
-		//		       ^^ Main class or pluginid
-		// Send message
-		CommandSpec command = CommandSpec.builder()
-    	        .executor((src, args) -> {
-    	        	src.sendMessage(getOrDefaultLocale(src.getLocale()).getString("message-key"));
-    	            return CommandResult.success();
-    	        })
-    	        .build();
-		Sponge.getCommandManager().register(this, command, "command");
+	public void onEnable(StartedEngineEvent<Server> event) {
+		instance = this;
+		// Apache logger
+		logger = LogManager.getLogger("PluginName");
+		// Get API
+		if(Sponge.pluginManager().plugin("localeapi").isPresent() && Sponge.pluginManager().isLoaded("localeapi")) {
+			localeAPI = ((LocaleAPIMain) Sponge.pluginManager().plugin("localeapi").get().instance()).getAPI();
+		}
+		api.checkLocalesExist(instance, ConfigTypes.HOCON);
+		api.createPluginLocale(instance, ConfigTypes.HOCON, Locales.DEFAULT);
+		//		       ^^ Main class or "pluginid".
+		api.createPluginLocale(instance, ConfigTypes.HOCON, Locales.DEFAULT);
+		getLocaleUtil(Locales.DEFAULT).checkString("Your string for localization.", "Optional comment", "Path");
+		
+		// Get message from locale. You can get and use the player's localization 'player.locale();'.
+		logger.info(getLocaleUtil(Locales.DEFAULT).getComponent(false, "Path"));
 	}
 
-	// Get locale. Similarly for Sponge configurations(HoconLocaleUtil,  JsonLocaleUtil,  YamlLocaleUtil). These methods are optional. Used to simplify access to the localization API.
-	public Map<Locale, LocaleUtil> getLocales() {
-		return localeAPI.getLocalesMap("pluginid");
-		//				   ^^ Main class or pluginid
-	}
-	public LocaleUtil getLocale(Locale locale) {
-		return getLocales().get(locale);
-	}
-	public LocaleUtil getDefaultLocale() {
-		return getLocales().get(localeAPI.getDefaultLocale());
-	}
-	public LocaleUtil getOrDefaultLocale(Locale locale) {
-		return getLocales().getOrDefault(locale, getDefaultLocale());
+	public LocaleUtil getLocaleUtil(Locale locale) {
+		return api.getOrDefaultLocale(instance, locale);
 	}
 }
 ```
@@ -53,13 +42,13 @@ public class PluginName {
 repositories {
     ...
     maven { 
-        name = "jitpack"
-        url = 'https://jitpack.io' 
+        name = "JitPack"
+        url 'https://jitpack.io' 
     }
 }
 dependencies {
     ...
-    implementation 'com.github.Mr-Krab:LocaleAPI:1.0'
+    implementation 'com.github.SawFowl:LocaleAPI:2.0'
 }
 
 ```
