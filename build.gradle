@@ -8,8 +8,7 @@ group = "sawfowl.localeapi"
 version = "${major}.${minor}.${patch}-${api}-${suffix}"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = targetCompatibility = "1.8"
 }
 
 repositories {
