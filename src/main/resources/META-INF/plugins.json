@@ -1,0 +1,32 @@
+
+{
+    "plugins": [
+        {
+            "loader": "java_plain",
+            "id": "localeapi",
+            "name": "LocaleAPI",
+            "version": "2.1.0-API8",
+            "main-class": "sawfowl.localeapi.LocaleAPIMain",
+            "description": "Locale API for Sponge plugins.",
+            "links": {
+                "homepage": "https://ore.spongepowered.org/KrabsCompany/LocaleAPI",
+                "source": "https://github.com/SawFowl/LocaleAPI",
+                "issues": "https://github.com/SawFowl/LocaleAPI/issues"
+            },
+            "contributors": [
+                {
+                    "name": "SawFowl",
+                    "description": "Developer"
+                }
+            ],
+            "dependencies": [
+                {
+                    "id": "spongeapi",
+                    "version": "8.0.0",
+                    "load-order": "AFTER",
+                    "optional": false
+                }
+            ]
+        }
+    ]
+} 
