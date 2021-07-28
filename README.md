@@ -48,7 +48,7 @@ repositories {
 }
 dependencies {
     ...
-    implementation 'com.github.SawFowl:LocaleAPI:2.0'
+    implementation 'com.github.SawFowl:LocaleAPI:API8-SNAPSHOT'
 }
 
 ```
