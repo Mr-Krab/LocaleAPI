@@ -18,10 +18,6 @@ repositories {
         name = "Sponge"
         url = "https://repo.spongepowered.org/maven"
     }
-    maven { 
-        name = "JitPack"
-        url 'https://jitpack.io' 
-    }
 }
 
 tasks.withType(JavaCompile) {
