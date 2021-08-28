@@ -19,8 +19,6 @@ import java.nio.file.Path;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 import org.spongepowered.api.config.ConfigDir;
-import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.lifecycle.ConstructPluginEvent;
 import org.spongepowered.configurate.ConfigurationOptions;
 import org.spongepowered.configurate.objectmapping.ObjectMapper;
 import org.spongepowered.configurate.objectmapping.meta.NodeResolver;
@@ -51,6 +49,13 @@ public class LocaleAPIMain {
 	public LocaleAPIMain(PluginContainer pluginContainer, @ConfigDir(sharedRoot = false) Path configDirectory) {
 		this.configDir = configDirectory;
 		this.pluginContainer = pluginContainer;
+		instance = this;
+		logger = LogManager.getLogger("LocaleAPI");
+		this.configFile = configDir.toFile();
+		factory = ObjectMapper.factoryBuilder().addNodeResolver(NodeResolver.onlyWithSetting()).build();
+		child = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(factory).build();
+		options = ConfigurationOptions.defaults().serializers(child);
+		api = new LocaleAPI(instance);
 	}
 
 	public Logger getLogger() {
@@ -75,17 +80,6 @@ public class LocaleAPIMain {
 
 	public ConfigurationOptions getConfigurationOptions() {
 		return options;
-	}
-
-	@Listener
-	public void onConstruct(ConstructPluginEvent event) {
-		instance = this;
-		logger = LogManager.getLogger("LocaleAPI");
-		this.configFile = configDir.toFile();
-		factory = ObjectMapper.factoryBuilder().addNodeResolver(NodeResolver.onlyWithSetting()).build();
-		child = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(factory).build();
-		options = ConfigurationOptions.defaults().serializers(child);
-		api = new LocaleAPI(instance);
 	}
 
 }
