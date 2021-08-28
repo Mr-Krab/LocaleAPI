@@ -1,8 +1,10 @@
 package sawfowl.localeapi.serializetools;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import org.spongepowered.api.ResourceKey;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.persistence.DataFormats;
 import org.spongepowered.api.data.persistence.DataQuery;
 import org.spongepowered.api.data.persistence.DataView;
@@ -60,11 +62,11 @@ public class SerializedItemStack {
 	}
 
 	public ItemStack getItemStack() {
-		if(itemStack == null || !isPresent()) {
+		if(itemStack == null || !getOptItemType().isPresent()) {
 			itemStack = ItemStack.empty();
 		}
-		if(isPresent()) {
-			itemStack = ItemStack.of(getDeserializedType());
+		if(getOptItemType().isPresent()) {
+			itemStack = ItemStack.of(getOptItemType().get());
 			itemStack.setQuantity(itemQuantity);
 			//net.minecraft.world.item.ItemStack nmsStack = ItemStackUtil.toNative(itemStack);
 			//nmsStack.setDamageValue(itemSubType);
@@ -80,17 +82,12 @@ public class SerializedItemStack {
 		return itemStack.copy();
 	}
 
-	public ItemType getDeserializedType() {
-		return RegistryTypes.ITEM_TYPE.find().get().value(ResourceKey.resolve(itemType));
+	public Optional<ItemType> getOptItemType() {
+		return Sponge.game().registry(RegistryTypes.ITEM_TYPE).findValue(ResourceKey.resolve(itemType));
 	}
 
 	public void setQuantity(int quantity) {
 		itemQuantity = quantity;
-	}
-
-	public boolean isPresent() {
-		return RegistryTypes.ITEM_TYPE.find().get().findValue(ResourceKey.resolve(itemType)).isPresent();
-		//return RegistryTypes.ITEM_TYPE.find().of(itemType).isPresent();
 	}
 
 	@Override

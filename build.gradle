@@ -17,6 +17,7 @@ repositories {
     maven {
         name = "Sponge"
         url = "https://repo.spongepowered.org/maven"
+		allowInsecureProtocol = true
     }
 }
 
@@ -35,7 +36,7 @@ minecraft {
 
 dependencies {
     implementation "org.spongepowered:spongeapi:8.0.0-SNAPSHOT"
-    implementation 'org.spongepowered:spongevanilla:1.16.5-8.0.0-RC705:universal@jar'
+    implementation 'org.spongepowered:spongevanilla:1.16.5-8.0.0-RC869:universal@jar'
 }
 
 configurations {
