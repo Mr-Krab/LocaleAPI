@@ -8,9 +8,9 @@ javadoc -> https://sawfowl.github.io/LocaleAPI/
 public class Main {
 	private Main instance;
 	private Logger logger;
-	private static LocaleService api;
+	private static LocaleService localeService;
 	public LocaleService getLocaleAPI() {
-		return api;
+		return localeService;
 	}
 
 	@Listener
@@ -20,20 +20,21 @@ public class Main {
 		logger = LogManager.getLogger("PluginName");
 		// Get API
 		if(Sponge.pluginManager().plugin("localeapi").isPresent() && Sponge.pluginManager().isLoaded("localeapi")) {
-			localeAPI = ((LocaleAPIMain) Sponge.pluginManager().plugin("localeapi").get().instance()).getAPI();
+			localeService = ((LocaleAPIMain) Sponge.pluginManager().plugin("localeapi").get().instance()).getAPI();
 		}
-		api.checkLocalesExist(instance, ConfigTypes.HOCON);
-		api.createPluginLocale(instance, ConfigTypes.HOCON, Locales.DEFAULT);
-		//		       ^^ Main class or "pluginid".
-		api.createPluginLocale(instance, ConfigTypes.HOCON, Locales.DEFAULT);
-		getLocaleUtil(Locales.DEFAULT).checkString("Your string for localization.", "Optional comment", "Path");
+		if(!localeService.localesExist(instance)) {
+			localeService.createPluginLocale(instance, ConfigTypes.HOCON, Locales.DEFAULT);
+			//		       ^^ Main class or "pluginid".
+			localeService.createPluginLocale(instance, ConfigTypes.HOCON, Locales.DEFAULT);
+			getLocaleUtil(Locales.DEFAULT).checkString("Your string for localization.", "Optional comment", "Path");
+		}
 		
 		// Get message from locale. You can get and use the player's localization 'player.locale();'.
 		logger.info(getLocaleUtil(Locales.DEFAULT).getComponent(false, "Path"));
 	}
 
 	public LocaleUtil getLocaleUtil(Locale locale) {
-		return api.getOrDefaultLocale(instance, locale);
+		return localeService.getOrDefaultLocale(instance, locale);
 	}
 }
 ```
