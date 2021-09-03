@@ -15,6 +15,8 @@ import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 
+import net.kyori.adventure.key.Key;
+
 @ConfigSerializable
 public class SerializedItemStack {
 
@@ -88,6 +90,10 @@ public class SerializedItemStack {
 
 	public void setQuantity(int quantity) {
 		itemQuantity = quantity;
+	}
+
+	public Key getItemKey() {
+		return getOptItemType().isPresent() ? Key.key(itemType) : Key.key("air");
 	}
 
 	@Override
