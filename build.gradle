@@ -36,7 +36,7 @@ minecraft {
 
 dependencies {
     implementation "org.spongepowered:spongeapi:8.0.0-SNAPSHOT"
-    implementation 'org.spongepowered:spongevanilla:1.16.5-8.0.0-RC869:universal@jar'
+    implementation 'org.spongepowered:spongevanilla:1.16.5-8.0.0-RC886:universal@jar'
 }
 
 configurations {
