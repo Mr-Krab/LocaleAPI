@@ -9,31 +9,40 @@ public class Main {
 	private Main instance;
 	private Logger logger;
 	private static LocaleService localeService;
-	public LocaleService getLocaleAPI() {
+	public LocaleService getLocaleService() {
 		return localeService;
 	}
 
+	// Get API. Variant 1. This happens in event `ConstructPluginEvent`.  It's recommended if LocaleAPI is mandatory.
 	@Listener
-	public void onEnable(StartedEngineEvent<Server> event) {
+	public void onLocaleServisePostEvent(LocaleServiseEvent.Construct event) {
 		instance = this;
-		// Apache logger
 		logger = LogManager.getLogger("PluginName");
-		// Get API
-		if(Sponge.pluginManager().plugin("localeapi").isPresent() && Sponge.pluginManager().isLoaded("localeapi")) {
-			localeService = ((LocaleAPIMain) Sponge.pluginManager().plugin("localeapi").get().instance()).getAPI();
-		}
+		localeService = event.getLocaleService();
+		testLocales();
+	}
+
+	// Get API. Variant 2. This happens in event `StartedEngineEvent<Server>`. It's recommended if LocaleAPI is optional.
+	// Recommended if LocaleAPI is optional. In this case, you can specify another class as the event listener.
+	@Listener
+	public void onLocaleServisePostEvent(LocaleServiseEvent.Started event) {
+		localeService = event.getLocaleService();
+		testLocales();
+	}
+
+	public void testLocales() {
 		if(!localeService.localesExist(instance)) {
 			localeService.createPluginLocale(instance, ConfigTypes.HOCON, Locales.DEFAULT);
-			//		       ^^ Main class or "pluginid".
+			//		                          ^^ Main class or "pluginid".
 			localeService.createPluginLocale(instance, ConfigTypes.HOCON, Locales.DEFAULT);
 			getLocaleUtil(Locales.DEFAULT).checkString("Your string for localization.", "Optional comment", "Path");
 		}
-		
 		// Get message from locale. You can get and use the player's localization 'player.locale();'.
+		// The boolean parameter defines what type of string serializer will be used.
 		logger.info(getLocaleUtil(Locales.DEFAULT).getComponent(false, "Path"));
 	}
 
-	public LocaleUtil getLocaleUtil(Locale locale) {
+	public AbstractLocaleUtil getLocaleUtil(Locale locale) {
 		return localeService.getOrDefaultLocale(instance, locale);
 	}
 }
@@ -41,15 +50,15 @@ public class Main {
 ##### Gradle
 ```gradle
 repositories {
-    ...
-    maven { 
-        name = "JitPack"
-        url 'https://jitpack.io' 
-    }
+	...
+	maven { 
+		name = "JitPack"
+		url 'https://jitpack.io' 
+	}
 }
 dependencies {
-    ...
-    implementation 'com.github.SawFowl:LocaleAPI:API8-SNAPSHOT'
+	...
+	implementation 'com.github.SawFowl:LocaleAPI:API8-SNAPSHOT'
 }
 
 ```

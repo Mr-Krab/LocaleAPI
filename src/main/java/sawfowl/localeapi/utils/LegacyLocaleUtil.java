@@ -4,23 +4,20 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import org.spongepowered.api.Sponge;
-import org.spongepowered.api.asset.Asset;
+import org.apache.logging.log4j.Logger;
 import org.spongepowered.api.util.locale.Locales;
 import org.spongepowered.configurate.ConfigurationNode;
-import org.spongepowered.plugin.PluginContainer;
-
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import sawfowl.localeapi.LocaleAPIMain;
+import sawfowl.localeapi.api.LocaleService;
 
 /**
  * Most likely, this is the final version of the class..  <br>
@@ -39,6 +36,9 @@ import sawfowl.localeapi.LocaleAPIMain;
  */
 public class LegacyLocaleUtil extends AbstractLocaleUtil {
 
+	private LocaleService localeService;
+	private Logger logger;
+	private Path path;
 	private final Properties locale = new Properties();
 	private File localeFile;
 	private String loc;
@@ -46,16 +46,17 @@ public class LegacyLocaleUtil extends AbstractLocaleUtil {
 	private FileWriter fileWriter;
 	private boolean thisIsDefault = false;
 
-	LocaleAPIMain plugin;
-	public LegacyLocaleUtil(LocaleAPIMain plugin, String pluginID, String locale) {
-		this.plugin = plugin;
+	public LegacyLocaleUtil(LocaleService localeService, Logger logger, Path path, String pluginID, String locale) {
+		this.localeService = localeService;
+		this.logger = logger;
+		this.path = path;
 		this.pluginID = pluginID;
 		this.loc = locale;
 		thisIsDefault = locale.equals(Locales.DEFAULT.toLanguageTag());
 		try {
 			init();
 		} catch (IOException e) {
-			plugin.getLogger().error(e.getLocalizedMessage());
+			logger.error(e.getLocalizedMessage());
 		}
 	}
 
@@ -64,7 +65,7 @@ public class LegacyLocaleUtil extends AbstractLocaleUtil {
 		try {
 			init();
 		} catch (IOException e) {
-			plugin.getLogger().error(e.getMessage());
+			logger.error(e.getMessage());
 		}
 	}
 
@@ -74,19 +75,19 @@ public class LegacyLocaleUtil extends AbstractLocaleUtil {
 			if(fileWriter == null) fileWriter = new FileWriter(localeFile);
 			locale.store(fileWriter, null);
 		} catch (IOException e) {
-			plugin.getLogger().error(e.getLocalizedMessage());
+			logger.error(e.getLocalizedMessage());
 		}
 	}
 
 	@Override
 	public ConfigurationNode getLocaleRootNode() {
-		plugin.getLogger().error("In this type of configuration(Properties), it is not possible to obtain the ConfigurationNode object.");
+		logger.error("In this type of configuration(Properties), it is not possible to obtain the ConfigurationNode object.");
 		return null;
 	}
 
 	@Override
 	public ConfigurationNode getLocaleNode(Object... path) {
-		plugin.getLogger().error("In this type of configuration(Properties), it is not possible to obtain the ConfigurationNode object.");
+		logger.error("In this type of configuration(Properties), it is not possible to obtain the ConfigurationNode object.");
 		return null;
 	}
 
@@ -190,12 +191,12 @@ public class LegacyLocaleUtil extends AbstractLocaleUtil {
 	private void init() throws IOException {
 		this.locale.clear();
 		String loc = this.loc;
-		this.localeFile = new File(plugin.getConfigFile(), File.separator + pluginID + File.separator + loc + ".properties");
-		if (this.saveLocale(pluginID, loc)) {
+		this.localeFile = new File(path.toFile(), File.separator + pluginID + File.separator + loc + ".properties");
+		if (localeFile.exists()) {
 			try (FileReader fr = new FileReader(this.localeFile)) {
 				this.locale.load(fr);
 			} catch (Exception ex) {
-				plugin.getLogger().error("Failed to load " + loc + " locale!" + ex.getLocalizedMessage());
+				logger.error("Failed to load " + loc + " locale!" + ex.getLocalizedMessage());
 			}
 		}
 	}
@@ -204,7 +205,7 @@ public class LegacyLocaleUtil extends AbstractLocaleUtil {
 		List<String> list = new ArrayList<String>();
 		String out = this.locale.getProperty(key);
 		if (out == null) {
-			plugin.getLogger().error("&§4PropertiesKey \"" + key + "\" not found!");
+			logger.error("&§4PropertiesKey \"" + key + "\" not found!");
 			return list;
 		}
 		String spliter = "\n";
@@ -275,30 +276,7 @@ public class LegacyLocaleUtil extends AbstractLocaleUtil {
 	}
 
 	private AbstractLocaleUtil getDefaultLocale() {
-		return plugin.getAPI().getPluginLocales(pluginID).get(Locales.DEFAULT);
-	}
-
-	private boolean saveLocale(final String pluginID, final String name) {
-		if(plugin.getConfigDir().resolve(pluginID + File.separator + name + ".properties").toFile().exists()) {
-			return true;
-		}
-		Optional<PluginContainer> optPlugin = Sponge.pluginManager().plugin(pluginID);
-		if(optPlugin.isPresent()) {
-			Optional<Asset> assetOpt = Sponge.assetManager().asset(optPlugin.get(), "lang/" + name + ".properties");
-			if(assetOpt.isPresent()) {
-				Asset asset = assetOpt.get();
-				try {
-					if(!plugin.getConfigDir().resolve(pluginID + File.separator + name + ".properties").toFile().exists()) {
-						asset.copyToDirectory(plugin.getConfigDir().resolve(pluginID));
-						plugin.getLogger().info("Locale config saved");
-					}
-					return true;
-				} catch (IOException e) {
-					plugin. getLogger().error("Failed to save locale config! " + e.getLocalizedMessage());
-				}
-			}
-		}
-		return false;
+		return localeService.getPluginLocales(pluginID).get(Locales.DEFAULT);
 	}
 	
 }

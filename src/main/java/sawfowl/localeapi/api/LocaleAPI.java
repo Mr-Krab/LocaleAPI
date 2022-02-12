@@ -4,23 +4,29 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+
+import org.apache.logging.log4j.Logger;
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.util.locale.Locales;
 import org.spongepowered.configurate.ConfigurationOptions;
 import org.spongepowered.configurate.gson.GsonConfigurationLoader;
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
+import org.spongepowered.configurate.objectmapping.ObjectMapper;
+import org.spongepowered.configurate.objectmapping.meta.NodeResolver;
+import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 import org.spongepowered.plugin.PluginContainer;
 import org.spongepowered.plugin.builtin.jvm.Plugin;
 
-import sawfowl.localeapi.LocaleAPIMain;
 import sawfowl.localeapi.utils.HoconLocaleUtil;
 import sawfowl.localeapi.utils.JsonLocaleUtil;
 import sawfowl.localeapi.utils.LegacyLocaleUtil;
@@ -29,22 +35,33 @@ import sawfowl.localeapi.utils.YamlLocaleUtil;
 
 public class LocaleAPI implements LocaleService {
 
-	private LocaleAPIMain plugin;
 	private Map<String, Map<Locale, AbstractLocaleUtil>> pluginLocales;
 	private List<Locale> locales;
 	private WatchThread watchThread;
+	private Path configDirectory;
+	private Logger logger;
+	private ObjectMapper.Factory factory;
+	private TypeSerializerCollection child;
+	private ConfigurationOptions options;
+	
+	public WatchThread getWatchThread() {
+		return watchThread;
+	}
 
-	public LocaleAPI(LocaleAPIMain plugin) {
-		this.plugin = plugin;
+	public LocaleAPI(Logger logger, Path path) {
+		this.logger = logger;
+		configDirectory = path;
+		factory = ObjectMapper.factoryBuilder().addNodeResolver(NodeResolver.onlyWithSetting()).build();
+		child = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(factory).build();
+		options = ConfigurationOptions.defaults().serializers(child);
 		pluginLocales = new HashMap<String, Map<Locale, AbstractLocaleUtil>>();
 		locales = new ArrayList<Locale>();
 		generateLocalesList();
-		watchThread = new WatchThread(plugin, this);
+		watchThread = new WatchThread(this, logger, path);
 		watchThread.start();
 	}
 
 	private void updateWatch(String pluginID) {
-		if(pluginLocales.containsKey(pluginID)) return;
 		watchThread.getWatchLocales().addPluginData(pluginID);
 	}
 
@@ -53,7 +70,7 @@ public class LocaleAPI implements LocaleService {
 			try {
 				if(field.get(field.getType()) instanceof Locale) locales.add((Locale) field.get(field.getType()));
 			} catch (IllegalArgumentException | IllegalAccessException e) {
-				plugin.getLogger().error("Error get locales {}" + e.getLocalizedMessage());
+				logger.error("Error get locales {}" + e.getLocalizedMessage());
 			}
 		}
 	}
@@ -65,34 +82,30 @@ public class LocaleAPI implements LocaleService {
 		return "";
 	}
 
-	private void checkAsset(String pluginID, ConfigTypes configType, Locale locale) {
+	private void saveAssets(String pluginID, Locale locale) {
 		if(pluginID == null || pluginID.isEmpty()) {
-			plugin.getLogger().error("Plugin can not be null or noname(\"\")");
+			logger.error("Plugin can not be null or noname(\"\")");
 			return;
-		}
-		String selectedConfigType = ".properties";
-		if(configType.equals(ConfigTypes.HOCON)) {
-			selectedConfigType = ".conf";
-		} else if(configType.equals(ConfigTypes.JSON)) {
-			selectedConfigType = ".json";
-		} else if(configType.equals(ConfigTypes.YAML)) {
-			selectedConfigType = ".yml";
 		}
 		Optional<PluginContainer> optPluginContainer = Sponge.pluginManager().plugin(pluginID);
 		if(optPluginContainer.isPresent()) {
-			Optional<Asset> assetOpt = Sponge.assetManager().asset(optPluginContainer.get(), "lang/" + locale.toLanguageTag() + selectedConfigType);
-			if(assetOpt.isPresent()) {
-				if(!plugin.getConfigDir().resolve(pluginID + File.separator + locale.toLanguageTag() + selectedConfigType).toFile().exists()) {
-					try {
-						assetOpt.get().copyToDirectory(plugin.getConfigDir().resolve(pluginID));
-						plugin.getLogger().info("Locale config " + locale.toLanguageTag() + selectedConfigType + " saved");
-					} catch (IOException e) {
-						plugin.getLogger().error(e.getLocalizedMessage());
+			PluginContainer pluginContainer = optPluginContainer.get();
+			for(ConfigTypes configType : ConfigTypes.values()) {
+				String configTypeName = configType.toString();
+				pluginContainer.openResource(URI.create(File.separator + "assets" + File.separator + pluginID + File.separator + "lang" + File.separator + locale.toLanguageTag() + configTypeName)).ifPresent(inputStream -> {
+					File localeFile = configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + configTypeName).toFile();
+					if(!localeFile.exists()) {
+						try {
+							Files.copy(inputStream, localeFile.toPath());
+							logger.info("Locale config " + locale.toLanguageTag() + configTypeName + " for plugin \"" + pluginID + "\" has been saved");
+						} catch (IOException e) {
+							logger.error(e.getLocalizedMessage());
+						}
 					}
-				}
+				});
 			}
 		} else {
-			plugin.getLogger().error("Could not find PluginContainer for plugin " + pluginID);
+			logger.error("Could not find PluginContainer for plugin " + pluginID);
 		}
 	}
 
@@ -106,7 +119,7 @@ public class LocaleAPI implements LocaleService {
 	 * 
 	 */
 	public ConfigurationOptions getConfigurationOptions() {
-		return plugin.getConfigurationOptions();
+		return options;
 	}
 
 	/**
@@ -140,7 +153,7 @@ public class LocaleAPI implements LocaleService {
 	 */
 	public Map<Locale, AbstractLocaleUtil> getPluginLocales(String pluginID) {
 		if(pluginID == null || pluginID.isEmpty()) {
-			plugin.getLogger().error("Plugin can not be null or noname(\"\")");
+			logger.error("Plugin can not be null or noname(\"\")");
 			return null;
 		}
 		return pluginLocales.containsKey(pluginID) ? pluginLocales.get(pluginID) : new HashMap<Locale, AbstractLocaleUtil>();
@@ -168,7 +181,7 @@ public class LocaleAPI implements LocaleService {
 	 */
 	public AbstractLocaleUtil getOrDefaultLocale(String pluginID, Locale locale) {
 		if(pluginID == null || pluginID.isEmpty()) {
-			plugin.getLogger().error("Plugin can not be null or noname(\"\")");
+			logger.error("Plugin can not be null or noname(\"\")");
 			return null;
 		}
 		return getPluginLocales(pluginID).getOrDefault(locale, pluginLocales.get(pluginID).get(Locales.DEFAULT));
@@ -178,31 +191,29 @@ public class LocaleAPI implements LocaleService {
 	 * Save plugin locales from assets.
 	 * 
 	 * @param plugin - A class annotated with '@Plugin'.
-	 * @param configType - Selected config type. See enum class 'ConfigTypes'.
 	 */
-	public void saveAssetLocales(Object plugin, ConfigTypes configType) {
+	public void saveAssetLocales(Object plugin) {
 		String pluginID = getPluginID(plugin);
-		saveAssetLocales(pluginID, configType);
+		saveAssetLocales(pluginID);
 	}
 
 	/**
 	 * Save plugin locales from assets.
 	 * 
 	 * @param pluginID - Plugin ID.
-	 * @param configType - Selected config type. See enum class 'ConfigTypes'.
 	 */
-	public void saveAssetLocales(String pluginID, ConfigTypes configType) {
+	public void saveAssetLocales(String pluginID) {
 		if(pluginID == null || pluginID.isEmpty()) {
-			this.plugin.getLogger().error("Plugin can not be null or noname(\"\")");
+			logger.error("Plugin can not be null or noname(\"\")");
 			return;
 		}
-		File localePath = new File(this.plugin.getConfigDir() + File.separator + pluginID);
+		File localePath = new File(this.configDirectory + File.separator + pluginID);
 		if(!localePath.exists()) {
 			localePath.mkdir();
 		}
 		if(!pluginLocales.containsKey(pluginID)) pluginLocales.put(pluginID, new HashMap<Locale, AbstractLocaleUtil>());
 		for(Locale locale : this.locales) {
-			checkAsset(pluginID, configType, locale);
+			saveAssets(pluginID, locale);
 		}
 		localesExist(pluginID);
 		updateWatch(pluginID);
@@ -227,19 +238,19 @@ public class LocaleAPI implements LocaleService {
 	 */
 	public AbstractLocaleUtil createPluginLocale(String pluginID, ConfigTypes configType, Locale locale) {
 		if(pluginID == null || pluginID.isEmpty()) {
-			this.plugin.getLogger().error("Plugin can not be null or noname(\"\")");
+			this.logger.error("Plugin can not be null or noname(\"\")");
 			return null;
 		}
 		if(!pluginLocales.containsKey(pluginID)) pluginLocales.put(pluginID, new HashMap<Locale, AbstractLocaleUtil>());
 		if(getPluginLocales(pluginID).containsKey(locale)) return getPluginLocales(pluginID).get(locale);
 		if(configType.equals(ConfigTypes.HOCON)) {
-			addPluginLocale(pluginID, locale, new HoconLocaleUtil(this.plugin, pluginID, locale.toLanguageTag()));
+			addPluginLocale(pluginID, locale, new HoconLocaleUtil(this, logger, configDirectory, pluginID, locale.toLanguageTag()));
 		} else if(configType.equals(ConfigTypes.JSON)) {
-			addPluginLocale(pluginID, locale, new JsonLocaleUtil(this.plugin, pluginID, locale.toLanguageTag()));
+			addPluginLocale(pluginID, locale, new JsonLocaleUtil(this, logger, configDirectory, pluginID, locale.toLanguageTag()));
 		} else if(configType.equals(ConfigTypes.YAML)) {
-			addPluginLocale(pluginID, locale, new YamlLocaleUtil(this.plugin, pluginID, locale.toLanguageTag()));
+			addPluginLocale(pluginID, locale, new YamlLocaleUtil(this, logger, configDirectory, pluginID, locale.toLanguageTag()));
 		} else if(configType.equals(ConfigTypes.PROPERTIES)) {
-			addPluginLocale(pluginID, locale, new LegacyLocaleUtil(this.plugin, pluginID, locale.toLanguageTag()));
+			addPluginLocale(pluginID, locale, new LegacyLocaleUtil(this, logger, configDirectory, pluginID, locale.toLanguageTag()));
 		}
 		updateWatch(pluginID);
 		return getPluginLocales(pluginID).get(locale);
@@ -252,8 +263,7 @@ public class LocaleAPI implements LocaleService {
 	 * @param configType - Selected config type. See enum class 'ConfigTypes'.
 	 */
 	public boolean localesExist(Object plugin) {
-		String pluginID = getPluginID(plugin);
-		return localesExist(pluginID);
+		return localesExist(getPluginID(plugin));
 	}
 
 	/**
@@ -264,17 +274,17 @@ public class LocaleAPI implements LocaleService {
 	 */
 	public boolean localesExist(String pluginID) {
 		if(pluginID == null || pluginID.isEmpty()) {
-			this.plugin.getLogger().error("Plugin can not be null or noname(\"\")");
+			this.logger.error("Plugin can not be null or noname(\"\")");
 			return false;
 		}
 		for(Locale locale : locales) {
-			if(plugin.getConfigDir().resolve(pluginID + File.separator + locale.toLanguageTag() + ".conf").toFile().exists() && HoconConfigurationLoader.builder().defaultOptions(getConfigurationOptions()).path(plugin.getConfigDir().resolve(pluginID + File.separator + locale.toLanguageTag() + ".conf")).build().canLoad()) {
+			if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".conf").toFile().exists() && HoconConfigurationLoader.builder().defaultOptions(getConfigurationOptions()).path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".conf")).build().canLoad()) {
 				createPluginLocale(pluginID, ConfigTypes.HOCON, locale);
-			} else if(plugin.getConfigDir().resolve(pluginID + File.separator + locale.toLanguageTag() + ".json").toFile().exists() && GsonConfigurationLoader.builder().defaultOptions(getConfigurationOptions()).path(plugin.getConfigDir().resolve(pluginID + File.separator + locale.toLanguageTag() + ".json")).build().canLoad()) {
+			} else if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".json").toFile().exists() && GsonConfigurationLoader.builder().defaultOptions(getConfigurationOptions()).path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".json")).build().canLoad()) {
 				createPluginLocale(pluginID, ConfigTypes.JSON, locale);
-			} else if(plugin.getConfigDir().resolve(pluginID + File.separator + locale.toLanguageTag() + ".yml").toFile().exists() && YamlConfigurationLoader.builder().defaultOptions(getConfigurationOptions()).path(plugin.getConfigDir().resolve(pluginID + File.separator + locale.toLanguageTag() + ".yml")).build().canLoad()) {
+			} else if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".yml").toFile().exists() && YamlConfigurationLoader.builder().defaultOptions(getConfigurationOptions()).path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".yml")).build().canLoad()) {
 				createPluginLocale(pluginID, ConfigTypes.YAML, locale);
-			} else if(plugin.getConfigDir().resolve(pluginID + File.separator + locale.toLanguageTag() + ".properties").toFile().exists()) {
+			} else if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".properties").toFile().exists()) {
 				createPluginLocale(pluginID, ConfigTypes.PROPERTIES, locale);
 			}
 		}

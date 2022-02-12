@@ -66,17 +66,15 @@ public interface LocaleService {
 	 * Save plugin locales from assets.
 	 * 
 	 * @param plugin - A class annotated with '@Plugin'.
-	 * @param configType - Selected config type. See enum class 'ConfigTypes'.
 	 */
-	public void saveAssetLocales(Object plugin, ConfigTypes configType);
+	public void saveAssetLocales(Object plugin);
 
 	/**
 	 * Save plugin locales from assets.
 	 * 
 	 * @param pluginID - Plugin ID.
-	 * @param configType - Selected config type. See enum class 'ConfigTypes'.
 	 */
-	public void saveAssetLocales(String pluginID, ConfigTypes configType);
+	public void saveAssetLocales(String pluginID);
 
 	/**
 	 * Creating a plugin localization file.
