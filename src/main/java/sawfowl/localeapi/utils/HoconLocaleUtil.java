@@ -5,43 +5,38 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import org.spongepowered.api.Sponge;
-import org.spongepowered.api.asset.Asset;
+import org.apache.logging.log4j.Logger;
 import org.spongepowered.api.util.locale.Locales;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
 import org.spongepowered.configurate.loader.ConfigurationLoader;
 import org.spongepowered.configurate.serialize.SerializationException;
-import org.spongepowered.plugin.PluginContainer;
-
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import sawfowl.localeapi.LocaleAPIMain;
+import sawfowl.localeapi.api.LocaleService;
 
 public class HoconLocaleUtil extends AbstractLocaleUtil {
 
-	private LocaleAPIMain plugin;
+	private LocaleService localeService;
+	private Logger logger;
 	private String pluginID;
-	private String locale;
 	private boolean thisIsDefault = false;
 	private ConfigurationLoader<CommentedConfigurationNode> configLoader;
 	private CommentedConfigurationNode localeNode;
 	private Path path;
 
-	public HoconLocaleUtil(LocaleAPIMain plugin, String pluginID, String locale) {
-		this.plugin = plugin;
+	public HoconLocaleUtil(LocaleService localeService, Logger logger, Path path, String pluginID, String locale) {
+		this.localeService = localeService;
+		this.logger = logger;
 		this.pluginID = pluginID;
-		this.locale = locale;
 		thisIsDefault = locale.equals(Locales.DEFAULT.toLanguageTag());
-		saveLocaleFile();
-		path = plugin.getConfigDir().resolve(pluginID + File.separator + locale + ".conf");
-		configLoader = HoconConfigurationLoader.builder().defaultOptions(plugin.getConfigurationOptions()).path(path).build();
+		this.path = path.resolve(pluginID + File.separator + locale + ".conf");
+		configLoader = HoconConfigurationLoader.builder().defaultOptions(localeService.getConfigurationOptions()).path(this.path).build();
 		reload();
 	}
 
@@ -50,7 +45,7 @@ public class HoconLocaleUtil extends AbstractLocaleUtil {
 		try {
 			localeNode = configLoader.load();
 		} catch (IOException e) {
-			plugin.getLogger().error(e.getMessage());
+			logger.error(e.getMessage());
 		}
 	}
 
@@ -59,7 +54,7 @@ public class HoconLocaleUtil extends AbstractLocaleUtil {
 		try {
 			configLoader.save(localeNode);
 		} catch (IOException e) {
-			plugin.getLogger().error(e.getMessage());
+			logger.error(e.getMessage());
 		}
 	}
 
@@ -99,7 +94,7 @@ public class HoconLocaleUtil extends AbstractLocaleUtil {
 		try {
 			return getLocaleNode(path).virtual() && !thisIsDefault ? getDefaultLocale().getListStrings(path) : getLocaleNode(path).getList(String.class);
 		} catch (SerializationException e) {
-			plugin.getLogger().error(e.getLocalizedMessage());
+			logger.error(e.getLocalizedMessage());
 		}
 		return Arrays.asList("Error getting list of Strings " + getPathName(path));
 	}
@@ -118,7 +113,7 @@ public class HoconLocaleUtil extends AbstractLocaleUtil {
 				}
 				return true;
 			} catch (SerializationException e) {
-				plugin.getLogger().error(e.getLocalizedMessage());
+				logger.error(e.getLocalizedMessage());
 			}
 		}
 		return false;
@@ -138,7 +133,7 @@ public class HoconLocaleUtil extends AbstractLocaleUtil {
 				}
 				return true;
 			} catch (SerializationException e) {
-				plugin.getLogger().error(e.getLocalizedMessage());
+				logger.error(e.getLocalizedMessage());
 			}
 		}
 		return false;
@@ -154,7 +149,7 @@ public class HoconLocaleUtil extends AbstractLocaleUtil {
 				}
 				return true;
 			} catch (SerializationException e) {
-				plugin.getLogger().error(e.getLocalizedMessage());
+				logger.error(e.getLocalizedMessage());
 			}
 		}
 		return false;
@@ -170,7 +165,7 @@ public class HoconLocaleUtil extends AbstractLocaleUtil {
 				}
 				return true;
 			} catch (SerializationException e) {
-				plugin.getLogger().error(e.getLocalizedMessage());
+				logger.error(e.getLocalizedMessage());
 			}
 		}
 		return false;
@@ -193,7 +188,7 @@ public class HoconLocaleUtil extends AbstractLocaleUtil {
 	}
 
 	private AbstractLocaleUtil getDefaultLocale() {
-		return plugin.getAPI().getPluginLocales(pluginID).get(Locales.DEFAULT);
+		return localeService.getPluginLocales(pluginID).get(Locales.DEFAULT);
 	}
 
 	private String getPathName(Object... path) {
@@ -208,27 +203,6 @@ public class HoconLocaleUtil extends AbstractLocaleUtil {
 			}
 		}
 		return name + "]";
-	}
-	
-	private void saveLocaleFile() {
-		if(plugin.getConfigDir().resolve(pluginID + File.separator + locale + ".conf").toFile().exists()) {
-			return;
-		}
-		Optional<PluginContainer> optPlugin = Sponge.pluginManager().plugin(pluginID);
-		if(optPlugin.isPresent()) {
-			Optional<Asset> assetOpt = Sponge.assetManager().asset(optPlugin.get(), "lang/" + locale + ".conf");
-			if(assetOpt.isPresent()) {
-				Asset asset = assetOpt.get();
-				try {
-					if(!plugin.getConfigDir().resolve(pluginID + File.separator + locale + ".conf").toFile().exists()) {
-						asset.copyToDirectory(plugin.getConfigDir().resolve(pluginID));
-						plugin.getLogger().info("Locale config saved");
-					}
-				} catch (IOException e) {
-					plugin. getLogger().error("Failed to save locale config! " + e.getLocalizedMessage());
-				}
-			}
-		}
 	}
 
 }

@@ -1,16 +1,15 @@
 package sawfowl.localeapi.api;
 
-import sawfowl.localeapi.LocaleAPIMain;
+import java.nio.file.Path;
+
+import org.apache.logging.log4j.Logger;
+
 
 public class WatchThread extends Thread {
 
-	LocaleAPIMain plugin;
-	LocaleAPI localeAPI;
 	private WatchLocales watchLocales;
-	public WatchThread(LocaleAPIMain instance, LocaleAPI localeAPI) {
-		plugin = instance;
-		this.localeAPI = localeAPI;
-		watchLocales = new WatchLocales(plugin, localeAPI);
+	public WatchThread(LocaleService localeService, Logger logger, Path path) {
+		watchLocales = new WatchLocales(localeService, logger, path);
 	}
 
 	public void run() {
