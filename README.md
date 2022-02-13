@@ -23,7 +23,7 @@ public class Main {
 	}
 
 	// Get API. Variant 2. This happens in event `StartedEngineEvent<Server>`. It's recommended if LocaleAPI is optional.
-	// Recommended if LocaleAPI is optional. In this case, you can specify another class as the event listener.
+	// In this case, you can specify another class as the event listener.
 	@Listener
 	public void onLocaleServisePostEvent(LocaleServiseEvent.Started event) {
 		localeService = event.getLocaleService();
@@ -58,8 +58,5 @@ repositories {
 }
 dependencies {
 	...
-	implementation 'com.github.SawFowl:LocaleAPI:2.1'
+	implementation 'com.github.SawFowl:LocaleAPI:2.1.0'
 }
-
-```
-
