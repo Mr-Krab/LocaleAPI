@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"sawfowl.localeapi"},{"l":"sawfowl.localeapi.api"},{"l":"sawfowl.localeapi.serializetools"},{"l":"sawfowl.localeapi.utils"}];updateSearchResults();
