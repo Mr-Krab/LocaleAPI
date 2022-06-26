@@ -260,7 +260,6 @@ public class LocaleAPI implements LocaleService {
 	 * Load plugin locales if exists.
 	 * 
 	 * @param plugin - A class annotated with '@Plugin'.
-	 * @param configType - Selected config type. See enum class 'ConfigTypes'.
 	 */
 	public boolean localesExist(Object plugin) {
 		return localesExist(getPluginID(plugin));
@@ -270,7 +269,6 @@ public class LocaleAPI implements LocaleService {
 	 * Load plugin locales if exists.
 	 * 
 	 * @param pluginID - Plugin ID.
-	 * @param configType - Selected config type. See enum class 'ConfigTypes'.
 	 */
 	public boolean localesExist(String pluginID) {
 		if(pluginID == null || pluginID.isEmpty()) {

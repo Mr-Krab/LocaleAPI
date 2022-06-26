@@ -96,8 +96,7 @@ public interface LocaleService {
 	 * Load plugin locales if exists.
 	 * 
 	 * @param plugin - A class annotated with '@Plugin'.
-	 * @param configType - Selected config type. See enum class 'ConfigTypes'.
-	 * @return 
+	 * @return true if loaded.
 	 */
 	public boolean localesExist(Object plugin);
 
@@ -105,8 +104,7 @@ public interface LocaleService {
 	 * Load plugin locales if exists.
 	 * 
 	 * @param pluginID - Plugin ID.
-	 * @param configType - Selected config type. See enum class 'ConfigTypes'.
-	 * @return 
+	 * @return true if loaded.
 	 */
 	public boolean localesExist(String pluginID);
 
