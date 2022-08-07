@@ -1,52 +1,97 @@
-plugins {
-    id("java")
-    id("java-library")
-    id("org.spongepowered.gradle.vanilla") version "0.2"
+buildscript {
+	repositories {
+		maven { url = 'https://maven.minecraftforge.net' }
+		maven { url = 'https://maven.blamejared.com' }
+		jcenter()
+		mavenCentral()
+	}
+	dependencies {
+		classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.+', changing: true
+	}
 }
+
+plugins {
+	id("java")
+	id("java-library")
+	id("maven-publish")
+	id("eclipse")
+	id("org.spongepowered.gradle.plugin") version "2.0.2"
+}
+
+apply plugin: 'net.minecraftforge.gradle'
 
 group = "sawfowl.localeapi"
 version = "${major}.${minor}.${patch}-${api}-${suffix}"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-}
-
-repositories {
-    mavenCentral()
-    maven {
-        name = "Sponge"
-        url = "https://repo.spongepowered.org/maven"
-		allowInsecureProtocol = true
-    }
-}
-
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
+	sourceCompatibility = JavaVersion.VERSION_1_8
+	targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 minecraft {
-    version("1.16.5")
+	mappings channel: 'official', version: '1.16.5'
+}
 
-    runs {
-        server()
-        client()
-    }
+repositories {
+	mavenCentral()
+	
+	maven { 
+		name = "Forge"
+		url = 'https://maven.minecraftforge.net' 
+	}
+	maven {
+		name = "Sponge"
+		url = "https://repo.spongepowered.org/repository/maven-public/"
+	}
+}
+
+tasks.withType(JavaCompile) {
+	options.encoding = 'UTF-8'
 }
 
 dependencies {
-    implementation "org.spongepowered:spongeapi:8.0.0-SNAPSHOT"
-    implementation 'org.spongepowered:spongevanilla:1.16.5-8.0.0-RC886:universal@jar'
+	implementation "org.spongepowered:spongeapi:8.0.0"
+	implementation 'org.spongepowered:spongevanilla:1.16.5-8.0.0-RC1111:universal'
+	minecraft 'net.minecraftforge:forge:1.16.5-36.1.16'
+	implementation fileTree(dir: 'libs', include: '*.jar')
+}
+
+sponge {
+	apiVersion("8.0.0")
+	loader {
+		name("java_plain")
+		version("1.0")
+	}
+	license("GPL-3.0")
+	plugin("localeapi") {
+		displayName(project.name.capitalize())
+		version("${project.version}")
+		entrypoint("${project.group}.LocaleAPIMain")
+		description("Locale API for Sponge plugins.")
+		contributor("SawFowl") {
+			description("Lead Developer")
+		}
+		links {
+            homepage("https://ore.spongepowered.org/KrabsCompany/LocaleAPI")
+            source("https://github.com/SawFowl/LocaleAPI")
+            issues("https://github.com/SawFowl/LocaleAPI/issues")
+        }
+		dependency("spongeapi") {
+			optional(false)
+			loadOrder("after")
+			version("8.0.0")
+		}
+	}
 }
 
 configurations {
-    doc {
-        transitive false
-    }
+	doc {
+		transitive false
+	}
 }
 
 javadoc {
-    source configurations.doc.collect { zipTree(it) }
-    include '**/*.java'
-    options.addStringOption('Xdoclint:none', '-quiet')
+	source configurations.doc.collect { zipTree(it) }
+	include '**/*.java'
+	options.addStringOption('Xdoclint:none', '-quiet')
 }

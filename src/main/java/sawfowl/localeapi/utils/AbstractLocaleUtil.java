@@ -2,8 +2,6 @@ package sawfowl.localeapi.utils;
 
 import java.util.List;
 
-import javax.annotation.Nullable;
-
 import org.spongepowered.configurate.ConfigurationNode;
 
 import net.kyori.adventure.text.Component;
@@ -78,7 +76,7 @@ public abstract class AbstractLocaleUtil {
 	 * @param path - Path in the config file.
 	 * @return false if the path already exists. <br>true if path is created.
 	 */
-	public abstract boolean checkComponent(boolean json, Component component, @Nullable String comment, Object... path);
+	public abstract boolean checkComponent(boolean json, Component component, String comment, Object... path);
 
 	/**
 	 * Checking for the existence of a path in the localization file. And the serialization of the "Component" classes list to JSON strings. <br>
@@ -90,7 +88,7 @@ public abstract class AbstractLocaleUtil {
 	 * @param path - Path in the config file.
 	 * @return false if the path already exists. <br>true if path is created.
 	 */
-	public abstract boolean checkListComponents(boolean json, List<Component> components, @Nullable String comment, Object... path);
+	public abstract boolean checkListComponents(boolean json, List<Component> components, String comment, Object... path);
 
 	/**
 	 * Checking for the existence of a path in the localization file. And set String value. <br>
@@ -101,7 +99,7 @@ public abstract class AbstractLocaleUtil {
 	 * @param path - Path in the config file.
 	 * @return false if the path already exists. <br>true if path is created.
 	 */
-	public abstract boolean checkString(String string, @Nullable String comment, Object... path);
+	public abstract boolean checkString(String string, String comment, Object... path);
 
 	/**
 	 * Checking for the existence of a path in the localization file. And set list of String classes. <br>
@@ -112,6 +110,6 @@ public abstract class AbstractLocaleUtil {
 	 * @param path - Path in the config file.
 	 * @return false if the path already exists. <br>true if path is created.
 	 */
-	public abstract boolean checkListStrings(List<String> strings, @Nullable String comment, Object... path);
+	public abstract boolean checkListStrings(List<String> strings, String comment, Object... path);
 
 }

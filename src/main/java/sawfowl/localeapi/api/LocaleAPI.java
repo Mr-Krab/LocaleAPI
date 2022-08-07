@@ -184,7 +184,7 @@ public class LocaleAPI implements LocaleService {
 			logger.error("Plugin can not be null or noname(\"\")");
 			return null;
 		}
-		return getPluginLocales(pluginID).getOrDefault(locale, pluginLocales.get(pluginID).get(Locales.DEFAULT));
+		return getPluginLocales(pluginID).containsKey(locale) ? getPluginLocales(pluginID).get(locale) : getPluginLocales(pluginID).get(Locales.DEFAULT);
 	}
 
 	/**

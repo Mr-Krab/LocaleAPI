@@ -7,8 +7,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.api.util.locale.Locales;
 import org.spongepowered.configurate.CommentedConfigurationNode;
@@ -101,7 +99,7 @@ public class YamlLocaleUtil extends AbstractLocaleUtil {
 	}
 
 	@Override
-	public boolean checkComponent(boolean json, Component component, @Nullable String comment, Object... path) {
+	public boolean checkComponent(boolean json, Component component, String comment, Object... path) {
 		if(getLocaleNode(path).empty()) {
 			try {
 				if(json) {
@@ -121,7 +119,7 @@ public class YamlLocaleUtil extends AbstractLocaleUtil {
 	}
 
 	@Override
-	public boolean checkListComponents(boolean json, List<Component> components, @Nullable String comment, Object... path) {
+	public boolean checkListComponents(boolean json, List<Component> components, String comment, Object... path) {
 		if(getLocaleNode(path).empty()) {
 			try {
 				if(json) {
