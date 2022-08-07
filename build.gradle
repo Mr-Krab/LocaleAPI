@@ -56,20 +56,6 @@ dependencies {
 	implementation fileTree(dir: 'libs', include: '*.jar')
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            release(MavenPublication) {
-                from components.java
-                groupId = "com.github.SawFowl"
-                artifactId = "LocaleAPI"
-                version = "${major}.${minor}.${patch}"
-                artifactId = "${major}.${minor}.${patch}"
-            }
-        }
-    }
-}
-
 sponge {
 	apiVersion("8.0.0")
 	loader {
