@@ -60,7 +60,7 @@ afterEvaluate {
     publishing {
         publications {
             release(MavenPublication) {
-                from components.release
+                from components.java
                 groupId = "com.github.SawFowl"
                 artifactId = "LocaleAPI"
                 version = "${major}.${minor}.${patch}"
