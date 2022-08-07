@@ -56,6 +56,16 @@ dependencies {
 	implementation fileTree(dir: 'libs', include: '*.jar')
 }
 
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                artifactId = "${major}.${minor}.${patch}"
+            }
+        }
+    }
+}
+
 sponge {
 	apiVersion("8.0.0")
 	loader {
