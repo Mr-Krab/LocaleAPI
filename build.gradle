@@ -2,7 +2,6 @@ buildscript {
 	repositories {
 		maven { url = 'https://maven.minecraftforge.net' }
 		maven { url = 'https://maven.blamejared.com' }
-		jcenter()
 		mavenCentral()
 	}
 	dependencies {
@@ -54,6 +53,19 @@ dependencies {
 	implementation 'org.spongepowered:spongevanilla:1.16.5-8.0.0-RC1111:universal'
 	minecraft 'net.minecraftforge:forge:1.16.5-36.1.16'
 	implementation fileTree(dir: 'libs', include: '*.jar')
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.java
+                groupId = "com.github.SawFowl"
+                artifactId = "LocaleAPI"
+                version = "${major}.${minor}.${patch}"
+            }
+        }
+    }
 }
 
 sponge {
