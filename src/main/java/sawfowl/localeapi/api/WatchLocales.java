@@ -14,6 +14,14 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.Logger;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.event.Cause;
+import org.spongepowered.api.event.EventContext;
+import org.spongepowered.api.event.EventContextKeys;
+import org.spongepowered.api.event.impl.AbstractEvent;
+import org.spongepowered.plugin.PluginContainer;
+
+import sawfowl.localeapi.event.LocaleEvent;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
@@ -25,9 +33,12 @@ class WatchLocales {
 	private Path configDirectory;
 	private WatchService watchService;
 	private Map<String, Long> updated;
+	private Cause cause;
 	public WatchLocales(LocaleService localeService, Logger logger, Path path) {
 		this.localeService = localeService;
 		this.logger = logger;
+		PluginContainer pluginContainer = Sponge.pluginManager().plugin("localeapi").get();
+		cause = Cause.of(EventContext.builder().add(EventContextKeys.PLUGIN, pluginContainer).build(), pluginContainer);
 		configDirectory = path;
 		updated = new HashMap<String, Long>();
 		try {
@@ -87,6 +98,30 @@ class WatchLocales {
 						int localesSizeBefore = localeService.getPluginLocales(pluginID).size();
 						logger.info("[FileWatcher] New locale file found -> " + fileName + " for plugin \"" + pluginID + "\"! Loading...");
 						localeService.createPluginLocale(pluginID, configType, locale);
+						class CreateLocaleEvent extends AbstractEvent implements LocaleEvent.Create {
+
+							@Override
+							public String plugin() {
+								return pluginID;
+							}
+
+							@Override
+							public Locale getLocale() {
+								return locale;
+							}
+
+							@Override
+							public Cause cause() {
+								return cause;
+							}
+
+							@Override
+							public ConfigTypes configType() {
+								return configType;
+							}
+							
+						}
+						postEvent(new CreateLocaleEvent());
 						if(localesSizeBefore < localeService.getPluginLocales(pluginID).size()) {
 							logger.info("[FileWatcher] Done. " + (System.currentTimeMillis() - oldTime) + "ms");
 						} else {
@@ -110,6 +145,25 @@ class WatchLocales {
 				localeService.getOrDefaultLocale(pluginID, locale).reload();
 				//logger.info("[FileWatcher] Done. " + (System.currentTimeMillis() - oldTime) + "ms");
 				updated.put(pluginID + locale.toLanguageTag(), TimeUnit.MILLISECONDS.toSeconds(oldTime));
+				class ReloadLocaleEvent extends AbstractEvent implements LocaleEvent.Reload {
+
+					@Override
+					public String plugin() {
+						return pluginID;
+					}
+
+					@Override
+					public Locale getLocale() {
+						return locale;
+					}
+
+					@Override
+					public Cause cause() {
+						return cause;
+					}
+					
+				}
+				postEvent(new ReloadLocaleEvent());
 				break;
 			}
 		}
@@ -136,6 +190,10 @@ class WatchLocales {
 				}
 			}
 		});
+	}
+
+	private void postEvent(LocaleEvent localeEvent) {
+		Sponge.eventManager().post(localeEvent);
 	}
 
 }
