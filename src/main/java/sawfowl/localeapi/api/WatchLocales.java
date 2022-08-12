@@ -21,6 +21,7 @@ import org.spongepowered.api.event.EventContextKeys;
 import org.spongepowered.api.event.impl.AbstractEvent;
 import org.spongepowered.plugin.PluginContainer;
 
+import sawfowl.localeapi.LocaleAPIMain;
 import sawfowl.localeapi.event.LocaleEvent;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
@@ -37,7 +38,7 @@ class WatchLocales {
 	public WatchLocales(LocaleService localeService, Logger logger, Path path) {
 		this.localeService = localeService;
 		this.logger = logger;
-		PluginContainer pluginContainer = Sponge.pluginManager().plugin("localeapi").get();
+		PluginContainer pluginContainer = LocaleAPIMain.getPluginContainer();
 		cause = Cause.of(EventContext.builder().add(EventContextKeys.PLUGIN, pluginContainer).build(), pluginContainer);
 		configDirectory = path;
 		updated = new HashMap<String, Long>();

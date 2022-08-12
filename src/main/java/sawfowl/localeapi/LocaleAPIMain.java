@@ -39,12 +39,14 @@ import sawfowl.localeapi.event.LocaleServiseEvent;
 @Plugin("localeapi")
 public class LocaleAPIMain {
 
+	private static PluginContainer container;
 	private Logger logger;
 	private LocaleService localeService;
 	private Cause cause;
 
 	@Inject
 	public LocaleAPIMain(PluginContainer pluginContainer, @ConfigDir(sharedRoot = false) Path configDirectory) {
+		container = pluginContainer;
 		logger = LogManager.getLogger("LocaleAPI");
 		localeService = new LocaleAPI(logger, configDirectory);
 		cause = Cause.of(EventContext.builder().add(EventContextKeys.PLUGIN, pluginContainer).build(), pluginContainer);
@@ -90,6 +92,10 @@ public class LocaleAPIMain {
 	@Deprecated
 	public LocaleService getAPI() {
 		return localeService;
+	}
+
+	public static PluginContainer getPluginContainer() {
+		return container;
 	}
 
 }
