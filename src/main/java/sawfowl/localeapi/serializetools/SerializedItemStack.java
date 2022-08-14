@@ -305,19 +305,19 @@ public class SerializedItemStack {
 
 		@Override
 		public void putTag(String key, CompoundTag tag) {
-            StringWriter sink = new StringWriter();
-            ConfigurationOptions options = ConfigurationOptions.defaults().serializers(
-            		TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(
-            				ObjectMapper.factoryBuilder().addNodeResolver(NodeResolver.onlyWithSetting()).build()).build());
-            YamlConfigurationLoader loader = YamlConfigurationLoader.builder().nodeStyle(NodeStyle.FLOW).defaultOptions(options).sink(() -> new BufferedWriter(sink)).build();
-            ConfigurationNode node = loader.createNode();
-            try {
+			StringWriter sink = new StringWriter();
+			ConfigurationOptions options = ConfigurationOptions.defaults().serializers(
+					TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(
+							ObjectMapper.factoryBuilder().addNodeResolver(NodeResolver.onlyWithSetting()).build()).build());
+			YamlConfigurationLoader loader = YamlConfigurationLoader.builder().nodeStyle(NodeStyle.FLOW).defaultOptions(options).sink(() -> new BufferedWriter(sink)).build();
+			ConfigurationNode node = loader.createNode();
+			try {
 				node.node("CustomTags").set(CompoundTag.class, tag);
-	            loader.save(node);
+				loader.save(node);
 			} catch (ConfigurateException e) {
 				e.printStackTrace();
 			}
-            putString(key, sink.toString());
+			putString(key, sink.toString());
 		}
 
 		@Override
@@ -400,9 +400,9 @@ public class SerializedItemStack {
 		public Optional<CompoundTag> getTag(String key, Class<CompoundTag> clazz) {
 			if(!getString(key).isPresent() || clazz == null) return Optional.empty();
 			String string = getString(key).get();
-            StringReader source = new StringReader(string);
-            YamlConfigurationLoader loader = YamlConfigurationLoader.builder().nodeStyle(NodeStyle.FLOW).source(() -> new BufferedReader(source)).build();
-            try {
+			StringReader source = new StringReader(string);
+			YamlConfigurationLoader loader = YamlConfigurationLoader.builder().nodeStyle(NodeStyle.FLOW).source(() -> new BufferedReader(source)).build();
+			try {
 				ConfigurationNode node = loader.load();
 				if(node.node("CustomTags").virtual()) return Optional.empty();
 				return Optional.ofNullable(node.node("CustomTags").get(clazz));
@@ -544,19 +544,19 @@ public class SerializedItemStack {
 
 		@Override
 		public void putTag(String key, CompoundTag tag) {
-            StringWriter sink = new StringWriter();
-            ConfigurationOptions options = ConfigurationOptions.defaults().serializers(
-            		TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(
-            				ObjectMapper.factoryBuilder().addNodeResolver(NodeResolver.onlyWithSetting()).build()).build());
-            YamlConfigurationLoader loader = YamlConfigurationLoader.builder().nodeStyle(NodeStyle.FLOW).defaultOptions(options).sink(() -> new BufferedWriter(sink)).build();
-            ConfigurationNode node = loader.createNode();
-            try {
+			StringWriter sink = new StringWriter();
+			ConfigurationOptions options = ConfigurationOptions.defaults().serializers(
+					TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(
+							ObjectMapper.factoryBuilder().addNodeResolver(NodeResolver.onlyWithSetting()).build()).build());
+			YamlConfigurationLoader loader = YamlConfigurationLoader.builder().nodeStyle(NodeStyle.FLOW).defaultOptions(options).sink(() -> new BufferedWriter(sink)).build();
+			ConfigurationNode node = loader.createNode();
+			try {
 				node.node("CustomTags").set(CompoundTag.class, tag);
-	            loader.save(node);
+				loader.save(node);
 			} catch (ConfigurateException e) {
 				e.printStackTrace();
 			}
-            putString(key, sink.toString());
+			putString(key, sink.toString());
 		}
 
 		@Override
@@ -639,9 +639,9 @@ public class SerializedItemStack {
 		public Optional<CompoundTag> getTag(String key, Class<CompoundTag> clazz) {
 			if(!getString(key).isPresent() || clazz == null) return Optional.empty();
 			String string = getString(key).get();
-            StringReader source = new StringReader(string);
-            YamlConfigurationLoader loader = YamlConfigurationLoader.builder().nodeStyle(NodeStyle.FLOW).source(() -> new BufferedReader(source)).build();
-            try {
+			StringReader source = new StringReader(string);
+			YamlConfigurationLoader loader = YamlConfigurationLoader.builder().nodeStyle(NodeStyle.FLOW).source(() -> new BufferedReader(source)).build();
+			try {
 				ConfigurationNode node = loader.load();
 				if(node.node("CustomTags").virtual()) return Optional.empty();
 				return Optional.ofNullable(node.node("CustomTags").get(clazz));
