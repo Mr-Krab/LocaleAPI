@@ -71,10 +71,10 @@ sponge {
 			description("Lead Developer")
 		}
 		links {
-            homepage("https://ore.spongepowered.org/KrabsCompany/LocaleAPI")
-            source("https://github.com/SawFowl/LocaleAPI")
-            issues("https://github.com/SawFowl/LocaleAPI/issues")
-        }
+			homepage("https://ore.spongepowered.org/KrabsCompany/LocaleAPI")
+			source("https://github.com/SawFowl/LocaleAPI")
+			issues("https://github.com/SawFowl/LocaleAPI/issues")
+		}
 		dependency("spongeapi") {
 			optional(false)
 			loadOrder("after")
