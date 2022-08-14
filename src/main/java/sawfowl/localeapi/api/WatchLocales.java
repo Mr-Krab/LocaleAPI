@@ -67,7 +67,7 @@ class WatchLocales {
 		try {
 			Thread.sleep(5000);
 			while ((key = watchService.take()) != null) {
-			    for (WatchEvent<?> event : key.pollEvents()) {
+			    for(WatchEvent<?> event : key.pollEvents()) {
 		    		String pluginID = key.watchable().toString().replace(configDirectory.toString() + File.separator, "");
 		    		String fileName = event.context().toString();
 			    	if(event.kind() == ENTRY_CREATE) {
@@ -140,11 +140,10 @@ class WatchLocales {
 		long oldTime = System.currentTimeMillis();
 		for(Locale locale : localeService.getLocalesList()) {
 			if(updated.containsKey(pluginID + locale.toLanguageTag())) return;
-			if(fileName.contains(locale.toLanguageTag()) && (fileName.contains("conf") || fileName.contains("yml") || fileName.equals("json") || fileName.contains("properties")) ) {
+			if(fileName.contains(locale.toLanguageTag()) && (fileName.contains("conf") || fileName.contains("yml") || fileName.contains("json") || fileName.contains("properties"))) {
 				if(updated.containsKey(fileName)) 
 				logger.info("[FileWatcher] Locale file " + fileName + " has been changed! Reloading...");
 				localeService.getOrDefaultLocale(pluginID, locale).reload();
-				//logger.info("[FileWatcher] Done. " + (System.currentTimeMillis() - oldTime) + "ms");
 				updated.put(pluginID + locale.toLanguageTag(), TimeUnit.MILLISECONDS.toSeconds(oldTime));
 				class ReloadLocaleEvent extends AbstractEvent implements LocaleEvent.Reload {
 
