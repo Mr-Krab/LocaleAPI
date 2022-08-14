@@ -25,12 +25,13 @@ import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.ConfigurationOptions;
-import org.spongepowered.configurate.gson.GsonConfigurationLoader;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.ObjectMapper;
 import org.spongepowered.configurate.objectmapping.meta.NodeResolver;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
+import org.spongepowered.configurate.yaml.NodeStyle;
+import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 import net.kyori.adventure.key.Key;
 
@@ -303,15 +304,15 @@ public class SerializedItemStack {
 		}
 
 		@Override
-		public void putTag(String key, CompoundNBT nbt) {
+		public void putTag(String key, CompoundTag tag) {
             StringWriter sink = new StringWriter();
             ConfigurationOptions options = ConfigurationOptions.defaults().serializers(
             		TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(
             				ObjectMapper.factoryBuilder().addNodeResolver(NodeResolver.onlyWithSetting()).build()).build());
-            GsonConfigurationLoader loader = GsonConfigurationLoader.builder().defaultOptions(options).sink(() -> new BufferedWriter(sink)).build();
+            YamlConfigurationLoader loader = YamlConfigurationLoader.builder().nodeStyle(NodeStyle.FLOW).defaultOptions(options).sink(() -> new BufferedWriter(sink)).build();
             ConfigurationNode node = loader.createNode();
             try {
-				node.node("Tags").set(CompoundNBT.class, nbt);
+				node.node("CustomTags").set(CompoundTag.class, tag);
 	            loader.save(node);
 			} catch (ConfigurateException e) {
 				e.printStackTrace();
@@ -396,20 +397,17 @@ public class SerializedItemStack {
 		}
 
 		@Override
-		public Optional<CompoundNBT> getTag(String key) {
-			if(!getString(key).isPresent()) return Optional.empty();
+		public Optional<CompoundTag> getTag(String key, Class<CompoundTag> clazz) {
+			if(!getString(key).isPresent() || clazz == null) return Optional.empty();
 			String string = getString(key).get();
             StringReader source = new StringReader(string);
-            GsonConfigurationLoader loader = GsonConfigurationLoader.builder().source(() -> new BufferedReader(source)).build();
+            YamlConfigurationLoader loader = YamlConfigurationLoader.builder().nodeStyle(NodeStyle.FLOW).source(() -> new BufferedReader(source)).build();
             try {
 				ConfigurationNode node = loader.load();
-				if(node.node("Tags").virtual()) return Optional.empty();
-				try {
-					return Optional.ofNullable(node.node("Tags").get(CompoundNBT.class));
-				} catch (Exception e) {
-					return Optional.empty();
-				}
+				if(node.node("CustomTags").virtual()) return Optional.empty();
+				return Optional.ofNullable(node.node("CustomTags").get(clazz));
 			} catch (ConfigurateException e) {
+				e.printStackTrace();
 				return Optional.empty();
 			}
 		}
@@ -545,15 +543,15 @@ public class SerializedItemStack {
 		}
 
 		@Override
-		public void putTag(String key, CompoundNBT nbt) {
+		public void putTag(String key, CompoundTag tag) {
             StringWriter sink = new StringWriter();
             ConfigurationOptions options = ConfigurationOptions.defaults().serializers(
             		TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(
             				ObjectMapper.factoryBuilder().addNodeResolver(NodeResolver.onlyWithSetting()).build()).build());
-            GsonConfigurationLoader loader = GsonConfigurationLoader.builder().defaultOptions(options).sink(() -> new BufferedWriter(sink)).build();
+            YamlConfigurationLoader loader = YamlConfigurationLoader.builder().nodeStyle(NodeStyle.FLOW).defaultOptions(options).sink(() -> new BufferedWriter(sink)).build();
             ConfigurationNode node = loader.createNode();
             try {
-				node.node("Tags").set(CompoundNBT.class, nbt);
+				node.node("CustomTags").set(CompoundTag.class, tag);
 	            loader.save(node);
 			} catch (ConfigurateException e) {
 				e.printStackTrace();
@@ -638,20 +636,17 @@ public class SerializedItemStack {
 		}
 
 		@Override
-		public Optional<CompoundNBT> getTag(String key) {
-			if(!getString(key).isPresent()) return Optional.empty();
+		public Optional<CompoundTag> getTag(String key, Class<CompoundTag> clazz) {
+			if(!getString(key).isPresent() || clazz == null) return Optional.empty();
 			String string = getString(key).get();
             StringReader source = new StringReader(string);
-            GsonConfigurationLoader loader = GsonConfigurationLoader.builder().source(() -> new BufferedReader(source)).build();
+            YamlConfigurationLoader loader = YamlConfigurationLoader.builder().nodeStyle(NodeStyle.FLOW).source(() -> new BufferedReader(source)).build();
             try {
 				ConfigurationNode node = loader.load();
-				if(node.node("Tags").virtual()) return Optional.empty();
-				try {
-					return Optional.ofNullable(node.node("Tags").get(CompoundNBT.class));
-				} catch (Exception e) {
-					return Optional.empty();
-				}
+				if(node.node("CustomTags").virtual()) return Optional.empty();
+				return Optional.ofNullable(node.node("CustomTags").get(clazz));
 			} catch (ConfigurateException e) {
+				e.printStackTrace();
 				return Optional.empty();
 			}
 		}

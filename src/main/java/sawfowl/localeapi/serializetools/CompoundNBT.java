@@ -6,8 +6,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
+import org.spongepowered.configurate.objectmapping.meta.Setting;
 
-@ConfigSerializable
 public interface CompoundNBT {
 
 	/**
@@ -91,9 +91,11 @@ public interface CompoundNBT {
 	public void putByteArray(String key, byte[] value);
 
 	/**
-	 * Adding a tag. If a tag with the specified key already exists, it will be overwritten.
+	 * Adding a tag. If a tag with the specified key already exists, it will be overwritten.<br>
+	 * The class must be marked with the {@link ConfigSerializable} annotation.<br>
+	 * Only objects marked with the {@link Setting} annotation are saved.
 	 */
-	public void putTag(String key, CompoundNBT nbt);
+	public void putTag(String key, CompoundTag tag);
 
 	/**
 	 * Getting all the keys. 
@@ -171,9 +173,10 @@ public interface CompoundNBT {
 	public Optional<byte[]> getByteArray(String key);
 
 	/**
-	 * Getting the tag value. If the object has been changed after receiving it, it must be rewritten.
+	 * Getting the tag value. If the object has been changed after receiving it, it must be rewritten.<br>
+	 * Example of getting a value - <a href="https://github.com/SawFowl/LocaleTestPlugin/blob/3d3f53d8a520757a2a1a15ee213845deaa943b6b/src/main/java/sawfowl/localetest/LocaleTest.java#L135">GitHub</a>
 	 */
-	public Optional<CompoundNBT> getTag(String key);
+	public Optional<CompoundTag> getTag(String key, Class<CompoundTag> clazz);
 
 	/**
 	 * Getting the number of tags in ItemStack.
