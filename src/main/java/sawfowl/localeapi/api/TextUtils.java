@@ -60,6 +60,20 @@ public class TextUtils {
 	}
 
 	/**
+	 * Removing all decorations from the text.
+	 */
+	public static final Component removeDecorations(Component component) {
+		return removeDecorations(serializeLegacy(component));
+	}
+
+	/**
+	 * Removing all decorations from the text.
+	 */
+	public static final Component removeDecorations(String string) {
+		return deserializeLegacy(clearDecorations(string));
+	}
+
+	/**
 	 * Adding the execution of arbitrary code when you click on text.<br>
 	 * It is used {@link #createCallBack(Component, Consumer)}
 	 */
