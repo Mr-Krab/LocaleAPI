@@ -1,15 +1,13 @@
 package sawfowl.localeapi.utils;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.spongepowered.configurate.ConfigurationNode;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextReplacementConfig;
+import sawfowl.localeapi.api.TextUtils;
 
 public abstract class AbstractLocaleUtil {
 
@@ -57,7 +55,7 @@ public abstract class AbstractLocaleUtil {
 	 * @return {@link Component}
 	 */
 	public Component getComponentReplaced1(Map<String, String> map, boolean json, Object... path) {
-		return replace(getComponent(json, path), map);
+		return TextUtils.replace(getComponent(json, path), map);
 	}
 
 	/**
@@ -71,7 +69,7 @@ public abstract class AbstractLocaleUtil {
 	 * @return {@link Component}
 	 */
 	public Component getComponentReplaced2(Map<String, Component> map, boolean json, Object... path) {
-		return replaceToComponents(getComponent(json, path), map);
+		return TextUtils.replaceToComponents(getComponent(json, path), map);
 	}
 
 	/**
@@ -94,7 +92,7 @@ public abstract class AbstractLocaleUtil {
 	 * @return {@link Component}
 	 */
 	public List<Component> getListComponentsReplaced1(Map<String, String> map, boolean json, Object... path){
-		return getListComponents(json, path).stream().map(component -> (replace(component, map))).collect(Collectors.toList());
+		return getListComponents(json, path).stream().map(component -> (TextUtils.replace(component, map))).collect(Collectors.toList());
 	}
 
 	/**
@@ -108,7 +106,7 @@ public abstract class AbstractLocaleUtil {
 	 * @return {@link Component}
 	 */
 	public List<Component> getListComponentsReplaced2(Map<String, Component> map, boolean json, Object... path){
-		return getListComponents(json, path).stream().map(component -> (replaceToComponents(component, map))).collect(Collectors.toList());
+		return getListComponents(json, path).stream().map(component -> (TextUtils.replaceToComponents(component, map))).collect(Collectors.toList());
 	}
 
 	/**
@@ -178,50 +176,26 @@ public abstract class AbstractLocaleUtil {
 	 * In this map all values are converted to strings.<br>
 	 * For correct replacement it is necessary in both lists the order of adding data must be the same. For example key 1 = value 1, key 4 = value 4.
 	 * 
+	 * @deprecated See {@link TextUtils#replaceMap}
 	 * @param keys - Keys contained in the text.
 	 * @param values - Values that should be placed in the text instead of keys.
 	 */
+	@Deprecated
 	public static Map<String, String>  replaceMap(List<String> keys, List<Object> values) {
-		Map<String, String> map = new HashMap<String, String>();
-		int i = 0;
-		for(String key : keys) {
-			if(i >= keys.size() || i >= values.size()) break;
-			map.put(key, values.get(i).toString());
-			i++;
-		}
-		return map;
+		return TextUtils.replaceMap(keys, values);
 	}
 
 	/**
 	 * Creating a map for replacing values in text components.<br>
 	 * For correct replacement it is necessary in both lists the order of adding data must be the same. For example key 1 = value 1, key 4 = value 4.
 	 * 
+	 * @deprecated See {@link TextUtils#replaceMapComponents}
 	 * @param keys - Keys contained in the text.
 	 * @param values - Values that should be placed in the text instead of keys.
 	 */
+	@Deprecated
 	public static Map<String, Component> replaceMapComponents(List<String> keys, List<Component> values) {
-		Map<String, Component> map = new HashMap<String, Component>();
-		int i = 0;
-		for(String key : keys) {
-			if(i >= keys.size() || i >= values.size()) break;
-			map.put(key, values.get(i));
-			i++;
-		}
-		return map;
-	}
-
-	Component replace(Component component, Map<String, String> map) {
-		for(Entry<String, String> entry : map.entrySet()) {
-			component = component.replaceText(TextReplacementConfig.builder().match(entry.getKey()).replacement(Component.text(entry.getValue())).build());
-		}
-		return component;
-	}
-
-	Component replaceToComponents(Component component, Map<String, Component> map) {
-		for(Entry<String, Component> entry : map.entrySet()) {
-			component = component.replaceText(TextReplacementConfig.builder().match(entry.getKey()).replacement(entry.getValue()).build());
-		}
-		return component;
+		return TextUtils.replaceMapComponents(keys, values);
 	}
 
 }
