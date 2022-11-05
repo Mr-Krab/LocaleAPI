@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":9,"i1":9,"i2":9,"i3":9,"i4":9,"i5":9,"i6":9,"i7":9,"i8":9,"i9":9,"i10":9,"i11":9,"i12":9,"i13":9,"i14":9,"i15":9};
+var data = {"i0":9,"i1":9,"i2":9,"i3":9,"i4":9,"i5":9,"i6":9,"i7":9,"i8":9,"i9":9,"i10":9,"i11":9,"i12":9,"i13":9,"i14":9,"i15":9,"i16":9,"i17":9};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -222,6 +222,20 @@ extends java.lang.Object</pre>
 </tr>
 <tr id="i6" class="altColor">
 <td class="colFirst"><code>static net.kyori.adventure.text.Component</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#removeDecorations(java.lang.String)">removeDecorations</a></span>&#8203;(java.lang.String&nbsp;string)</code></th>
+<td class="colLast">
+<div class="block">Removing all decorations from the text.</div>
+</td>
+</tr>
+<tr id="i7" class="rowColor">
+<td class="colFirst"><code>static net.kyori.adventure.text.Component</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#removeDecorations(net.kyori.adventure.text.Component)">removeDecorations</a></span>&#8203;(net.kyori.adventure.text.Component&nbsp;component)</code></th>
+<td class="colLast">
+<div class="block">Removing all decorations from the text.</div>
+</td>
+</tr>
+<tr id="i8" class="altColor">
+<td class="colFirst"><code>static net.kyori.adventure.text.Component</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#replace(net.kyori.adventure.text.Component,java.lang.String%5B%5D,java.lang.Object%5B%5D)">replace</a></span>&#8203;(net.kyori.adventure.text.Component&nbsp;component,
        java.lang.String[]&nbsp;keys,
        java.lang.Object[]&nbsp;values)</code></th>
@@ -229,7 +243,7 @@ extends java.lang.Object</pre>
 <div class="block">This method works similarly to <code>String#replace(String, String)</code></div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>static net.kyori.adventure.text.Component</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#replace(net.kyori.adventure.text.Component,java.util.Map)">replace</a></span>&#8203;(net.kyori.adventure.text.Component&nbsp;component,
        java.util.Map&lt;java.lang.String,&#8203;java.lang.String&gt;&nbsp;map)</code></th>
@@ -237,7 +251,7 @@ extends java.lang.Object</pre>
 <div class="block">This method works similarly to <code>String#replace(String, String)</code></div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>static java.util.Map&lt;java.lang.String,&#8203;java.lang.String&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#replaceMap(java.lang.String%5B%5D,java.lang.Object%5B%5D)">replaceMap</a></span>&#8203;(java.lang.String[]&nbsp;keys,
           java.lang.Object[]&nbsp;values)</code></th>
@@ -247,7 +261,7 @@ extends java.lang.Object</pre>
  For correct replacement it is necessary in both lists the order of adding data must be the same.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>static java.util.Map&lt;java.lang.String,&#8203;java.lang.String&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#replaceMap(java.util.List,java.util.List)">replaceMap</a></span>&#8203;(java.util.List&lt;java.lang.String&gt;&nbsp;keys,
           java.util.List&lt;java.lang.Object&gt;&nbsp;values)</code></th>
@@ -257,7 +271,7 @@ extends java.lang.Object</pre>
  For correct replacement it is necessary in both lists the order of adding data must be the same.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>static java.util.Map&lt;java.lang.String,&#8203;net.kyori.adventure.text.Component&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#replaceMapComponents(java.lang.String%5B%5D,net.kyori.adventure.text.Component%5B%5D)">replaceMapComponents</a></span>&#8203;(java.lang.String[]&nbsp;keys,
                     net.kyori.adventure.text.Component[]&nbsp;values)</code></th>
@@ -266,7 +280,7 @@ extends java.lang.Object</pre>
  For correct replacement it is necessary in both lists the order of adding data must be the same.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>static java.util.Map&lt;java.lang.String,&#8203;net.kyori.adventure.text.Component&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#replaceMapComponents(java.util.List,java.util.List)">replaceMapComponents</a></span>&#8203;(java.util.List&lt;java.lang.String&gt;&nbsp;keys,
                     java.util.List&lt;net.kyori.adventure.text.Component&gt;&nbsp;values)</code></th>
@@ -275,7 +289,7 @@ extends java.lang.Object</pre>
  For correct replacement it is necessary in both lists the order of adding data must be the same.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>static net.kyori.adventure.text.Component</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#replaceToComponents(net.kyori.adventure.text.Component,java.lang.String%5B%5D,net.kyori.adventure.text.Component%5B%5D)">replaceToComponents</a></span>&#8203;(net.kyori.adventure.text.Component&nbsp;component,
                    java.lang.String[]&nbsp;keys,
@@ -284,7 +298,7 @@ extends java.lang.Object</pre>
 <div class="block">This method works similarly to <code>String#replace(String, String)</code></div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>static net.kyori.adventure.text.Component</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#replaceToComponents(net.kyori.adventure.text.Component,java.util.Map)">replaceToComponents</a></span>&#8203;(net.kyori.adventure.text.Component&nbsp;component,
                    java.util.Map&lt;java.lang.String,&#8203;net.kyori.adventure.text.Component&gt;&nbsp;map)</code></th>
@@ -292,14 +306,14 @@ extends java.lang.Object</pre>
 <div class="block">This method works similarly to <code>String#replace(String, String)</code></div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>static java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#serializeJson(net.kyori.adventure.text.Component)">serializeJson</a></span>&#8203;(net.kyori.adventure.text.Component&nbsp;component)</code></th>
 <td class="colLast">
 <div class="block">It is used {@link GsonComponentSerializer.gson()}</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>static java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#serializeLegacy(net.kyori.adventure.text.Component)">serializeLegacy</a></span>&#8203;(net.kyori.adventure.text.Component&nbsp;component)</code></th>
 <td class="colLast">
@@ -406,6 +420,26 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>clearDecorations</h4>
 <pre class="methodSignature">public static final&nbsp;java.lang.String&nbsp;clearDecorations&#8203;(java.lang.String&nbsp;string)</pre>
+<div class="block">Removing all decorations from the text.</div>
+</li>
+</ul>
+<a id="removeDecorations(net.kyori.adventure.text.Component)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>removeDecorations</h4>
+<pre class="methodSignature">public static final&nbsp;net.kyori.adventure.text.Component&nbsp;removeDecorations&#8203;(net.kyori.adventure.text.Component&nbsp;component)</pre>
+<div class="block">Removing all decorations from the text.</div>
+</li>
+</ul>
+<a id="removeDecorations(java.lang.String)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>removeDecorations</h4>
+<pre class="methodSignature">public static final&nbsp;net.kyori.adventure.text.Component&nbsp;removeDecorations&#8203;(java.lang.String&nbsp;string)</pre>
 <div class="block">Removing all decorations from the text.</div>
 </li>
 </ul>
