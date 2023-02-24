@@ -3,11 +3,9 @@ package sawfowl.localeapi.api;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -15,6 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.logging.log4j.Logger;
+
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.util.locale.Locales;
 import org.spongepowered.configurate.ConfigurationOptions;
@@ -43,6 +42,8 @@ public class LocaleAPI implements LocaleService {
 	private ObjectMapper.Factory factory;
 	private TypeSerializerCollection child;
 	private ConfigurationOptions options;
+	private Locale system = Locale.getDefault();
+	private boolean allowSystem = false;
 	
 	public WatchThread getWatchThread() {
 		return watchThread;
@@ -55,24 +56,14 @@ public class LocaleAPI implements LocaleService {
 		child = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(factory).build();
 		options = ConfigurationOptions.defaults().serializers(child);
 		pluginLocales = new HashMap<String, Map<Locale, AbstractLocaleUtil>>();
-		locales = new ArrayList<Locale>();
-		generateLocalesList();
+		locales = EnumLocales.getLocales();
 		watchThread = new WatchThread(this, logger, path);
 		watchThread.start();
+		allowSystem = locales.contains(system) || locales.stream().filter(locale -> (locale.toLanguageTag().equals(system.toLanguageTag()))).findFirst().isPresent();
 	}
 
 	private void updateWatch(String pluginID) {
 		watchThread.getWatchLocales().addPluginData(pluginID);
-	}
-
-	private void generateLocalesList() {
-		for(Field field : Locales.class.getFields()) {
-			try {
-				if(field.get(field.getType()) instanceof Locale) locales.add((Locale) field.get(field.getType()));
-			} catch (IllegalArgumentException | IllegalAccessException e) {
-				logger.error("Error get locales {}" + e.getLocalizedMessage());
-			}
-		}
 	}
 
 	private String getPluginID(Object plugin) {
@@ -113,44 +104,26 @@ public class LocaleAPI implements LocaleService {
 		if(!pluginLocales.get(pluginID).containsKey(locale)) pluginLocales.get(pluginID).put(locale, localeUtil);
 	}
 
-	/**
-	 * The method returns options for the Sponge configuration files.<br>
-	 * These options disable serialization of objects not marked by the <b>@Setting</b> annotation.
-	 * 
-	 */
+	public Locale getSystemOrDefaultLocale() {
+		return allowSystem ? system : getDefaultLocale();
+	}
+
 	public ConfigurationOptions getConfigurationOptions() {
 		return options;
 	}
 
-	/**
-	 * List of all localizations of the game.
-	 * 
-	 */
 	public List<Locale> getLocalesList() {
 		return locales;
 	}
 
-	/**
-	 * The default location. Used in a localization map.
-	 */
 	public Locale getDefaultLocale() {
 		return Locales.DEFAULT;
 	}
 
-	/**
-	 * Getting a map of plugin localizations with Sponge config files. <br>
-	 * 
-	 * @param plugin - A class annotated with '@Plugin'.
-	 */
 	public Map<Locale, AbstractLocaleUtil> getPluginLocales(Object plugin) {
 		return getPluginLocales(getPluginID(plugin));
 	}
 
-	/**
-	 * Getting a map of plugin localizations with Sponge config files. <br>
-	 * 
-	 * @param pluginID - Plugin ID.
-	 */
 	public Map<Locale, AbstractLocaleUtil> getPluginLocales(String pluginID) {
 		if(pluginID == null || pluginID.isEmpty()) {
 			logger.error("Plugin can not be null or noname(\"\")");
@@ -159,26 +132,10 @@ public class LocaleAPI implements LocaleService {
 		return pluginLocales.containsKey(pluginID) ? pluginLocales.get(pluginID) : new HashMap<Locale, AbstractLocaleUtil>();
 	}
 
-	/**
-	 * Get plugin localization with Sponge config file. <br> <br>
-	 * Note that getting the ConfigurationNode object in the <b>'*.properties'</b> configuration is not possible.<br>
-	 * Methods for getting this object will return null.
-	 * 
-	 * @param plugin - A class annotated with '@Plugin'.
-	 * @param locale - Selected localization. If the selected localization is not found, the default localization will be returned.
-	 */
 	public AbstractLocaleUtil getOrDefaultLocale(Object plugin, Locale locale) {
 		return getOrDefaultLocale(getPluginID(plugin), locale);
 	}
 
-	/**
-	 * Get plugin localization with Sponge config file. <br> <br>
-	 * Note that getting the ConfigurationNode object in the <b>'*.properties'</b> configuration is not possible.<br>
-	 * Methods for getting this object will return null.
-	 * 
-	 * @param pluginID - Plugin ID.
-	 * @param locale - Selected localization. If the selected localization is not found, the default localization will be returned.
-	 */
 	public AbstractLocaleUtil getOrDefaultLocale(String pluginID, Locale locale) {
 		if(pluginID == null || pluginID.isEmpty()) {
 			logger.error("Plugin can not be null or noname(\"\")");
@@ -187,21 +144,11 @@ public class LocaleAPI implements LocaleService {
 		return getPluginLocales(pluginID).containsKey(locale) ? getPluginLocales(pluginID).get(locale) : getPluginLocales(pluginID).get(Locales.DEFAULT);
 	}
 
-	/**
-	 * Save plugin locales from assets.
-	 * 
-	 * @param plugin - A class annotated with '@Plugin'.
-	 */
 	public void saveAssetLocales(Object plugin) {
 		String pluginID = getPluginID(plugin);
 		saveAssetLocales(pluginID);
 	}
 
-	/**
-	 * Save plugin locales from assets.
-	 * 
-	 * @param pluginID - Plugin ID.
-	 */
 	public void saveAssetLocales(String pluginID) {
 		if(pluginID == null || pluginID.isEmpty()) {
 			logger.error("Plugin can not be null or noname(\"\")");
@@ -219,23 +166,11 @@ public class LocaleAPI implements LocaleService {
 		updateWatch(pluginID);
 	}
 
-	/**
-	 * Creating a plugin localization file.
-	 * 
-	 * @param plugin - A class annotated with '@Plugin'.
-	 * @param configType - Selected config type. See enum class 'ConfigTypes'.
-	 */
 	public AbstractLocaleUtil createPluginLocale(Object plugin, ConfigTypes configType, Locale locale) {
 		String pluginID = getPluginID(plugin);
 		return createPluginLocale(pluginID, configType, locale);
 	}
 
-	/**
-	 * Creating a plugin localization file.
-	 * 
-	 * @param pluginID - Plugin ID.
-	 * @param configType - Selected config type. See enum class 'ConfigTypes'.
-	 */
 	public AbstractLocaleUtil createPluginLocale(String pluginID, ConfigTypes configType, Locale locale) {
 		if(pluginID == null || pluginID.isEmpty()) {
 			this.logger.error("Plugin can not be null or noname(\"\")");
@@ -256,20 +191,10 @@ public class LocaleAPI implements LocaleService {
 		return getPluginLocales(pluginID).get(locale);
 	}
 
-	/**
-	 * Load plugin locales if exists.
-	 * 
-	 * @param plugin - A class annotated with '@Plugin'.
-	 */
 	public boolean localesExist(Object plugin) {
 		return localesExist(getPluginID(plugin));
 	}
 
-	/**
-	 * Load plugin locales if exists.
-	 * 
-	 * @param pluginID - Plugin ID.
-	 */
 	public boolean localesExist(String pluginID) {
 		if(pluginID == null || pluginID.isEmpty()) {
 			this.logger.error("Plugin can not be null or noname(\"\")");

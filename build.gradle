@@ -105,6 +105,7 @@ configurations {
 }
 
 javadoc {
+	options.encoding = 'UTF-8'
 	source configurations.doc.collect { zipTree(it) }
 	include '**/*.java'
 	options.addStringOption('Xdoclint:none', '-quiet')

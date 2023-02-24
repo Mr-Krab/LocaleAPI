@@ -10,6 +10,12 @@ import sawfowl.localeapi.utils.AbstractLocaleUtil;
 
 public interface LocaleService {
 
+	/*
+	 * Getting the system locale.<br>
+	 * If Sponge does not support your system locale, the default locale for Sponge will be selected.
+	 */
+	public Locale getSystemOrDefaultLocale();
+
 	/**
 	 * The method returns options for the Sponge configuration files.<br>
 	 * These options disable serialization of objects not marked by the <b>@Setting</b> annotation.
@@ -23,8 +29,16 @@ public interface LocaleService {
 	 */
 	public List<Locale> getLocalesList();
 
+
 	/**
-	 * The default location. Used in a localization map.
+	 * The system locale. Used in a localization map.
+	 */
+	public default Locale getSystemLocale() {
+		return Locale.getDefault();
+	}
+
+	/**
+	 * The default locale. Used in a localization map.
 	 */
 	public Locale getDefaultLocale();
 

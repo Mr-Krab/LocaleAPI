@@ -175,10 +175,22 @@ public class TextUtils {
 	/**
 	 * This method works similarly to {@link String#replace(String, String)}
 	 */
+	public static final Component replace(Component component, String key, Component value) {
+		return component.replaceText(TextReplacementConfig.builder().match(key).replacement(value).build());
+	}
+
+	/**
+	 * This method works similarly to {@link String#replace(String, String)}
+	 */
+	public static final Component replace(Component component, String key, String value) {
+		return replace(component, key, deserialize(value));
+	}
+
+	/**
+	 * This method works similarly to {@link String#replace(String, String)}
+	 */
 	public static final Component replace(Component component, Map<String, String> map) {
-		for(Entry<String, String> entry : map.entrySet()) {
-			component = component.replaceText(TextReplacementConfig.builder().match(entry.getKey()).replacement(Component.text(entry.getValue())).build());
-		}
+		for(Entry<String, String> entry : map.entrySet()) component = replace(component, entry.getKey(), entry.getValue());
 		return component;
 	}
 
@@ -193,10 +205,19 @@ public class TextUtils {
 	 * This method works similarly to {@link String#replace(String, String)}
 	 */
 	public static final Component replaceToComponents(Component component, Map<String, Component> map) {
-		for(Entry<String, Component> entry : map.entrySet()) {
-			component = component.replaceText(TextReplacementConfig.builder().match(entry.getKey()).replacement(entry.getValue()).build());
-		}
+		for(Entry<String, Component> entry : map.entrySet()) component = replace(component, entry.getKey(), entry.getValue());
 		return component;
+	}
+
+	/**
+	 * String to {@link Component} conversion.
+	 */
+	public static final  Component deserialize(String string) {
+		try {
+			return GsonComponentSerializer.gson().deserialize(string);
+		} catch (Exception e) {
+			return LegacyComponentSerializer.legacyAmpersand().deserialize(string);
+		}
 	}
 
 	private static boolean isStyleChar(char ch) {
