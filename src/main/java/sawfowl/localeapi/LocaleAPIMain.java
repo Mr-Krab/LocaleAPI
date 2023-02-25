@@ -15,6 +15,9 @@
 package sawfowl.localeapi;
 
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 import org.spongepowered.api.Server;
@@ -43,6 +46,7 @@ public class LocaleAPIMain {
 	private Logger logger;
 	private LocaleService localeService;
 	private Cause cause;
+	private Map<String, Long> updated = new HashMap<String, Long>();
 
 	@Inject
 	public LocaleAPIMain(PluginContainer pluginContainer, @ConfigDir(sharedRoot = false) Path configDirectory) {
@@ -96,6 +100,10 @@ public class LocaleAPIMain {
 
 	public static PluginContainer getPluginContainer() {
 		return container;
+	}
+
+	public Map<String, Long> getUpdated() {
+		return updated;
 	}
 
 }

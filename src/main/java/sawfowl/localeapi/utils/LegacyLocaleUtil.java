@@ -17,6 +17,7 @@ import org.spongepowered.configurate.ConfigurationNode;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.LocaleService;
 
 /**
@@ -36,23 +37,14 @@ import sawfowl.localeapi.api.LocaleService;
  */
 public class LegacyLocaleUtil extends AbstractLocaleUtil {
 
-	private LocaleService localeService;
-	private Logger logger;
-	private Path path;
 	private final Properties locale = new Properties();
 	private File localeFile;
 	private String loc;
-	private String pluginID;
 	private FileWriter fileWriter;
-	private boolean thisIsDefault = false;
 
 	public LegacyLocaleUtil(LocaleService localeService, Logger logger, Path path, String pluginID, String locale) {
-		this.localeService = localeService;
-		this.logger = logger;
-		this.path = path;
-		this.pluginID = pluginID;
+		super(localeService, logger, path, pluginID, locale, ConfigTypes.PROPERTIES.toString());
 		this.loc = locale;
-		thisIsDefault = locale.equals(Locales.DEFAULT.toLanguageTag());
 		try {
 			init();
 		} catch (IOException e) {
@@ -71,6 +63,7 @@ public class LegacyLocaleUtil extends AbstractLocaleUtil {
 
 	@Override
 	public void saveLocaleNode() {
+		freezeWatcher();
 		try {
 			if(fileWriter == null) fileWriter = new FileWriter(localeFile);
 			locale.store(fileWriter, null);

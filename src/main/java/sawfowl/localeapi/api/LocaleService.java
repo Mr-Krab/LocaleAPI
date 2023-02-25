@@ -29,14 +29,6 @@ public interface LocaleService {
 	 */
 	public List<Locale> getLocalesList();
 
-
-	/**
-	 * The system locale. Used in a localization map.
-	 */
-	public default Locale getSystemLocale() {
-		return Locale.getDefault();
-	}
-
 	/**
 	 * The default locale. Used in a localization map.
 	 */

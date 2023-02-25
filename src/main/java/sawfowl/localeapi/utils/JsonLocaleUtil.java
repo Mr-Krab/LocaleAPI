@@ -1,6 +1,5 @@
 package sawfowl.localeapi.utils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -15,24 +14,15 @@ import org.spongepowered.configurate.serialize.SerializationException;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.LocaleService;
 
 public class JsonLocaleUtil extends AbstractLocaleUtil {
 
-	private LocaleService localeService;
-	private Logger logger;
-	private String pluginID;
-	private boolean thisIsDefault = false;
 	private GsonConfigurationLoader configLoader;
 	private ConfigurationNode localeNode;
-	private Path path;
-
 	public JsonLocaleUtil(LocaleService localeService, Logger logger, Path path, String pluginID, String locale) {
-		this.localeService = localeService;
-		this.logger = logger;
-		this.pluginID = pluginID;
-		thisIsDefault = locale.equals(Locales.DEFAULT.toLanguageTag());
-		this.path = path.resolve(pluginID + File.separator + locale + ".json");
+		super(localeService, logger, path, pluginID, locale, ConfigTypes.JSON.toString());
 		configLoader = GsonConfigurationLoader.builder().defaultOptions(localeService.getConfigurationOptions()).path(this.path).build();
 		reload();
 	}
@@ -48,6 +38,7 @@ public class JsonLocaleUtil extends AbstractLocaleUtil {
 
 	@Override
 	public void saveLocaleNode() {
+		freezeWatcher();
 		try {
 			configLoader.save(localeNode);
 		} catch (IOException e) {

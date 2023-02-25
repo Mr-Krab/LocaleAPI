@@ -1,15 +1,40 @@
 package sawfowl.localeapi.utils;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.Logger;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.scheduler.Task;
+import org.spongepowered.api.util.locale.Locales;
 import org.spongepowered.configurate.ConfigurationNode;
 
 import net.kyori.adventure.text.Component;
+import sawfowl.localeapi.LocaleAPIMain;
+import sawfowl.localeapi.api.LocaleService;
 import sawfowl.localeapi.api.TextUtils;
 
 public abstract class AbstractLocaleUtil {
+
+
+	final LocaleService localeService;
+	final Logger logger;
+	final String pluginID;
+	final boolean thisIsDefault;
+	final Path path;
+	final String locale;
+	public AbstractLocaleUtil(LocaleService localeService, Logger logger, Path path, String pluginID, String locale, String fileSuffix) {
+		this.localeService = localeService;
+		this.logger = logger;
+		this.path = path.resolve(pluginID + File.separator + locale + fileSuffix);
+		this.pluginID = pluginID;
+		this.locale = locale;
+		thisIsDefault = locale.equals(Locales.DEFAULT.toLanguageTag());
+	}
 
 	/**
 	 * Reload locale file
@@ -196,6 +221,21 @@ public abstract class AbstractLocaleUtil {
 	@Deprecated
 	public static Map<String, Component> replaceMapComponents(List<String> keys, List<Component> values) {
 		return TextUtils.replaceMapComponents(keys, values);
+	}
+
+	/**
+	 * Pauses to listen to localization file changes for 3 seconds.<br>
+	 * Must be used when filling files via code.
+	 */
+	void freezeWatcher() {
+		getUpdated().put(pluginID + locale, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()));
+		Sponge.asyncScheduler().submit(Task.builder().plugin(LocaleAPIMain.getPluginContainer()).delay(3, TimeUnit.SECONDS).execute(() -> {
+			if(getUpdated().containsKey(pluginID + locale)) getUpdated().remove(pluginID + locale);
+		}).build());
+	}
+
+	private Map<String, Long> getUpdated() {
+		return ((LocaleAPIMain) LocaleAPIMain.getPluginContainer().instance()).getUpdated();
 	}
 
 }
