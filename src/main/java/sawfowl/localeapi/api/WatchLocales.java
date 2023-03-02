@@ -33,7 +33,7 @@ class WatchLocales {
 	private Path configDirectory;
 	private WatchService watchService;
 	private Cause cause;
-	PluginContainer pluginContainer;
+	private PluginContainer pluginContainer;
 	public WatchLocales(LocaleService localeService, Logger logger, Path path) {
 		this.localeService = localeService;
 		this.logger = logger;
@@ -49,8 +49,9 @@ class WatchLocales {
 
 	void addPluginData(String pluginID) {
 		if(getUpdated().containsKey(pluginID)) return;
+		if(!configDirectory.resolve(pluginID).toFile().exists()) configDirectory.resolve(pluginID).toFile().mkdir();
+		getUpdated().put(pluginID, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()));
 		try {
-			getUpdated().put(pluginID, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()));
 			configDirectory.resolve(pluginID).register(watchService, ENTRY_CREATE, ENTRY_MODIFY);
 			logger.info("[FileWatcher] Added tracking of localization files for plugin: " + pluginID);
 		} catch (IOException e) {
@@ -59,36 +60,44 @@ class WatchLocales {
 	}
 
 	void startWatch() {
-		logger.info("[FileWatcher] File tracking has been launched.");
 		WatchKey key;
 		try {
 			Thread.sleep(5000);
-			while ((key = watchService.take()) != null) {
-			    for(WatchEvent<?> event : key.pollEvents()) {
-		    		String pluginID = key.watchable().toString().replace(configDirectory.toString() + File.separator, "");
-		    		String fileName = event.context().toString();
-			    	if(event.kind() == ENTRY_CREATE) {
-			    		checkOnCreate(pluginID, fileName);
-			    	} else if(event.kind() == ENTRY_MODIFY) {
-			    		checkOnModify(pluginID, fileName);
-			    	}
-			    }
-			    if(!key.reset()) {
-			    	break;
-			    }
+			while(watchService != null && (key = watchService.take()) != null) {
+				for(WatchEvent<?> event : key.pollEvents()) {
+					String pluginID = key.watchable().toString().replace(configDirectory.toString() + File.separator, "");
+					String fileName = event.context().toString();
+					if(event.kind() == ENTRY_CREATE) {
+						checkOnCreate(pluginID, fileName);
+					} else if(event.kind() == ENTRY_MODIFY) {
+						checkOnModify(pluginID, fileName);
+					}
+				}
+				if(!key.reset()) {
+					break;
+				}
 			}
 		} catch (InterruptedException e) {
-			logger.error(e.getLocalizedMessage());
+			if(watchService != null) logger.error(e.getLocalizedMessage());
 		}
 	}
 
+	void stopWatch() {
+		/*try {
+			watchService.close();
+		} catch (IOException e) {
+			logger.error(e.getLocalizedMessage());
+		}*/
+		watchService = null;
+	}
+
 	private void checkOnCreate(String pluginID, String fileName) {
+		if(fileName.contains("tmp")) {
+			return;
+		}
 		long oldTime = System.currentTimeMillis();
 		for(Locale locale : localeService.getLocalesList()) {
 			if(fileName.contains(locale.toLanguageTag())) {
-				if(fileName.contains("tmp")) {
-					return;
-				}
 				if((getUpdated().containsKey(pluginID) && getUpdated().get(pluginID) + 5 > oldTime) || localeService.getPluginLocales(pluginID).containsKey(locale)) return;
 				for(ConfigTypes configType : ConfigTypes.values()) {
 					String configTypeName = configType.toString();
@@ -135,6 +144,9 @@ class WatchLocales {
 	}
 
 	private void checkOnModify(String pluginID, String fileName) {
+		if(fileName.contains("tmp")) {
+			return;
+		}
 		long oldTime = System.currentTimeMillis();
 		for(Locale locale : localeService.getLocalesList()) {
 			if(getUpdated().containsKey(pluginID + locale.toLanguageTag())) return;

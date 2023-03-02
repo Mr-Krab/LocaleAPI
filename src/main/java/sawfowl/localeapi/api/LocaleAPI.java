@@ -15,6 +15,8 @@ import java.util.Optional;
 import org.apache.logging.log4j.Logger;
 
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.lifecycle.StoppedGameEvent;
 import org.spongepowered.api.util.locale.Locales;
 import org.spongepowered.configurate.ConfigurationOptions;
 import org.spongepowered.configurate.gson.GsonConfigurationLoader;
@@ -29,6 +31,7 @@ import org.spongepowered.plugin.builtin.jvm.Plugin;
 import sawfowl.localeapi.utils.HoconLocaleUtil;
 import sawfowl.localeapi.utils.JsonLocaleUtil;
 import sawfowl.localeapi.utils.LegacyLocaleUtil;
+import sawfowl.localeapi.LocaleAPIMain;
 import sawfowl.localeapi.utils.AbstractLocaleUtil;
 import sawfowl.localeapi.utils.YamlLocaleUtil;
 
@@ -60,6 +63,7 @@ public class LocaleAPI implements LocaleService {
 		watchThread = new WatchThread(this, logger, path);
 		watchThread.start();
 		allowSystem = locales.contains(system) || locales.stream().filter(locale -> (locale.toLanguageTag().equals(system.toLanguageTag()))).findFirst().isPresent();
+		Sponge.eventManager().registerListeners(LocaleAPIMain.getPluginContainer(), this);
 	}
 
 	private void updateWatch(String pluginID) {
@@ -176,6 +180,7 @@ public class LocaleAPI implements LocaleService {
 			this.logger.error("Plugin can not be null or noname(\"\")");
 			return null;
 		}
+		if(!configDirectory.resolve(pluginID).toFile().exists()) configDirectory.resolve(pluginID).toFile().mkdir();
 		if(!pluginLocales.containsKey(pluginID)) pluginLocales.put(pluginID, new HashMap<Locale, AbstractLocaleUtil>());
 		if(getPluginLocales(pluginID).containsKey(locale)) return getPluginLocales(pluginID).get(locale);
 		if(configType.equals(ConfigTypes.HOCON)) {
@@ -212,6 +217,12 @@ public class LocaleAPI implements LocaleService {
 			}
 		}
 		return pluginLocales.containsKey(pluginID) && pluginLocales.get(pluginID).containsKey(Locales.DEFAULT);
+	}
+
+	@Listener
+	public void stopWatch(StoppedGameEvent event) {
+		if(event == null) return;
+		watchThread.stopWatch();
 	}
 
 }
