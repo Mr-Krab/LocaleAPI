@@ -83,11 +83,6 @@ class WatchLocales {
 	}
 
 	void stopWatch() {
-		/*try {
-			watchService.close();
-		} catch (IOException e) {
-			logger.error(e.getLocalizedMessage());
-		}*/
 		watchService = null;
 	}
 
