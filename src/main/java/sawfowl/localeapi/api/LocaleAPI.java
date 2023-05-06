@@ -3,26 +3,35 @@ package sawfowl.localeapi.api;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
 import org.apache.logging.log4j.Logger;
 
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.data.persistence.DataContainer;
+import org.spongepowered.api.data.persistence.DataQuery;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.lifecycle.StoppedGameEvent;
 import org.spongepowered.api.util.locale.Locales;
+import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.ConfigurationOptions;
 import org.spongepowered.configurate.gson.GsonConfigurationLoader;
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
 import org.spongepowered.configurate.objectmapping.ObjectMapper;
 import org.spongepowered.configurate.objectmapping.meta.NodeResolver;
+import org.spongepowered.configurate.serialize.SerializationException;
+import org.spongepowered.configurate.serialize.TypeSerializer;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 import org.spongepowered.plugin.PluginContainer;
@@ -56,7 +65,7 @@ public class LocaleAPI implements LocaleService {
 		this.logger = logger;
 		configDirectory = path;
 		factory = ObjectMapper.factoryBuilder().addNodeResolver(NodeResolver.onlyWithSetting()).build();
-		child = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(factory).build();
+		child = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(factory).register(DataContainer.class, DATA_CONTAINER_SERIALIZER).build();
 		options = ConfigurationOptions.defaults().serializers(child);
 		pluginLocales = new HashMap<String, Map<Locale, AbstractLocaleUtil>>();
 		locales = EnumLocales.getLocales();
@@ -224,5 +233,68 @@ public class LocaleAPI implements LocaleService {
 		if(event == null) return;
 		watchThread.stopWatch();
 	}
+
+	private static final TypeSerializer<DataContainer> DATA_CONTAINER_SERIALIZER = new TypeSerializer<DataContainer>() {
+
+		@Override
+		public DataContainer deserialize(Type type, ConfigurationNode node) throws SerializationException {
+			DataContainer container = DataContainer.createNew();
+			for (ConfigurationNode query : node.childrenMap().values()) {
+				Map<List<String>, Object> values = findValue(query, new ArrayList<>());
+				for (Map.Entry<List<String>, Object> entry : values.entrySet()) {
+					DataQuery valueQuery = DataQuery.of(entry.getKey());
+					container = container.set(valueQuery, entry.getValue());
+				}
+			}
+			return container;
+		}
+
+		@Override
+		public void serialize(Type type, @Nullable DataContainer obj, ConfigurationNode node) throws SerializationException {
+			if (obj == null) {
+				node.set(null);
+				return;
+			}
+			for (DataQuery key : obj.keys(true)) {
+				Optional<Object> opValue = obj.get(key);
+				if (!opValue.isPresent()) {
+					System.err.println("Skipping '" + key + "'. Could not read value");
+					continue;
+				}
+				Object[] nodes = key.parts().stream().map(s -> (Object) s).toArray();
+				Object value = opValue.get();
+
+				node.node(nodes).node("value").set(value);
+				node.node(nodes).node("type").set(value.getClass().getTypeName());
+			}
+		}
+
+		private Map<List<String>, Object> findValue(ConfigurationNode node, List<String> path) {
+			List<String> newPath = new ArrayList<>(path);
+			Map<List<String>, Object> newMap = new HashMap<>();
+			newPath.add(node.key().toString());
+			if (node.node("type").isNull()) {
+				for (ConfigurationNode child : node.childrenList()) {
+					Map<List<String>, Object> returnedMap = findValue(child, newPath);
+					newMap.putAll(returnedMap);
+				}
+				return newMap;
+			}
+			String type = node.node("type").getString();
+			Class<?> clazz;
+			try {
+				clazz = Class.forName(type);
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+			try {
+				Object value = node.node("value").get(clazz);
+				newMap.put(newPath, value);
+				return newMap;
+			} catch (SerializationException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	};
 
 }
