@@ -1,47 +1,27 @@
-buildscript {
-	repositories {
-		maven { url = 'https://maven.minecraftforge.net' }
-		maven { url = 'https://maven.blamejared.com' }
-		mavenCentral()
-	}
-	dependencies {
-		classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.+', changing: true
-	}
-}
-
 plugins {
 	id("java")
-	id("java-library")
-	id("maven-publish")
-	id("eclipse")
 	id("org.spongepowered.gradle.plugin") version "2.0.2"
+	id("eclipse")
+	id("org.spongepowered.gradle.vanilla") version "0.2.1-SNAPSHOT"
 }
-
-apply plugin: 'net.minecraftforge.gradle'
 
 group = "sawfowl.localeapi"
 version = "${major}.${minor}.${patch}-${api}-${suffix}"
 
 java {
-	sourceCompatibility = JavaVersion.VERSION_1_8
-	targetCompatibility = JavaVersion.VERSION_1_8
-}
-
-minecraft {
-	mappings channel: 'official', version: '1.16.5'
+	sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
 }
 
 repositories {
 	mavenCentral()
-	
-	maven { 
-		name = "Forge"
-		url = 'https://maven.minecraftforge.net' 
-	}
 	maven {
 		name = "Sponge"
-		url = "https://repo.spongepowered.org/repository/maven-public/"
+		url = "https://repo.spongepowered.org/repository/maven-public"
 	}
+}
+
+minecraft {
+	version("1.19.4")
 }
 
 tasks.withType(JavaCompile) {
@@ -49,14 +29,12 @@ tasks.withType(JavaCompile) {
 }
 
 dependencies {
-	implementation "org.spongepowered:spongeapi:8.0.0"
-	implementation 'org.spongepowered:spongevanilla:1.16.5-8.0.0-RC1111:universal'
-	minecraft 'net.minecraftforge:forge:1.16.5-36.1.16'
-	implementation fileTree(dir: 'libs', include: '*.jar')
+	implementation "org.spongepowered:spongeapi:10.0.0"
+	//implementation fileTree(dir: 'libs', include: '*.jar')
 }
 
 sponge {
-	apiVersion("8.0.0")
+	apiVersion("10.0.0")
 	loader {
 		name("java_plain")
 		version("1.0")
@@ -65,7 +43,7 @@ sponge {
 	plugin("localeapi") {
 		displayName(project.name.capitalize())
 		version("${project.version}")
-		entrypoint("${project.group}.LocaleAPIMain")
+		entrypoint("${project.group}.LocaleAPI")
 		description("Locale API for Sponge plugins.")
 		contributor("SawFowl") {
 			description("Lead Developer")
@@ -78,11 +56,11 @@ sponge {
 		dependency("spongeapi") {
 			optional(false)
 			loadOrder("after")
-			version("8.0.0")
+			version("10.0.0")
 		}
 	}
 }
-
+/*
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
     from sourceSets.main.allSource
@@ -107,6 +85,6 @@ configurations {
 javadoc {
 	options.encoding = 'UTF-8'
 	source configurations.doc.collect { zipTree(it) }
-	include '**/*.java'
-	options.addStringOption('Xdoclint:none', '-quiet')
-}
+*///	include '**/*.java'
+/*	options.addStringOption('Xdoclint:none', '-quiet')
+}*/

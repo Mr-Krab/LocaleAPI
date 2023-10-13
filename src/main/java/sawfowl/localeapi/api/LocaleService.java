@@ -5,8 +5,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.spongepowered.configurate.ConfigurationOptions;
-
-import sawfowl.localeapi.utils.AbstractLocaleUtil;
+import org.spongepowered.plugin.PluginContainer;
 
 public interface LocaleService {
 
@@ -39,14 +38,14 @@ public interface LocaleService {
 	 * 
 	 * @param plugin - A class annotated with '@Plugin'.
 	 */
-	public Map<Locale, AbstractLocaleUtil> getPluginLocales(Object plugin);
+	public Map<Locale, PluginLocale> getPluginLocales(PluginContainer plugin);
 
 	/**
 	 * Getting a map of plugin localizations with Sponge config files. <br>
 	 * 
 	 * @param pluginID - Plugin ID.
 	 */
-	public Map<Locale, AbstractLocaleUtil> getPluginLocales(String pluginID);
+	public Map<Locale, PluginLocale> getPluginLocales(String pluginID);
 
 	/**
 	 * Get plugin localization with Sponge config file. <br> <br>
@@ -56,7 +55,7 @@ public interface LocaleService {
 	 * @param plugin - A class annotated with '@Plugin'.
 	 * @param locale - Selected localization. If the selected localization is not found, the default localization will be returned.
 	 */
-	public AbstractLocaleUtil getOrDefaultLocale(Object plugin, Locale locale);
+	public PluginLocale getOrDefaultLocale(PluginContainer plugin, Locale locale);
 
 	/**
 	 * Get plugin localization with Sponge config file. <br> <br>
@@ -66,14 +65,14 @@ public interface LocaleService {
 	 * @param pluginID - Plugin ID.
 	 * @param locale - Selected localization. If the selected localization is not found, the default localization will be returned.
 	 */
-	public AbstractLocaleUtil getOrDefaultLocale(String pluginID, Locale locale);
+	public PluginLocale getOrDefaultLocale(String pluginID, Locale locale);
 
 	/**
 	 * Save plugin locales from assets.
 	 * 
 	 * @param plugin - A class annotated with '@Plugin'.
 	 */
-	public void saveAssetLocales(Object plugin);
+	public void saveAssetLocales(PluginContainer plugin);
 
 	/**
 	 * Save plugin locales from assets.
@@ -88,7 +87,7 @@ public interface LocaleService {
 	 * @param plugin - A class annotated with '@Plugin'.
 	 * @param configType - Selected config type. See enum class 'ConfigTypes'.
 	 */
-	public AbstractLocaleUtil createPluginLocale(Object plugin, ConfigTypes configType, Locale locale);
+	public PluginLocale createPluginLocale(PluginContainer plugin, ConfigTypes configType, Locale locale);
 
 	/**
 	 * Creating a plugin localization file.
@@ -96,7 +95,7 @@ public interface LocaleService {
 	 * @param pluginID - Plugin ID.
 	 * @param configType - Selected config type. See enum class 'ConfigTypes'.
 	 */
-	public AbstractLocaleUtil createPluginLocale(String pluginID, ConfigTypes configType, Locale locale);
+	public PluginLocale createPluginLocale(String pluginID, ConfigTypes configType, Locale locale);
 
 	/**
 	 * Load plugin locales if exists.
@@ -104,7 +103,7 @@ public interface LocaleService {
 	 * @param plugin - A class annotated with '@Plugin'.
 	 * @return true if loaded.
 	 */
-	public boolean localesExist(Object plugin);
+	public boolean localesExist(PluginContainer plugin);
 
 	/**
 	 * Load plugin locales if exists.

@@ -25,13 +25,13 @@ import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.ConfigurationOptions;
+import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.ObjectMapper;
 import org.spongepowered.configurate.objectmapping.meta.NodeResolver;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
-import org.spongepowered.configurate.yaml.NodeStyle;
-import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
+import org.spongepowered.configurate.util.MapFactories;
 
 import net.kyori.adventure.key.Key;
 
@@ -117,7 +117,7 @@ public class SerializedItemStack {
 	 * Getting a tag collection is similar to what's in Minecraft code.
 	 */
 	public CompoundNBT getOrCreateTag() {
-		return compoundNBT != null ? compoundNBT : (compoundNBT = isForgeItem() ? new ForgeNBT() : new VanillaNBT());
+		return compoundNBT != null ? compoundNBT : (compoundNBT = /*isForgeItem() ? new ForgeNBT() :*/ new VanillaNBT());
 	}
 
 	/**
@@ -126,7 +126,7 @@ public class SerializedItemStack {
 	public void setQuantity(int quantity) {
 		itemQuantity = quantity;
 	}
-
+/*
 	public boolean isForgeItem() {
 		try {
 			Class.forName("net.minecraft.item.ItemStack");
@@ -135,7 +135,7 @@ public class SerializedItemStack {
 			return false;
 		}
 	}
-
+*/
 	@Override
 	public int hashCode() {
 		return Objects.hash(itemQuantity, itemStack, itemType, nbt);
@@ -186,10 +186,10 @@ public class SerializedItemStack {
 
 	private String createStringFromCustomTag(String key, CompoundTag tag) {
 		StringWriter sink = new StringWriter();
-		ConfigurationOptions options = ConfigurationOptions.defaults().serializers(
+		ConfigurationOptions options = ConfigurationOptions.defaults().mapFactory(MapFactories.insertionOrdered()).serializers(
 				TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(
 						ObjectMapper.factoryBuilder().addNodeResolver(NodeResolver.onlyWithSetting()).build()).build());
-		YamlConfigurationLoader loader = YamlConfigurationLoader.builder().nodeStyle(NodeStyle.FLOW).defaultOptions(options).sink(() -> new BufferedWriter(sink)).build();
+		HoconConfigurationLoader loader = HoconConfigurationLoader.builder().emitJsonCompatible(true).emitComments(false).defaultOptions(options).sink(() -> new BufferedWriter(sink)).build();
 		ConfigurationNode node = loader.createNode();
 		try {
 			node.node("CustomTags").set(CompoundTag.class, tag);
@@ -205,7 +205,7 @@ public class SerializedItemStack {
 
 	private Optional<CompoundTag> createTagFromString(String string, Class<CompoundTag> clazz) {
 		StringReader source = new StringReader(string);
-		YamlConfigurationLoader loader = YamlConfigurationLoader.builder().nodeStyle(NodeStyle.FLOW).source(() -> new BufferedReader(source)).build();
+		HoconConfigurationLoader loader = HoconConfigurationLoader.builder().source(() -> new BufferedReader(source)).build();
 		try {
 			ConfigurationNode node = loader.load();
 			if(node.node("CustomTags").virtual()) return Optional.empty();
@@ -431,7 +431,7 @@ public class SerializedItemStack {
 		}
 		
 	}
-
+/*
 	class ForgeNBT implements CompoundNBT {
 
 		@Override
@@ -647,5 +647,5 @@ public class SerializedItemStack {
 		}
 
 	}
-
+*/
 }

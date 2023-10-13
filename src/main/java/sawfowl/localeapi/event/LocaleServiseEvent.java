@@ -8,13 +8,13 @@ public interface LocaleServiseEvent {
 
 	/**
 	 * This event is called during the `ConstructPluginEvent` event. </br>
-	 * Suitable for cases where LocaleAPI is mandatory.
+	 * Suitable for cases where API is mandatory.
 	 */
 	public interface Construct extends LocaleServiseEvent, Event{}
 
 	/**
 	 * This event is called during the `StartedEngineEvent<Server>` event. </br>
-	 * Suitable for cases where LocaleAPI is optional.
+	 * Suitable for cases where API is optional.
 	 */
 	public interface Started extends LocaleServiseEvent, Event{}
 
