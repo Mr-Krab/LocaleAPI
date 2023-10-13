@@ -49,7 +49,11 @@ public abstract class AbstractLocale implements PluginLocale {
 	@Override
 	public Component getComponent(Object... path) {
 		if(thisIsDefault && getLocaleNode(path).virtual()) return TextUtils.deserializeLegacy("&cPath " + getPathName(path) + " not exist!");
-		return getLocaleNode(path).virtual() && !thisIsDefault ? getDefaultLocale().getComponent(path) : TextUtils.deserialize(getString(path));
+		try {
+			return getLocaleNode(path).virtual() && !thisIsDefault ? getDefaultLocale().getComponent(path) : (getLocaleNode(path).childrenList().isEmpty() && getLocaleNode(path).childrenMap().isEmpty() ? TextUtils.deserialize(getString(path)) : getLocaleNode(path).get(Component.class));
+		} catch (SerializationException e) {
+			return TextUtils.deserialize(getString(path));
+		}
 	}
 
 	@Override
@@ -65,7 +69,11 @@ public abstract class AbstractLocale implements PluginLocale {
 	@Override
 	public List<Component> getListComponents(Object... path) {
 		if(thisIsDefault && getLocaleNode(path).virtual()) return Arrays.asList(TextUtils.deserializeLegacy("&cPath " + getPathName(path) + " not exist!"));
-		return getLocaleNode(path).virtual() && !thisIsDefault ? getDefaultLocale().getListComponents(path) : getListStrings(path).stream().map(TextUtils::deserialize).toList();
+		try {
+			return getLocaleNode(path).virtual() && !thisIsDefault ? getDefaultLocale().getListComponents(path) : (getLocaleNode(path).childrenList().isEmpty() && getLocaleNode(path).childrenMap().isEmpty() ? getListStrings(path).stream().map(TextUtils::deserialize).toList() : getLocaleNode(path).getList(Component.class));
+		} catch (SerializationException e) {
+			return getListStrings(path).stream().map(TextUtils::deserialize).toList();
+		}
 	}
 
 	@Override
@@ -90,7 +98,7 @@ public abstract class AbstractLocale implements PluginLocale {
 		if(getLocaleNode(path).empty()) {
 			try {
 				if(json) {
-					getLocaleNode(path).set(TextUtils.serializeJson(component));
+					getLocaleNode(path).set(Component.class, component);
 				} else getLocaleNode(path).set(TextUtils.serializeLegacy(component));
 				if(comment != null) setComment(comment, path);
 				return true;
@@ -106,7 +114,8 @@ public abstract class AbstractLocale implements PluginLocale {
 		if(getLocaleNode(path).empty()) {
 			try {
 				if(json) {
-					getLocaleNode(path).setList(String.class, components.stream().map(TextUtils::serializeJson).toList());
+					getLocaleNode(path).setList(Component.class, components);
+					//getLocaleNode(path).setList(String.class, components.stream().map(TextUtils::serializeJson).toList());
 				} else getLocaleNode(path).setList(String.class, components.stream().map(TextUtils::serializeLegacy).toList());
 				if(comment != null) setComment(comment, path);
 				return true;
@@ -171,7 +180,7 @@ public abstract class AbstractLocale implements PluginLocale {
 				name = name + object;
 			}
 		}*/
-		return "[" + String.join(", ", Stream.of(path).toArray(String[]::new)) + "]";
+		return "[" + String.join(", ", Stream.of(path).map(Object::toString).toArray(String[]::new)) + "]";
 	}
 
 }

@@ -74,7 +74,7 @@ public class LegacyLocale extends AbstractLocale {
 		freezeWatcher();
 		try {
 			if(fileWriter == null) fileWriter = new FileWriter(localeFile);
-			locale.store(fileWriter, null);
+			locale.store(fileWriter, "");
 		} catch (IOException e) {
 			logger.error(e.getLocalizedMessage());
 		}
@@ -184,13 +184,12 @@ public class LegacyLocale extends AbstractLocale {
 	private void init() throws IOException {
 		this.locale.clear();
 		String loc = this.loc;
-		this.localeFile = new File(path.toFile(), File.separator + pluginID + File.separator + loc + ".properties");
-		if (localeFile.exists()) {
-			try (FileReader fr = new FileReader(this.localeFile)) {
-				this.locale.load(fr);
-			} catch (Exception ex) {
-				logger.error("Failed to load " + loc + " locale!" + ex.getLocalizedMessage());
-			}
+		this.localeFile = path.toFile();
+		if (!localeFile.exists()) localeFile.createNewFile();
+		try (FileReader fr = new FileReader(this.localeFile)) {
+			this.locale.load(fr);
+		} catch (Exception ex) {
+			logger.error("Failed to load " + loc + " locale!" + ex.getLocalizedMessage());
 		}
 	}
 
@@ -221,7 +220,7 @@ public class LegacyLocale extends AbstractLocale {
 	}
 
 	private String getKey(Object... path) {
-		String key = "";
+		/*String key = "";
 		int pathSize = path.length;
 		for(Object object : path) {
 			if(pathSize > 1) {
@@ -230,8 +229,8 @@ public class LegacyLocale extends AbstractLocale {
 			} else {
 				key = key + object;
 			}
-		}
-		return key;
+		}*/
+		return String.join(".", Stream.of(path).map(Object::toString).toArray(String[]::new));
 	}
 	
 }

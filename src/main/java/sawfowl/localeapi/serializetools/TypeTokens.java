@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.leangen.geantyref.TypeToken;
+import net.kyori.adventure.text.Component;
 
 public class TypeTokens {
 
@@ -14,6 +15,8 @@ public class TypeTokens {
 	public static final TypeToken<Map<String, SerializedItemStack>> MAP_SERIALIZED_STACKS_TOKEN = new TypeToken<Map<String, SerializedItemStack>>(){};
 
 	public static final TypeToken<List<String>> LIST_STRINGS_TOKEN = new TypeToken<List<String>>(){};
+
+	public static final TypeToken<List<Component>> LIST_COMPONENTS_TOKEN = new TypeToken<List<Component>>(){};
 
 	public static final TypeToken<Boolean> BOOLEAN_TOKEN = new TypeToken<Boolean>(){};
 

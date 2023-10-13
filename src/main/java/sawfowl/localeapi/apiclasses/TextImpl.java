@@ -1,10 +1,12 @@
 package sawfowl.localeapi.apiclasses;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.jetbrains.annotations.NotNull;
+
 import org.spongepowered.api.adventure.SpongeComponents;
 import org.spongepowered.api.command.CommandCause;
 import org.spongepowered.api.data.persistence.DataContainer;
@@ -122,36 +124,37 @@ public class TextImpl implements Text {
 	}
 
 	private Map<String, String> replaceMap(String[] keys, Object[] values) {
-		Map<String, String> map = new HashMap<String, String>();
+		/*Map<String, String> map = new HashMap<String, String>();
 		int i = 0;
 		for(String key : keys) {
 			if(i >= keys.length || i >= values.length) break;
 			map.put(key, values[i].toString());
 			i++;
-		}
-		return map;
+		}*/
+		return IntStream.range(0, keys.length).boxed().collect(Collectors.toMap(i -> keys[i], i -> values.length > i ? values[i].toString() : ""));
 	}
 
 	private Map<String, Component> replaceMapComponents(String[] keys, Component[] values) {
-		Map<String, Component> map = new HashMap<String, Component>();
+		/*Map<String, Component> map = new HashMap<String, Component>();
 		int i = 0;
 		for(String key : keys) {
 			if(i >= keys.length || i >= values.length) break;
 			map.put(key, values[i]);
 			i++;
-		}
-		return map;
+		}*/
+		return IntStream.range(0, keys.length).boxed().collect(Collectors.toMap(i -> keys[i], i -> values.length > i ? values[i] : Component.empty()));
 	}
 
 	private Map<String, Component> replaceMapTexts(String[] keys, Text[] values) {
-		Map<String, Component> map = new HashMap<String, Component>();
+		/*Map<String, Component> map = new HashMap<String, Component>();
 		int i = 0;
 		for(String key : keys) {
 			if(i >= keys.length || i >= values.length) break;
 			map.put(key, values[i].get());
 			i++;
 		}
-		return map;
+		*/
+		return IntStream.range(0, keys.length).boxed().collect(Collectors.toMap(i -> keys[i], i -> values.length > i ? values[i].get() : Component.empty()));
 	}
 
 	private void updatePlainString() {

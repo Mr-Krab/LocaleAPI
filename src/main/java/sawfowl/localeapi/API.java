@@ -35,6 +35,8 @@ import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 import org.spongepowered.plugin.PluginContainer;
 
+import net.kyori.adventure.serializer.configurate4.ConfigurateComponentSerializer;
+
 import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.EnumLocales;
 import sawfowl.localeapi.api.LocaleService;
@@ -63,7 +65,7 @@ class API implements LocaleService {
 		this.logger = logger;
 		configDirectory = path;
 		factory = ObjectMapper.factoryBuilder().addNodeResolver(NodeResolver.onlyWithSetting()).build();
-		child = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(factory).register(DataContainer.class, DATA_CONTAINER_SERIALIZER).build();
+		child = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(factory).register(DataContainer.class, DATA_CONTAINER_SERIALIZER).registerAll(ConfigurateComponentSerializer.configurate().serializers()).build();
 		options = ConfigurationOptions.defaults().serializers(child);
 		pluginLocales = new HashMap<String, Map<Locale, PluginLocale>>();
 		locales = EnumLocales.getLocales();
@@ -229,7 +231,7 @@ class API implements LocaleService {
 		watchThread.stopWatch();
 	}
 
-	private static final TypeSerializer<DataContainer> DATA_CONTAINER_SERIALIZER = new TypeSerializer<DataContainer>() {
+	private final TypeSerializer<DataContainer> DATA_CONTAINER_SERIALIZER = new TypeSerializer<DataContainer>() {
 
 		@Override
 		public DataContainer deserialize(Type type, ConfigurationNode node) throws SerializationException {

@@ -1,10 +1,34 @@
 package sawfowl.localeapi.api;
 
+import java.util.function.Consumer;
+
+import org.spongepowered.api.adventure.SpongeComponents;
+import org.spongepowered.api.command.CommandCause;
+
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public class TextUtils {
+
+
+	/**
+	 * Adding the execution of arbitrary code when you click on text.<br>
+	 * It is used {@link #createCallBack(Component, Consumer)}
+	 */
+	public Component createCallBack(Component component, Runnable runnable) {
+		return createCallBack(component, cause -> {
+			runnable.run();
+		});
+	}
+
+	/**
+	 * Adding the execution of arbitrary code when you click on text.<br>
+	 * It is used {@link SpongeComponents#executeCallback(callback)}
+	 */
+	public Component createCallBack(Component component, Consumer<CommandCause> callback) {
+		return component.clickEvent(SpongeComponents.executeCallback(callback));
+	}
 
 	/**
 	 * It is used {@link LegacyComponentSerializer#legacyAmpersand()}

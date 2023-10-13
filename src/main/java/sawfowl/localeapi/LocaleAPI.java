@@ -58,6 +58,7 @@ public class LocaleAPI {
 		logger = LogManager.getLogger("API");
 		localeService = new API(logger, configDirectory);
 		cause = Cause.of(EventContext.builder().add(EventContextKeys.PLUGIN, pluginContainer).build(), pluginContainer);
+		if(!configDirectory.toFile().exists()) configDirectory.toFile().mkdir();
 	}
 
 	@Listener

@@ -57,7 +57,7 @@ public interface Text extends DataSerializable {
 
 	/**
 	 * Adding the execution of arbitrary code when you click on text.<br>
-	 * It is used {@link #createCallBack(Component, Consumer)}
+	 * It is used {@link #createCallBack(Consumer)}
 	 */
 	Text createCallBack(Runnable runnable);
 
