@@ -21,6 +21,7 @@ import java.util.function.Supplier;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
+
 import org.spongepowered.api.Server;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.config.ConfigDir;
@@ -55,7 +56,7 @@ public class LocaleAPI {
 	@Inject
 	public LocaleAPI(PluginContainer pluginContainer, @ConfigDir(sharedRoot = false) Path configDirectory) {
 		container = pluginContainer;
-		logger = LogManager.getLogger("API");
+		logger = LogManager.getLogger("LocaleAPI");
 		localeService = new API(logger, configDirectory);
 		cause = Cause.of(EventContext.builder().add(EventContextKeys.PLUGIN, pluginContainer).build(), pluginContainer);
 		if(!configDirectory.toFile().exists()) configDirectory.toFile().mkdir();
