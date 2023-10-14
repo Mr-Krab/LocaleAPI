@@ -32,7 +32,7 @@ public class SerializeOptions {
 	 * Creating a `.yml` config with serializers applied and standard options preserved.
 	 */
 	public static YamlConfigurationLoader.Builder createYamlConfigurationLoader() {
-		return YamlConfigurationLoader.builder().defaultOptions(options -> options.shouldCopyDefaults(true).serializers(OPTIONS.serializers()));
+		return YamlConfigurationLoader.builder().defaultOptions(options -> options.shouldCopyDefaults(true).serializers(CONFIGURATIO_NOPTIONS.serializers()));
 	}
 
 	public static final TypeSerializer<ItemStack> ITEMSTACK_SERIALIZER = new TypeSerializer<ItemStack>() {
@@ -113,7 +113,7 @@ public class SerializeOptions {
 	};
 
 	public static final ObjectMapper.Factory FACTORY = ObjectMapper.factoryBuilder().addNodeResolver(NodeResolver.onlyWithSetting()).build();
-	public static final TypeSerializerCollection CHILD = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(FACTORY).register(DataContainer.class, DATA_CONTAINER_SERIALIZER).register(ItemStack.class, ITEMSTACK_SERIALIZER).registerAll(TypeSerializerCollection.defaults()).registerAll(ConfigurateComponentSerializer.configurate().serializers()).build();
-	public static final ConfigurationOptions OPTIONS = ConfigurationOptions.defaults().serializers(CHILD);
+	public static final TypeSerializerCollection TYPE_SERIALIZER_COLLECTION = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(FACTORY).register(DataContainer.class, DATA_CONTAINER_SERIALIZER).register(ItemStack.class, ITEMSTACK_SERIALIZER).registerAll(TypeSerializerCollection.defaults()).registerAll(ConfigurateComponentSerializer.configurate().serializers()).build();
+	public static final ConfigurationOptions CONFIGURATIO_NOPTIONS = ConfigurationOptions.defaults().serializers(TYPE_SERIALIZER_COLLECTION);
 
 }

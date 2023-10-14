@@ -187,9 +187,9 @@ class API implements LocaleService {
 			return false;
 		}
 		for(Locale locale : locales) {
-			if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".conf").toFile().exists() && HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.OPTIONS).path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".conf")).build().canLoad()) {
+			if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".conf").toFile().exists() && HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.CONFIGURATIO_NOPTIONS).path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".conf")).build().canLoad()) {
 				createPluginLocale(pluginID, ConfigTypes.HOCON, locale);
-			} else if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".json").toFile().exists() && GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.OPTIONS).path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".json")).build().canLoad()) {
+			} else if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".json").toFile().exists() && GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.CONFIGURATIO_NOPTIONS).path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".json")).build().canLoad()) {
 				createPluginLocale(pluginID, ConfigTypes.JSON, locale);
 			} else if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".yml").toFile().exists() && SerializeOptions.createYamlConfigurationLoader().path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".yml")).build().canLoad()) {
 				createPluginLocale(pluginID, ConfigTypes.YAML, locale);
