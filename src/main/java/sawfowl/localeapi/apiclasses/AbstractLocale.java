@@ -170,16 +170,6 @@ public abstract class AbstractLocale implements PluginLocale {
 	}
 
 	protected String getPathName(Object... path) {
-		/*String name = "[";
-		int pathSize = path.length;
-		for(Object object : path) {
-			if(pathSize > 1) {
-				name = name + object + ", ";
-				pathSize--;
-			} else {
-				name = name + object;
-			}
-		}*/
 		return "[" + String.join(", ", Stream.of(path).map(Object::toString).toArray(String[]::new)) + "]";
 	}
 

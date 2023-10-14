@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import org.apache.logging.log4j.Logger;
+
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.yaml.NodeStyle;
@@ -18,7 +19,7 @@ public class YamlLocale extends AbstractLocale {
 	private CommentedConfigurationNode localeNode;
 	public YamlLocale(LocaleService localeService, Logger logger, Path path, String pluginID, String locale) {
 		super(localeService, logger, path, pluginID, locale);
-		configLoader = YamlConfigurationLoader.builder().defaultOptions(localeService.getConfigurationOptions()).path(this.path).nodeStyle(NodeStyle.BLOCK).build();
+		configLoader = SerializeOptions.createYamlConfigurationLoader().path(this.path).nodeStyle(NodeStyle.BLOCK).build();
 		reload();
 	}
 

@@ -16,7 +16,7 @@ public class JsonLocale extends AbstractLocale {
 	private ConfigurationNode localeNode;
 	public JsonLocale(LocaleService localeService, Logger logger, Path path, String pluginID, String locale) {
 		super(localeService, logger, path, pluginID, locale);
-		configLoader = GsonConfigurationLoader.builder().defaultOptions(localeService.getConfigurationOptions()).path(this.path).build();
+		configLoader = GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.OPTIONS).path(this.path).build();
 		reload();
 	}
 

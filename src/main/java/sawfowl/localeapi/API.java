@@ -2,40 +2,24 @@ package sawfowl.localeapi;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
-
 import org.apache.logging.log4j.Logger;
 
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.data.persistence.DataContainer;
-import org.spongepowered.api.data.persistence.DataQuery;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.lifecycle.StoppedGameEvent;
 import org.spongepowered.api.util.locale.Locales;
-import org.spongepowered.configurate.ConfigurationNode;
-import org.spongepowered.configurate.ConfigurationOptions;
 import org.spongepowered.configurate.gson.GsonConfigurationLoader;
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
-import org.spongepowered.configurate.objectmapping.ObjectMapper;
-import org.spongepowered.configurate.objectmapping.meta.NodeResolver;
-import org.spongepowered.configurate.serialize.SerializationException;
-import org.spongepowered.configurate.serialize.TypeSerializer;
-import org.spongepowered.configurate.serialize.TypeSerializerCollection;
-import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 import org.spongepowered.plugin.PluginContainer;
-
-import net.kyori.adventure.serializer.configurate4.ConfigurateComponentSerializer;
 
 import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.EnumLocales;
@@ -45,6 +29,7 @@ import sawfowl.localeapi.apiclasses.AbstractLocale;
 import sawfowl.localeapi.apiclasses.HoconLocale;
 import sawfowl.localeapi.apiclasses.JsonLocale;
 import sawfowl.localeapi.apiclasses.LegacyLocale;
+import sawfowl.localeapi.apiclasses.SerializeOptions;
 import sawfowl.localeapi.apiclasses.YamlLocale;
 import sawfowl.localeapi.utils.WatchThread;
 
@@ -55,18 +40,12 @@ class API implements LocaleService {
 	private WatchThread watchThread;
 	private Path configDirectory;
 	private Logger logger;
-	private ObjectMapper.Factory factory;
-	private TypeSerializerCollection child;
-	private ConfigurationOptions options;
 	private Locale system = Locale.getDefault();
 	private boolean allowSystem = false;
 
 	API(Logger logger, Path path) {
 		this.logger = logger;
 		configDirectory = path;
-		factory = ObjectMapper.factoryBuilder().addNodeResolver(NodeResolver.onlyWithSetting()).build();
-		child = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(factory).register(DataContainer.class, DATA_CONTAINER_SERIALIZER).registerAll(ConfigurateComponentSerializer.configurate().serializers()).build();
-		options = ConfigurationOptions.defaults().serializers(child);
 		pluginLocales = new HashMap<String, Map<Locale, PluginLocale>>();
 		locales = EnumLocales.getLocales();
 		watchThread = new WatchThread(this, logger, path);
@@ -116,10 +95,6 @@ class API implements LocaleService {
 
 	public Locale getSystemOrDefaultLocale() {
 		return allowSystem ? system : getDefaultLocale();
-	}
-
-	public ConfigurationOptions getConfigurationOptions() {
-		return options;
 	}
 
 	public List<Locale> getLocalesList() {
@@ -212,11 +187,11 @@ class API implements LocaleService {
 			return false;
 		}
 		for(Locale locale : locales) {
-			if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".conf").toFile().exists() && HoconConfigurationLoader.builder().defaultOptions(getConfigurationOptions()).path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".conf")).build().canLoad()) {
+			if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".conf").toFile().exists() && HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.OPTIONS).path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".conf")).build().canLoad()) {
 				createPluginLocale(pluginID, ConfigTypes.HOCON, locale);
-			} else if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".json").toFile().exists() && GsonConfigurationLoader.builder().defaultOptions(getConfigurationOptions()).path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".json")).build().canLoad()) {
+			} else if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".json").toFile().exists() && GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.OPTIONS).path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".json")).build().canLoad()) {
 				createPluginLocale(pluginID, ConfigTypes.JSON, locale);
-			} else if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".yml").toFile().exists() && YamlConfigurationLoader.builder().defaultOptions(getConfigurationOptions()).path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".yml")).build().canLoad()) {
+			} else if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".yml").toFile().exists() && SerializeOptions.createYamlConfigurationLoader().path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".yml")).build().canLoad()) {
 				createPluginLocale(pluginID, ConfigTypes.YAML, locale);
 			} else if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".properties").toFile().exists()) {
 				createPluginLocale(pluginID, ConfigTypes.PROPERTIES, locale);
@@ -230,68 +205,5 @@ class API implements LocaleService {
 		if(event == null) return;
 		watchThread.stopWatch();
 	}
-
-	private final TypeSerializer<DataContainer> DATA_CONTAINER_SERIALIZER = new TypeSerializer<DataContainer>() {
-
-		@Override
-		public DataContainer deserialize(Type type, ConfigurationNode node) throws SerializationException {
-			DataContainer container = DataContainer.createNew();
-			for (ConfigurationNode query : node.childrenMap().values()) {
-				Map<List<String>, Object> values = findValue(query, new ArrayList<>());
-				for (Map.Entry<List<String>, Object> entry : values.entrySet()) {
-					DataQuery valueQuery = DataQuery.of(entry.getKey());
-					container = container.set(valueQuery, entry.getValue());
-				}
-			}
-			return container;
-		}
-
-		@Override
-		public void serialize(Type type, @Nullable DataContainer obj, ConfigurationNode node) throws SerializationException {
-			if (obj == null) {
-				node.set(null);
-				return;
-			}
-			for (DataQuery key : obj.keys(true)) {
-				Optional<Object> opValue = obj.get(key);
-				if (!opValue.isPresent()) {
-					System.err.println("Skipping '" + key + "'. Could not read value");
-					continue;
-				}
-				Object[] nodes = key.parts().stream().map(s -> (Object) s).toArray();
-				Object value = opValue.get();
-
-				node.node(nodes).node("value").set(value);
-				node.node(nodes).node("type").set(value.getClass().getTypeName());
-			}
-		}
-
-		private Map<List<String>, Object> findValue(ConfigurationNode node, List<String> path) {
-			List<String> newPath = new ArrayList<>(path);
-			Map<List<String>, Object> newMap = new HashMap<>();
-			newPath.add(node.key().toString());
-			if (node.node("type").isNull()) {
-				for (ConfigurationNode child : node.childrenList()) {
-					Map<List<String>, Object> returnedMap = findValue(child, newPath);
-					newMap.putAll(returnedMap);
-				}
-				return newMap;
-			}
-			String type = node.node("type").getString();
-			Class<?> clazz;
-			try {
-				clazz = Class.forName(type);
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-			try {
-				Object value = node.node("value").get(clazz);
-				newMap.put(newPath, value);
-				return newMap;
-			} catch (SerializationException e) {
-				throw new RuntimeException(e);
-			}
-		}
-	};
 
 }

@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import org.spongepowered.configurate.ConfigurationOptions;
 import org.spongepowered.plugin.PluginContainer;
 
 public interface LocaleService {
@@ -14,13 +13,6 @@ public interface LocaleService {
 	 * If Sponge does not support your system locale, the default locale for Sponge will be selected.
 	 */
 	public Locale getSystemOrDefaultLocale();
-
-	/**
-	 * The method returns options for the Sponge configuration files.<br>
-	 * These options disable serialization of objects not marked by the <b>@Setting</b> annotation.
-	 * 
-	 */
-	public ConfigurationOptions getConfigurationOptions();
 
 	/**
 	 * List of all localizations of the game.
