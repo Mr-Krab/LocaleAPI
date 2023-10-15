@@ -27,6 +27,7 @@ import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
+import org.spongepowered.configurate.serialize.SerializationException;
 
 import net.kyori.adventure.key.Key;
 
@@ -187,9 +188,8 @@ public class SerializedItemStack {
 		this.itemStack = itemStack;
 	}
 
-	private String createStringFromCustomTag(String key, CompoundTag tag) {
-		StringWriter sink = new StringWriter();
-		HoconConfigurationLoader loader = HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.CONFIGURATIO_NOPTIONS).sink(() -> new BufferedWriter(sink)).build();
+	private String createStringFromCustomTag(String key, CompoundTag tag, StringWriter sink) {
+		HoconConfigurationLoader loader = createWriter(sink);
 		ConfigurationNode node = loader.createNode();
 		try {
 			node.node(key).set(CompoundTag.class, tag);
@@ -198,21 +198,39 @@ public class SerializedItemStack {
 		} catch (ConfigurateException e) {
 			e.printStackTrace();
 		}
-		String toReturn = sink.toString();
-		return toReturn;
+		node = null;
+		loader = null;
+		return sink.toString();
 	}
 
 	private Optional<CompoundTag> createTagFromString(String string, Class<CompoundTag> clazz) {
-		StringReader source = new StringReader(string);
-		HoconConfigurationLoader loader = HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.CONFIGURATIO_NOPTIONS).source(() -> new BufferedReader(source)).build();
 		try {
-			ConfigurationNode node = loader.load();
-			if(node.virtual()) return Optional.empty();
-			return Optional.ofNullable(node.get(clazz));
+			return tagFromNode(serializeNodeFromString(string), clazz);
 		} catch (ConfigurateException e) {
 			e.printStackTrace();
 			return Optional.empty();
 		}
+	}
+
+	private Optional<CompoundTag> tagFromNode(ConfigurationNode node, Class<CompoundTag> clazz) throws SerializationException {
+		return node.virtual() || node.empty() ? Optional.empty() : Optional.ofNullable(node.get(clazz));
+	}
+
+	private HoconConfigurationLoader createWriter(StringWriter sink) {
+		return HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.CONFIGURATIO_NOPTIONS).sink(() -> new BufferedWriter(sink)).build();
+	}
+
+	private HoconConfigurationLoader createLoader(StringReader source) {
+		return HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.CONFIGURATIO_NOPTIONS).source(() -> new BufferedReader(source)).build();
+	}
+
+	private ConfigurationNode serializeNodeFromString(String string) {
+		try {
+			return createLoader(new StringReader(string)).load();
+		} catch (ConfigurateException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	class VanillaNBT implements CompoundNBT {
@@ -336,7 +354,7 @@ public class SerializedItemStack {
 
 		@Override
 		public void putTag(String key, CompoundTag tag) {
-			putString("CustomTags", createStringFromCustomTag(key, tag));
+			putString("CustomTags", createStringFromCustomTag(key, tag, new StringWriter()));
 		}
 
 		@Override
