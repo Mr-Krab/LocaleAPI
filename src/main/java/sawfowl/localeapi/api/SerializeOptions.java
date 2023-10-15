@@ -54,7 +54,7 @@ public class SerializeOptions {
 
 		@Override
 		public ItemStack deserialize(Type type, ConfigurationNode node) throws SerializationException {
-			if(node.node("NBT").virtual() || node.node("NBT").empty()) return ItemStack.of(ItemTypes.registry().findValue(ResourceKey.resolve(node.node("Type").getString())).orElse(ItemTypes.AIR.get()), node.node("Quantity").getInt());
+			if(node.node("NBT").virtual() || node.node("NBT").childrenMap().isEmpty()) return ItemStack.of(ItemTypes.registry().findValue(ResourceKey.resolve(node.node("Type").getString())).orElse(ItemTypes.AIR.get()), node.node("Quantity").getInt());
 			return setNbt(type, node, ItemStack.of(ItemTypes.registry().findValue(ResourceKey.resolve(node.node("Type").getString())).orElse(ItemTypes.AIR.get()), node.node("Quantity").getInt()));
 		}
 
@@ -70,12 +70,10 @@ public class SerializeOptions {
 		private String serializedNbtToString(Type type, ConfigurationNode node, StringWriter sink) throws ConfigurateException {
 			HoconConfigurationLoader loader = createWriter(sink);
 			ConfigurationNode tempNode = BasicConfigurationNode.root(n -> n.options().shouldCopyDefaults(true).serializers(CONFIGURATIO_NOPTIONS.serializers()));
-			if(!node.node("NBT", "CustomTags").virtual() && !node.node("NBT").childrenMap().isEmpty()) {
-				for(Entry<Object, ? extends ConfigurationNode> entry : node.node("NBT").childrenMap().entrySet())
-				if(!entry.getValue().childrenMap().isEmpty()) {
-					tempNode.node(entry.getKey()).set(nodeToString(entry.getValue(), new StringWriter()));
-				} else tempNode.node(entry.getKey()).set(entry.getValue().raw());
-			}
+			for(Entry<Object, ? extends ConfigurationNode> entry : node.node("NBT").childrenMap().entrySet())
+			if(!entry.getValue().childrenMap().isEmpty()) {
+				tempNode.node(entry.getKey()).set(nodeToString(entry.getValue(), new StringWriter()));
+			} else tempNode.node(entry.getKey()).set(entry.getValue().raw());
 			loader.save(tempNode);
 			loader = null;
 			tempNode = null;
