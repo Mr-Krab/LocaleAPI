@@ -54,30 +54,7 @@ public class SerializeOptions {
 
 		@Override
 		public ItemStack deserialize(Type type, ConfigurationNode node) throws SerializationException {
-			if(node.node("NBT").virtual() || node.node("NBT").childrenMap().isEmpty()) return ItemStack.of(ItemTypes.registry().findValue(ResourceKey.resolve(node.node("Type").getString())).orElse(ItemTypes.AIR.get()), node.node("Quantity").getInt());
-			return setNbt(type, node, ItemStack.of(ItemTypes.registry().findValue(ResourceKey.resolve(node.node("Type").getString())).orElse(ItemTypes.AIR.get()), node.node("Quantity").getInt()));
-		}
-
-		private ItemStack setNbt(Type type, ConfigurationNode node, ItemStack itemStack) {
-			try {
-				return ItemStack.builder().fromContainer(itemStack.toContainer().set(DataQuery.of("UnsafeData"), DataFormats.HOCON.get().read(serializedNbtToString(type, node, new StringWriter())))).build();
-			} catch (InvalidDataException | IOException e) {
-				e.printStackTrace();
-			}
-			return itemStack;
-		}
-
-		private String serializedNbtToString(Type type, ConfigurationNode node, StringWriter sink) throws ConfigurateException {
-			HoconConfigurationLoader loader = createWriter(sink);
-			ConfigurationNode tempNode = BasicConfigurationNode.root(n -> n.options().shouldCopyDefaults(true).serializers(CONFIGURATIO_NOPTIONS.serializers()));
-			for(Entry<Object, ? extends ConfigurationNode> entry : node.node("NBT").childrenMap().entrySet())
-			if(!entry.getValue().childrenMap().isEmpty()) {
-				tempNode.node(entry.getKey()).set(nodeToString(entry.getValue(), new StringWriter()));
-			} else tempNode.node(entry.getKey()).set(entry.getValue().raw());
-			loader.save(tempNode);
-			loader = null;
-			tempNode = null;
-			return sink.toString();
+			return node.node("NBT").virtual() || node.node("NBT").childrenMap().isEmpty() ? ItemStack.of(ItemTypes.registry().findValue(ResourceKey.resolve(node.node("Type").getString("minecraft:air"))).orElse(ItemTypes.AIR.get()), node.node("Quantity").getInt(1)) : setNbt(type, node, ItemStack.of(ItemTypes.registry().findValue(ResourceKey.resolve(node.node("Type").getString())).orElse(ItemTypes.AIR.get()), node.node("Quantity").getInt()));
 		}
 
 		@Override
@@ -117,6 +94,28 @@ public class SerializeOptions {
 
 		private HoconConfigurationLoader createLoader(StringReader source) {
 			return HoconConfigurationLoader.builder().defaultOptions(CONFIGURATIO_NOPTIONS).source(() -> new BufferedReader(source)).build();
+		}
+
+		private ItemStack setNbt(Type type, ConfigurationNode node, ItemStack itemStack) {
+			try {
+				return ItemStack.builder().fromContainer(itemStack.toContainer().set(DataQuery.of("UnsafeData"), DataFormats.HOCON.get().read(serializedNbtToString(type, node, new StringWriter())))).build();
+			} catch (InvalidDataException | IOException e) {
+				e.printStackTrace();
+			}
+			return itemStack;
+		}
+
+		private String serializedNbtToString(Type type, ConfigurationNode node, StringWriter sink) throws ConfigurateException {
+			HoconConfigurationLoader loader = createWriter(sink);
+			ConfigurationNode tempNode = BasicConfigurationNode.root(n -> n.options().shouldCopyDefaults(true).serializers(CONFIGURATIO_NOPTIONS.serializers()));
+			for(Entry<Object, ? extends ConfigurationNode> entry : node.node("NBT").childrenMap().entrySet())
+			if(!entry.getValue().childrenMap().isEmpty()) {
+				tempNode.node(entry.getKey()).set(nodeToString(entry.getValue(), new StringWriter()));
+			} else tempNode.node(entry.getKey()).set(entry.getValue().raw());
+			loader.save(tempNode);
+			loader = null;
+			tempNode = null;
+			return sink.toString();
 		}
 
 		private ConfigurationNode serializeChildFromString(String string) {
