@@ -24,16 +24,13 @@ import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
-import org.spongepowered.configurate.ConfigurationOptions;
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
-import org.spongepowered.configurate.objectmapping.ObjectMapper;
-import org.spongepowered.configurate.objectmapping.meta.NodeResolver;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
-import org.spongepowered.configurate.serialize.TypeSerializerCollection;
-import org.spongepowered.configurate.util.MapFactories;
 
 import net.kyori.adventure.key.Key;
+
+import sawfowl.localeapi.api.SerializeOptions;
 
 @ConfigSerializable
 public class SerializedItemStack {
@@ -44,13 +41,19 @@ public class SerializedItemStack {
 		serialize(itemStack);
 	}
 
+	public SerializedItemStack(String type, int quantity, String nbt) {
+		itemType = type;
+		itemQuantity = quantity;
+		this.nbt = nbt;
+	}
+
 	@Setting("ItemType")
 	private String itemType;
 	//@Setting("ItemSubType")
 	//private Integer itemSubType;
-	@Setting("ItemQuantity")
+	@Setting("Quantity")
 	private Integer itemQuantity;
-	@Setting("Nbt")
+	@Setting("NBT")
 	private String nbt;
 	private ItemStack itemStack;
 	private CompoundNBT compoundNBT;
@@ -90,7 +93,7 @@ public class SerializedItemStack {
 			//itemStack = ItemStackUtil.fromNative(nmsStack);
 			if(nbt != null) {
 				try {
-					itemStack = ItemStack.builder().fromContainer(itemStack.toContainer().set(DataQuery.of("UnsafeData"), DataFormats.JSON.get().read(nbt))).build();
+					itemStack = ItemStack.builder().fromContainer(itemStack.toContainer().set(DataQuery.of("UnsafeData"), DataFormats.HOCON.get().read(nbt))).build();
 				} catch (InvalidDataException | IOException e) {
 					e.printStackTrace();
 				}
@@ -176,7 +179,7 @@ public class SerializedItemStack {
 		//itemSubType = nmsStack.getDamageValue();
 		if(itemStack.toContainer().get(DataQuery.of("UnsafeData")).isPresent()) {
 			try {
-				nbt = DataFormats.JSON.get().write((DataView) itemStack.toContainer().get(DataQuery.of("UnsafeData")).get());
+				nbt = DataFormats.HOCON.get().write((DataView) itemStack.toContainer().get(DataQuery.of("UnsafeData")).get());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -186,30 +189,26 @@ public class SerializedItemStack {
 
 	private String createStringFromCustomTag(String key, CompoundTag tag) {
 		StringWriter sink = new StringWriter();
-		ConfigurationOptions options = ConfigurationOptions.defaults().mapFactory(MapFactories.insertionOrdered()).serializers(
-				TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(
-						ObjectMapper.factoryBuilder().addNodeResolver(NodeResolver.onlyWithSetting()).build()).build());
-		HoconConfigurationLoader loader = HoconConfigurationLoader.builder().emitJsonCompatible(true).emitComments(false).defaultOptions(options).sink(() -> new BufferedWriter(sink)).build();
+		HoconConfigurationLoader loader = HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.CONFIGURATIO_NOPTIONS).sink(() -> new BufferedWriter(sink)).build();
 		ConfigurationNode node = loader.createNode();
 		try {
-			node.node("CustomTags").set(CompoundTag.class, tag);
-			if(!node.node("CustomTags").node("__class__").virtual()) node.node("CustomTags").removeChild("__class__");
+			node.node(key).set(CompoundTag.class, tag);
+			if(!node.node(key).node("__class__").virtual()) node.node(key).removeChild("__class__");
 			loader.save(node);
 		} catch (ConfigurateException e) {
 			e.printStackTrace();
 		}
 		String toReturn = sink.toString();
-		if(toReturn.endsWith("\n")) toReturn = toReturn.substring(0, toReturn.length()-1);
 		return toReturn;
 	}
 
 	private Optional<CompoundTag> createTagFromString(String string, Class<CompoundTag> clazz) {
 		StringReader source = new StringReader(string);
-		HoconConfigurationLoader loader = HoconConfigurationLoader.builder().source(() -> new BufferedReader(source)).build();
+		HoconConfigurationLoader loader = HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.CONFIGURATIO_NOPTIONS).source(() -> new BufferedReader(source)).build();
 		try {
 			ConfigurationNode node = loader.load();
-			if(node.node("CustomTags").virtual()) return Optional.empty();
-			return Optional.ofNullable(node.node("CustomTags").get(clazz));
+			if(node.virtual()) return Optional.empty();
+			return Optional.ofNullable(node.get(clazz));
 		} catch (ConfigurateException e) {
 			e.printStackTrace();
 			return Optional.empty();
@@ -337,7 +336,7 @@ public class SerializedItemStack {
 
 		@Override
 		public void putTag(String key, CompoundTag tag) {
-			putString(key, createStringFromCustomTag(key, tag));
+			putString("CustomTags", createStringFromCustomTag(key, tag));
 		}
 
 		@Override
@@ -418,7 +417,7 @@ public class SerializedItemStack {
 
 		@Override
 		public Optional<CompoundTag> getTag(String key, Class<CompoundTag> clazz) {
-			return !getString(key).isPresent() || clazz == null ? Optional.empty() : createTagFromString(getString(key).get(), clazz);
+			return !getString("CustomTags").isPresent() || clazz == null ? Optional.empty() : createTagFromString(getString("CustomTags").get(), clazz);
 		}
 
 		@Override

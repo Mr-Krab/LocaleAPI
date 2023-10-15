@@ -9,6 +9,7 @@ import org.spongepowered.configurate.gson.GsonConfigurationLoader;
 
 import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.LocaleService;
+import sawfowl.localeapi.api.SerializeOptions;
 
 public class JsonLocale extends AbstractLocale {
 

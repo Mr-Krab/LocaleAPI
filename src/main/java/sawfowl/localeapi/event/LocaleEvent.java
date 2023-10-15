@@ -9,7 +9,7 @@ import sawfowl.localeapi.api.ConfigTypes;
 public interface LocaleEvent extends Event {
 
 	public interface Create extends LocaleEvent {
-		
+
 		public ConfigTypes configType();
 
 	}

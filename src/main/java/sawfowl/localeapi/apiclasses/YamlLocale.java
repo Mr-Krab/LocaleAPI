@@ -12,6 +12,7 @@ import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.LocaleService;
+import sawfowl.localeapi.api.SerializeOptions;
 
 public class YamlLocale extends AbstractLocale {
 

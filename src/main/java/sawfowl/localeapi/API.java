@@ -25,11 +25,11 @@ import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.EnumLocales;
 import sawfowl.localeapi.api.LocaleService;
 import sawfowl.localeapi.api.PluginLocale;
+import sawfowl.localeapi.api.SerializeOptions;
 import sawfowl.localeapi.apiclasses.AbstractLocale;
 import sawfowl.localeapi.apiclasses.HoconLocale;
 import sawfowl.localeapi.apiclasses.JsonLocale;
 import sawfowl.localeapi.apiclasses.LegacyLocale;
-import sawfowl.localeapi.apiclasses.SerializeOptions;
 import sawfowl.localeapi.apiclasses.YamlLocale;
 import sawfowl.localeapi.utils.WatchThread;
 

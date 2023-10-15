@@ -11,6 +11,7 @@ import org.spongepowered.configurate.loader.ConfigurationLoader;
 
 import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.LocaleService;
+import sawfowl.localeapi.api.SerializeOptions;
 
 public class HoconLocale extends AbstractLocale {
 
