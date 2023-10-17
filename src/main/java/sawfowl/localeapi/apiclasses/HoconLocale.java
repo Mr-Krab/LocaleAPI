@@ -19,7 +19,7 @@ public class HoconLocale extends AbstractLocale {
 	private CommentedConfigurationNode localeNode;
 	public HoconLocale(LocaleService localeService, Logger logger, Path path, String pluginID, String locale) {
 		super(localeService, logger, path, pluginID, locale);
-		configLoader = HoconConfigurationLoader.builder().emitJsonCompatible(true).emitComments(false).defaultOptions(SerializeOptions.CONFIGURATIO_NOPTIONS).path(this.path).build();
+		configLoader = HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.CONFIGURATIO_NOPTIONS).path(this.path).build();
 		reload();
 	}
 
