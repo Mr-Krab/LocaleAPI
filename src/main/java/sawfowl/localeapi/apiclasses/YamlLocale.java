@@ -12,7 +12,7 @@ import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.LocaleService;
-import sawfowl.localeapi.api.SerializeOptions;
+import sawfowl.localeapi.api.serializetools.SerializeOptions;
 
 public class YamlLocale extends AbstractLocale {
 
@@ -20,7 +20,7 @@ public class YamlLocale extends AbstractLocale {
 	private CommentedConfigurationNode localeNode;
 	public YamlLocale(LocaleService localeService, Logger logger, Path path, String pluginID, String locale) {
 		super(localeService, logger, path, pluginID, locale);
-		configLoader = SerializeOptions.createYamlConfigurationLoader().path(this.path).nodeStyle(NodeStyle.BLOCK).build();
+		configLoader = SerializeOptions.createYamlConfigurationLoader(localeService.getItemStackSerializerVariant(pluginID)).path(this.path).nodeStyle(NodeStyle.BLOCK).build();
 		reload();
 	}
 

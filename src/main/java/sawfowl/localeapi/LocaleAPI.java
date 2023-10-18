@@ -41,8 +41,8 @@ import com.google.inject.Inject;
 
 import sawfowl.localeapi.api.LocaleService;
 import sawfowl.localeapi.api.Text;
+import sawfowl.localeapi.api.event.LocaleServiseEvent;
 import sawfowl.localeapi.apiclasses.TextImpl;
-import sawfowl.localeapi.event.LocaleServiseEvent;
 
 @Plugin("localeapi")
 public class LocaleAPI {

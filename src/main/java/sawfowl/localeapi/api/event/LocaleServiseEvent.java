@@ -1,4 +1,4 @@
-package sawfowl.localeapi.event;
+package sawfowl.localeapi.api.event;
 
 import org.spongepowered.api.event.Event;
 

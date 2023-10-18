@@ -1,4 +1,4 @@
-package sawfowl.localeapi.serializetools;
+package sawfowl.localeapi.api.serializetools.itemstack;
 
 import java.util.List;
 import java.util.Map;

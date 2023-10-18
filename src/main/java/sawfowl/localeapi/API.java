@@ -17,15 +17,13 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.lifecycle.StoppedGameEvent;
 import org.spongepowered.api.util.locale.Locales;
-import org.spongepowered.configurate.gson.GsonConfigurationLoader;
-import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
 import org.spongepowered.plugin.PluginContainer;
 
 import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.EnumLocales;
 import sawfowl.localeapi.api.LocaleService;
 import sawfowl.localeapi.api.PluginLocale;
-import sawfowl.localeapi.api.SerializeOptions;
+import sawfowl.localeapi.api.serializetools.SerializeOptions;
 import sawfowl.localeapi.apiclasses.AbstractLocale;
 import sawfowl.localeapi.apiclasses.HoconLocale;
 import sawfowl.localeapi.apiclasses.JsonLocale;
@@ -36,6 +34,7 @@ import sawfowl.localeapi.utils.WatchThread;
 class API implements LocaleService {
 
 	private Map<String, Map<Locale, PluginLocale>> pluginLocales;
+	private Map<String, Integer> stackSerializers;
 	private List<Locale> locales;
 	private WatchThread watchThread;
 	private Path configDirectory;
@@ -47,6 +46,7 @@ class API implements LocaleService {
 		this.logger = logger;
 		configDirectory = path;
 		pluginLocales = new HashMap<String, Map<Locale, PluginLocale>>();
+		stackSerializers = new HashMap<String, Integer>();
 		locales = EnumLocales.getLocales();
 		watchThread = new WatchThread(this, logger, path);
 		watchThread.start();
@@ -187,11 +187,14 @@ class API implements LocaleService {
 			return false;
 		}
 		for(Locale locale : locales) {
-			if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".conf").toFile().exists() && HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.CONFIGURATIO_NOPTIONS).path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".conf")).build().canLoad()) {
+			if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".conf").toFile().exists() && SerializeOptions.createHoconConfigurationLoader(getItemStackSerializerVariant(pluginID)).path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".conf")).build().canLoad()) {
 				createPluginLocale(pluginID, ConfigTypes.HOCON, locale);
-			} else if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".json").toFile().exists() && GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.CONFIGURATIO_NOPTIONS).path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".json")).build().canLoad()) {
+			} else if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".json").toFile().exists() && 
+					SerializeOptions.createJsonConfigurationLoader(
+							getItemStackSerializerVariant(pluginID))
+					.path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".json")).build().canLoad()) {
 				createPluginLocale(pluginID, ConfigTypes.JSON, locale);
-			} else if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".yml").toFile().exists() && SerializeOptions.createYamlConfigurationLoader().path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".yml")).build().canLoad()) {
+			} else if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".yml").toFile().exists() && SerializeOptions.createYamlConfigurationLoader(getItemStackSerializerVariant(pluginID)).path(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".yml")).build().canLoad()) {
 				createPluginLocale(pluginID, ConfigTypes.YAML, locale);
 			} else if(configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + ".properties").toFile().exists()) {
 				createPluginLocale(pluginID, ConfigTypes.PROPERTIES, locale);
@@ -204,6 +207,22 @@ class API implements LocaleService {
 	public void stopWatch(StoppedGameEvent event) {
 		if(event == null) return;
 		watchThread.stopWatch();
+	}
+
+	@Override
+	public void setItemStackSerializerVariant(PluginContainer container, int variant) throws Exception {
+		if(variant < 1 || variant > 3) throw new Exception("The value must not be less than 1 or greater than 3.");
+		if(stackSerializers.containsKey(container.metadata().id())) stackSerializers.remove(container.metadata().id());
+		stackSerializers.put(container.metadata().id(), variant);
+	}
+
+	@Override
+	public int getItemStackSerializerVariant(PluginContainer container) {
+		return getItemStackSerializerVariant(container.metadata().id());
+	}
+
+	public int getItemStackSerializerVariant(String plugin) {
+		return stackSerializers.getOrDefault(plugin, 1);
 	}
 
 }

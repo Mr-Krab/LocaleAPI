@@ -1,4 +1,4 @@
-package sawfowl.localeapi.serializetools;
+package sawfowl.localeapi.api.serializetools.itemstack;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -30,8 +30,7 @@ import org.spongepowered.configurate.objectmapping.meta.Setting;
 import org.spongepowered.configurate.serialize.SerializationException;
 
 import net.kyori.adventure.key.Key;
-
-import sawfowl.localeapi.api.SerializeOptions;
+import sawfowl.localeapi.api.serializetools.SerializeOptions;
 
 @ConfigSerializable
 public class SerializedItemStack {
@@ -203,7 +202,7 @@ public class SerializedItemStack {
 		return sink.toString();
 	}
 
-	private Optional<CompoundTag> createTagFromString(String string, Class<CompoundTag> clazz) {
+	private <T extends CompoundTag> Optional<T> createTagFromString(String string, Class<T> clazz) {
 		try {
 			return tagFromNode(serializeNodeFromString(string), clazz);
 		} catch (ConfigurateException e) {
@@ -212,16 +211,16 @@ public class SerializedItemStack {
 		}
 	}
 
-	private Optional<CompoundTag> tagFromNode(ConfigurationNode node, Class<CompoundTag> clazz) throws SerializationException {
+	private <T extends CompoundTag> Optional<T> tagFromNode(ConfigurationNode node, Class<T> clazz) throws SerializationException {
 		return node.virtual() || node.empty() ? Optional.empty() : Optional.ofNullable(node.get(clazz));
 	}
 
 	private HoconConfigurationLoader createWriter(StringWriter sink) {
-		return HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.CONFIGURATIO_NOPTIONS).sink(() -> new BufferedWriter(sink)).build();
+		return HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).sink(() -> new BufferedWriter(sink)).build();
 	}
 
 	private HoconConfigurationLoader createLoader(StringReader source) {
-		return HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.CONFIGURATIO_NOPTIONS).source(() -> new BufferedReader(source)).build();
+		return HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).source(() -> new BufferedReader(source)).build();
 	}
 
 	private ConfigurationNode serializeNodeFromString(String string) {
@@ -434,7 +433,7 @@ public class SerializedItemStack {
 		}
 
 		@Override
-		public Optional<CompoundTag> getTag(String key, Class<CompoundTag> clazz) {
+		public <T extends CompoundTag> Optional<T> getTag(String key, Class<T> clazz) {
 			return !getString("CustomTags").isPresent() || clazz == null ? Optional.empty() : createTagFromString(getString("CustomTags").get(), clazz);
 		}
 

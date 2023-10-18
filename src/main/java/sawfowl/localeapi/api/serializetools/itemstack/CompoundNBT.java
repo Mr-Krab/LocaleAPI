@@ -1,4 +1,4 @@
-package sawfowl.localeapi.serializetools;
+package sawfowl.localeapi.api.serializetools.itemstack;
 
 import java.util.List;
 import java.util.Optional;
@@ -176,7 +176,7 @@ public interface CompoundNBT {
 	 * Getting the tag value. If the object has been changed after receiving it, it must be rewritten.<br>
 	 * Example of getting a value - <a href="https://github.com/SawFowl/LocaleTestPlugin/blob/3d3f53d8a520757a2a1a15ee213845deaa943b6b/src/main/java/sawfowl/localetest/LocaleTest.java#L135">GitHub</a>
 	 */
-	public Optional<CompoundTag> getTag(String key, Class<CompoundTag> clazz);
+	public <T extends CompoundTag> Optional<T> getTag(String key, Class<T> clazz);
 
 	/**
 	 * Getting the number of tags in ItemStack.

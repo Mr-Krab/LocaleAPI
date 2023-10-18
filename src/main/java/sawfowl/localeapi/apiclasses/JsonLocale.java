@@ -9,7 +9,7 @@ import org.spongepowered.configurate.gson.GsonConfigurationLoader;
 
 import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.LocaleService;
-import sawfowl.localeapi.api.SerializeOptions;
+import sawfowl.localeapi.api.serializetools.SerializeOptions;
 
 public class JsonLocale extends AbstractLocale {
 
@@ -17,7 +17,7 @@ public class JsonLocale extends AbstractLocale {
 	private ConfigurationNode localeNode;
 	public JsonLocale(LocaleService localeService, Logger logger, Path path, String pluginID, String locale) {
 		super(localeService, logger, path, pluginID, locale);
-		configLoader = GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.CONFIGURATIO_NOPTIONS).path(this.path).build();
+		configLoader = SerializeOptions.createJsonConfigurationLoader(localeService.getItemStackSerializerVariant(pluginID)).path(this.path).build();
 		reload();
 	}
 

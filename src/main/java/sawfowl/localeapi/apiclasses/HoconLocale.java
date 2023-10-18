@@ -6,12 +6,11 @@ import java.nio.file.Path;
 import org.apache.logging.log4j.Logger;
 
 import org.spongepowered.configurate.CommentedConfigurationNode;
-import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
 import org.spongepowered.configurate.loader.ConfigurationLoader;
 
 import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.LocaleService;
-import sawfowl.localeapi.api.SerializeOptions;
+import sawfowl.localeapi.api.serializetools.SerializeOptions;
 
 public class HoconLocale extends AbstractLocale {
 
@@ -19,7 +18,7 @@ public class HoconLocale extends AbstractLocale {
 	private CommentedConfigurationNode localeNode;
 	public HoconLocale(LocaleService localeService, Logger logger, Path path, String pluginID, String locale) {
 		super(localeService, logger, path, pluginID, locale);
-		configLoader = HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.CONFIGURATIO_NOPTIONS).path(this.path).build();
+		configLoader = SerializeOptions.createHoconConfigurationLoader(localeService.getItemStackSerializerVariant(pluginID)).path(this.path).build();
 		reload();
 	}
 

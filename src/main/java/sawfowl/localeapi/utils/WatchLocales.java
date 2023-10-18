@@ -23,7 +23,8 @@ import org.spongepowered.plugin.PluginContainer;
 import sawfowl.localeapi.LocaleAPI;
 import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.LocaleService;
-import sawfowl.localeapi.event.LocaleEvent;
+import sawfowl.localeapi.api.PluginLocale;
+import sawfowl.localeapi.api.event.LocaleEvent;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
@@ -101,7 +102,7 @@ public class WatchLocales {
 					if(fileName.contains(configTypeName)) {
 						int localesSizeBefore = localeService.getPluginLocales(pluginID).size();
 						logger.info("[FileWatcher] New locale file found -> \"" + fileName + "\" for plugin \"" + pluginID + "\"! Loading...");
-						localeService.createPluginLocale(pluginID, configType, locale);
+						PluginLocale localeconfig = localeService.createPluginLocale(pluginID, configType, locale);
 						class CreateLocaleEvent extends AbstractEvent implements LocaleEvent.Create {
 
 							@Override
@@ -122,6 +123,11 @@ public class WatchLocales {
 							@Override
 							public ConfigTypes configType() {
 								return configType;
+							}
+
+							@Override
+							public PluginLocale getLocaleConfig() {
+								return localeconfig;
 							}
 							
 						}
@@ -150,7 +156,8 @@ public class WatchLocales {
 			if(fileName.contains(locale.toLanguageTag()) && (fileName.contains("conf") || fileName.contains("yml") || fileName.contains("json") || fileName.contains("properties"))) {
 				if(getUpdated().containsKey(fileName)) return;
 				logger.info("[FileWatcher] Locale file \"" + fileName + "\" for plugin \"" + pluginID + "\" has been changed! Reloading...");
-				localeService.getOrDefaultLocale(pluginID, locale).reload();
+				PluginLocale localeconfig = localeService.getOrDefaultLocale(pluginID, locale);
+				localeconfig.reload();
 				getUpdated().put(pluginID + locale.toLanguageTag(), TimeUnit.MILLISECONDS.toSeconds(oldTime));
 				class ReloadLocaleEvent extends AbstractEvent implements LocaleEvent.Reload {
 
@@ -167,6 +174,11 @@ public class WatchLocales {
 					@Override
 					public Cause cause() {
 						return cause;
+					}
+
+					@Override
+					public PluginLocale getLocaleConfig() {
+						return localeconfig;
 					}
 					
 				}
