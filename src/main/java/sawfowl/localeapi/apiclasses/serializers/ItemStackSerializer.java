@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.math.NumberUtils;
-
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.data.persistence.DataFormats;
 import org.spongepowered.api.data.persistence.DataQuery;
@@ -20,7 +19,6 @@ import org.spongepowered.api.data.persistence.InvalidDataException;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.registry.RegistryTypes;
-import org.spongepowered.configurate.BasicConfigurationNode;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
@@ -28,6 +26,7 @@ import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 
 import net.kyori.adventure.text.Component;
+
 import sawfowl.localeapi.api.TextUtils;
 import sawfowl.localeapi.api.serializetools.SerializeOptions;
 import sawfowl.localeapi.api.serializetools.itemstack.SerializedItemStack;
@@ -46,28 +45,29 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
 		node.node("ItemType").set(RegistryTypes.ITEM_TYPE.get().valueKey(itemStack.type()).asString());
 		node.node("Quantity").set(itemStack.quantity());
 		if(itemStack.toContainer().get(DataQuery.of("UnsafeData")).isPresent()) try {
-			StringReader source = new StringReader(DataFormats.HOCON.get().write((DataView) itemStack.toContainer().get(DataQuery.of("UnsafeData")).get()));
-			HoconConfigurationLoader loader = createLoader(source);
-			ConfigurationNode tempNode = loader.load();
-			ConfigurationNode tempNode2 = BasicConfigurationNode.root(n -> n.options().shouldCopyDefaults(true).serializers(SerializeOptions.SERIALIZER_COLLECTION_VARIANT_2));
-			if(!tempNode.childrenMap().isEmpty()) {
-				for(Entry<Object, ? extends ConfigurationNode> entry : tempNode.childrenMap().entrySet()) {
-					if(entry.getValue().isList()) {
-						tempNode2.node(entry.getKey()).set(entry.getValue());
-					} else if(entry.getValue().raw().toString().contains("{") &&  entry.getValue().raw().toString().contains("}")) {
-						tempNode2.node(entry.getKey()).from(serializeChildFromString(entry.getValue().raw().toString()));
-					} else tempNode2.node(entry.getKey()).set(entry.getValue().raw());
-				}
-				tempNode.from(tempNode2);
-				tempNode2 = null;
-			}
-			node.node("NBT").from(tempNode);
-			source = null;
-			loader = null;
-			tempNode = null;
+			node.node("NBT").from(serializeRecursive(createLoader(new StringReader(DataFormats.HOCON.get().write((DataView) itemStack.toContainer().get(DataQuery.of("UnsafeData")).get()))).load(), createWriter(new StringWriter()).createNode()));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private ConfigurationNode serializeRecursive(ConfigurationNode node, ConfigurationNode result) throws ConfigurateException {
+		if(!node.childrenMap().isEmpty()) {
+			for(Entry<Object, ? extends ConfigurationNode> entry : node.childrenMap().entrySet()) {
+				if(entry.getValue().isList()) {
+					result.node(entry.getKey()).set(entry.getValue());
+				} else if(isMapedString(entry.getValue().raw().toString())) {
+					if(entry.getValue().isMap()) {
+						result.node(entry.getKey()).set(serializeRecursive(entry.getValue(), createWriter(new StringWriter()).createNode()));
+					} else result.node(entry.getKey()).from(serializeChildFromString(entry.getValue().raw().toString()));
+				} else result.node(entry.getKey()).set(entry.getValue().raw());
+			}
+		}
+		return result;
+	}
+
+	private boolean isMapedString(String string) {
+		return string != null && string.contains("{") && string.contains("}");
 	}
 
 	private HoconConfigurationLoader createWriter(StringWriter sink) {

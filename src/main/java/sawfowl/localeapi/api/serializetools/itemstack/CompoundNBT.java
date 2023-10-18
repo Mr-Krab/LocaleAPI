@@ -7,180 +7,181 @@ import java.util.UUID;
 
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
+import org.spongepowered.plugin.PluginContainer;
 
 public interface CompoundNBT {
 
 	/**
 	 * Deleting a tag.
 	 */
-	public void remove(String key);
+	public void remove(PluginContainer container, String key);
 
 	/**
 	 * Checking for the presence of a tag.
 	 */
-	public boolean containsTag(String key);
+	public boolean containsTag(PluginContainer container, String key);
 
 	/**
 	 * Adding a tag. If a tag with the specified key already exists, it will be overwritten.
 	 */
-	public void putString(String key, String value);
+	public void putString(PluginContainer container, String key, String value);
 
 	/**
 	 * Adding a tag. If a tag with the specified key already exists, it will be overwritten.
 	 */
-	public void putUUID(String key, UUID value);
+	public void putUUID(PluginContainer container, String key, UUID value);
 
 	/**
 	 * Adding a tag. If a tag with the specified key already exists, it will be overwritten.
 	 */
-	public void putShort(String key, short value);
+	public void putShort(PluginContainer container, String key, short value);
 
 	/**
 	 * Adding a tag. If a tag with the specified key already exists, it will be overwritten.
 	 */
-	public void putInteger(String key, int value);
+	public void putInteger(PluginContainer container, String key, int value);
 
 	/**
 	 * Adding a tag. If a tag with the specified key already exists, it will be overwritten.
 	 */
-	public void putLong(String key, long value);
+	public void putLong(PluginContainer container, String key, long value);
 
 	/**
 	 * Adding a tag. If a tag with the specified key already exists, it will be overwritten.
 	 */
-	public void putFloat(String key, float value);
+	public void putFloat(PluginContainer container, String key, float value);
 
 	/**
 	 * Adding a tag. If a tag with the specified key already exists, it will be overwritten.
 	 */
-	public void putDouble(String key, double value);
+	public void putDouble(PluginContainer container, String key, double value);
 
 	/**
 	 * Adding a tag. If a tag with the specified key already exists, it will be overwritten.
 	 */
-	public void putByte(String key, byte value);
+	public void putByte(PluginContainer container, String key, byte value);
 
 	/**
 	 * Adding a tag. If a tag with the specified key already exists, it will be overwritten.
 	 */
-	public void putBoolean(String key, boolean value);
+	public void putBoolean(PluginContainer container, String key, boolean value);
 
 	/**
 	 * Adding a tag. If a tag with the specified key already exists, it will be overwritten.
 	 */
-	public void putIntArray(String key, int[] value);
+	public void putIntArray(PluginContainer container, String key, int[] value);
 
 	/**
 	 * Adding a tag. If a tag with the specified key already exists, it will be overwritten.
 	 */
-	public void putIntList(String key, List<Integer> value);
+	public void putIntList(PluginContainer container, String key, List<Integer> value);
 
 	/**
 	 * Adding a tag. If a tag with the specified key already exists, it will be overwritten.
 	 */
-	public void putLongArray(String key, long[] value);
+	public void putLongArray(PluginContainer container, String key, long[] value);
 
 	/**
 	 * Adding a tag. If a tag with the specified key already exists, it will be overwritten.
 	 */
-	public void putLongList(String key, List<Long> value);
+	public void putLongList(PluginContainer container, String key, List<Long> value);
 
 	/**
 	 * Adding a tag. If a tag with the specified key already exists, it will be overwritten.
 	 */
-	public void putByteArray(String key, byte[] value);
+	public void putByteArray(PluginContainer container, String key, byte[] value);
 
 	/**
 	 * Adding a tag. If a tag with the specified key already exists, it will be overwritten.<br>
 	 * The class must be marked with the {@link ConfigSerializable} annotation.<br>
 	 * Only objects marked with the {@link Setting} annotation are saved.
 	 */
-	public void putTag(String key, CompoundTag tag);
+	public void putTag(PluginContainer container, String key, CompoundTag tag);
 
 	/**
 	 * Getting all the keys. 
 	 */
-	public Set<String> getAllKeys();
+	public Set<String> getAllKeys(PluginContainer container);
 
 	/**
 	 * Getting the tag value. The method does not check for the type of value.
 	 */
-	public Optional<String> getString(String key);
+	public Optional<String> getString(PluginContainer container, String key);
 
 	/**
 	 * Getting the tag value. The method does not check for the type of value.
 	 */
-	public Optional<UUID> getUUID(String key);
+	public Optional<UUID> getUUID(PluginContainer container, String key);
 
 	/**
 	 * Getting the tag value. The method does not check for the type of value.
 	 */
-	public Optional<Short> getShort(String key);
+	public Optional<Short> getShort(PluginContainer container, String key);
 
 	/**
 	 * Getting the tag value. The method does not check for the type of value.
 	 */
-	public Optional<Integer> getInteger(String key);
+	public Optional<Integer> getInteger(PluginContainer container, String key);
 
 	/**
 	 * Getting the tag value. The method does not check for the type of value.
 	 */
-	public Optional<Long> getLong(String key);
+	public Optional<Long> getLong(PluginContainer container, String key);
 
 	/**
 	 * Getting the tag value. The method does not check for the type of value.
 	 */
-	public Optional<Float> getFloat(String key);
+	public Optional<Float> getFloat(PluginContainer container, String key);
 
 	/**
 	 * Getting the tag value. The method does not check for the type of value.
 	 */
-	public Optional<Double> getDouble(String key);
+	public Optional<Double> getDouble(PluginContainer container, String key);
 
 	/**Getting the tag value. The method does not check for the type of value.
 	 * 
 	 */
-	public Optional<Byte> getByte(String key);
+	public Optional<Byte> getByte(PluginContainer container, String key);
 
 	/**
 	 * Getting the tag value. The method does not check for the type of value.
 	 */
-	public Optional<Boolean> getBoolean(String key);
+	public Optional<Boolean> getBoolean(PluginContainer container, String key);
 
 	/**
 	 * Getting the tag value. The method does not check for the type of value.
 	 */
-	public Optional<int[]> getIntArray(String key);
+	public Optional<int[]> getIntArray(PluginContainer container, String key);
 
 	/**
 	 * Getting the tag value. The method does not check for the type of value.
 	 */
-	public Optional<List<Integer>> getIntList(String key);
+	public Optional<List<Integer>> getIntList(PluginContainer container, String key);
 
 	/**
 	 * Getting the tag value. The method does not check for the type of value.
 	 */
-	public Optional<long[]> getLongArray(String key);
+	public Optional<long[]> getLongArray(PluginContainer container, String key);
 
 	/**
 	 * Getting the tag value. The method does not check for the type of value.
 	 */
-	public Optional<List<Long>> getLongList(String key);
+	public Optional<List<Long>> getLongList(PluginContainer container, String key);
 
 	/**
 	 * Getting the tag value. The method does not check for the type of value.
 	 */
-	public Optional<byte[]> getByteArray(String key);
+	public Optional<byte[]> getByteArray(PluginContainer container, String key);
 
 	/**
 	 * Getting the tag value. If the object has been changed after receiving it, it must be rewritten.<br>
 	 * Example of getting a value - <a href="https://github.com/SawFowl/LocaleTestPlugin/blob/3d3f53d8a520757a2a1a15ee213845deaa943b6b/src/main/java/sawfowl/localetest/LocaleTest.java#L135">GitHub</a>
 	 */
-	public <T extends CompoundTag> Optional<T> getTag(String key, Class<T> clazz);
+	public <T extends CompoundTag> Optional<T> getTag(PluginContainer container, String key, Class<T> clazz);
 
 	/**
 	 * Getting the number of tags in ItemStack.
 	 */
-	public int size();
+	public int size(PluginContainer container);
 
 }

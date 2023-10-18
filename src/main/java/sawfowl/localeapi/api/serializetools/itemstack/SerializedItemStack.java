@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -28,6 +29,7 @@ import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 import org.spongepowered.configurate.serialize.SerializationException;
+import org.spongepowered.plugin.PluginContainer;
 
 import net.kyori.adventure.key.Key;
 import sawfowl.localeapi.api.serializetools.SerializeOptions;
@@ -187,12 +189,12 @@ public class SerializedItemStack {
 		this.itemStack = itemStack;
 	}
 
-	private String createStringFromCustomTag(String key, CompoundTag tag, StringWriter sink) {
+	private String createStringFromCustomTag(CompoundTag tag, StringWriter sink) {
 		HoconConfigurationLoader loader = createWriter(sink);
 		ConfigurationNode node = loader.createNode();
 		try {
-			node.node(key).set(CompoundTag.class, tag);
-			if(!node.node(key).node("__class__").virtual()) node.node(key).removeChild("__class__");
+			node.set(CompoundTag.class, tag);
+			if(!node.node("__class__").virtual()) node.removeChild("__class__");
 			loader.save(node);
 		} catch (ConfigurateException e) {
 			e.printStackTrace();
@@ -232,13 +234,19 @@ public class SerializedItemStack {
 		return null;
 	}
 
+	private String getPluginId(PluginContainer container) {
+		return container.metadata().id();
+	}
+
 	class VanillaNBT implements CompoundNBT {
 
 		@Override
-		public void remove(String key) {
+		public void remove(PluginContainer container, String key) {
 			net.minecraft.world.item.ItemStack nmsStack = getVanillaStack();
-			if(!nmsStack.hasTag() || !nmsStack.getOrCreateTag().contains(key)) return;
-			nmsStack.getOrCreateTag().remove(key);
+			if(!containsTag(container, key)) return;
+			nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).remove(key);
+			if(nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).isEmpty()) nmsStack.getOrCreateTag().getCompound("CustomTags").remove(getPluginId(container));
+			if(nmsStack.getOrCreateTag().getCompound("CustomTags").isEmpty()) nmsStack.getOrCreateTag().remove("CustomTags");
 			if(nmsStack.getOrCreateTag().isEmpty()) {
 				itemStack = ItemStack.of(getOptItemType().get());
 				itemStack.setQuantity(itemQuantity);
@@ -248,198 +256,226 @@ public class SerializedItemStack {
 		}
 
 		@Override
-		public boolean containsTag(String key) {
+		public boolean containsTag(PluginContainer container, String key) {
 			net.minecraft.world.item.ItemStack nmsStack = getVanillaStack();
-			return nmsStack.hasTag() && nmsStack.getOrCreateTag().contains(key);
+			return nmsStack.hasTag() && nmsStack.getOrCreateTag().contains("CustomTags") && nmsStack.getOrCreateTag().getCompound("CustomTags").contains(getPluginId(container)) && nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).contains(key);
 		}
 
 		@Override
-		public void putString(String key, String value) {
+		public void putString(PluginContainer container, String key, String value) {
 			net.minecraft.world.item.ItemStack nmsStack = getVanillaStack();
-			nmsStack.getOrCreateTag().putString(key, value);
+			if(!nmsStack.getOrCreateTag().contains("CustomTags")) nmsStack.getOrCreateTag().put("CustomTags", new net.minecraft.nbt.CompoundTag());
+			if(!nmsStack.getOrCreateTag().getCompound("CustomTags").contains(getPluginId(container))) nmsStack.getOrCreateTag().getCompound("CustomTags").put(getPluginId(container), new net.minecraft.nbt.CompoundTag());
+			nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).putString(key, value);
 			serialize((ItemStack) ((Object) nmsStack));
 		}
 
 		@Override
-		public void putUUID(String key, UUID value) {
+		public void putUUID(PluginContainer container, String key, UUID value) {
 			net.minecraft.world.item.ItemStack nmsStack = getVanillaStack();
-			nmsStack.getOrCreateTag().putUUID(key, value);
+			if(!nmsStack.getOrCreateTag().contains("CustomTags")) nmsStack.getOrCreateTag().put("CustomTags", new net.minecraft.nbt.CompoundTag());
+			if(!nmsStack.getOrCreateTag().getCompound("CustomTags").contains(getPluginId(container))) nmsStack.getOrCreateTag().getCompound("CustomTags").put(getPluginId(container), new net.minecraft.nbt.CompoundTag());
+			nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).putUUID(key, value);
 			serialize((ItemStack) ((Object) nmsStack));
 		}
 
 		@Override
-		public void putShort(String key, short value) {
+		public void putShort(PluginContainer container, String key, short value) {
 			net.minecraft.world.item.ItemStack nmsStack = getVanillaStack();
-			nmsStack.getOrCreateTag().putShort(key, value);
+			if(!nmsStack.getOrCreateTag().contains("CustomTags")) nmsStack.getOrCreateTag().put("CustomTags", new net.minecraft.nbt.CompoundTag());
+			if(!nmsStack.getOrCreateTag().getCompound("CustomTags").contains(getPluginId(container))) nmsStack.getOrCreateTag().getCompound("CustomTags").put(getPluginId(container), new net.minecraft.nbt.CompoundTag());
+			nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).putShort(key, value);
 			serialize((ItemStack) ((Object) nmsStack));
 		}
 
 		@Override
-		public void putInteger(String key, int value) {
+		public void putInteger(PluginContainer container, String key, int value) {
 			net.minecraft.world.item.ItemStack nmsStack = getVanillaStack();
-			nmsStack.getOrCreateTag().putInt(key, value);
+			if(!nmsStack.getOrCreateTag().contains("CustomTags")) nmsStack.getOrCreateTag().put("CustomTags", new net.minecraft.nbt.CompoundTag());
+			if(!nmsStack.getOrCreateTag().getCompound("CustomTags").contains(getPluginId(container))) nmsStack.getOrCreateTag().getCompound("CustomTags").put(getPluginId(container), new net.minecraft.nbt.CompoundTag());
+			nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).putInt(key, value);
 			serialize((ItemStack) ((Object) nmsStack));
 		}
 
 		@Override
-		public void putLong(String key, long value) {
+		public void putLong(PluginContainer container, String key, long value) {
 			net.minecraft.world.item.ItemStack nmsStack = getVanillaStack();
-			nmsStack.getOrCreateTag().putLong(key, value);
+			if(!nmsStack.getOrCreateTag().contains("CustomTags")) nmsStack.getOrCreateTag().put("CustomTags", new net.minecraft.nbt.CompoundTag());
+			if(!nmsStack.getOrCreateTag().getCompound("CustomTags").contains(getPluginId(container))) nmsStack.getOrCreateTag().getCompound("CustomTags").put(getPluginId(container), new net.minecraft.nbt.CompoundTag());
+			nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).putLong(key, value);
 			serialize((ItemStack) ((Object) nmsStack));
 		}
 
 		@Override
-		public void putFloat(String key, float value) {
+		public void putFloat(PluginContainer container, String key, float value) {
 			net.minecraft.world.item.ItemStack nmsStack = getVanillaStack();
-			nmsStack.getOrCreateTag().putFloat(key, value);
+			if(!nmsStack.getOrCreateTag().contains("CustomTags")) nmsStack.getOrCreateTag().put("CustomTags", new net.minecraft.nbt.CompoundTag());
+			if(!nmsStack.getOrCreateTag().getCompound("CustomTags").contains(getPluginId(container))) nmsStack.getOrCreateTag().getCompound("CustomTags").put(getPluginId(container), new net.minecraft.nbt.CompoundTag());
+			nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).putFloat(key, value);
 			serialize((ItemStack) ((Object) nmsStack));
 		}
 
 		@Override
-		public void putDouble(String key, double value) {
+		public void putDouble(PluginContainer container, String key, double value) {
 			net.minecraft.world.item.ItemStack nmsStack = getVanillaStack();
-			nmsStack.getOrCreateTag().putDouble(key, value);
+			if(!nmsStack.getOrCreateTag().contains("CustomTags")) nmsStack.getOrCreateTag().put("CustomTags", new net.minecraft.nbt.CompoundTag());
+			if(!nmsStack.getOrCreateTag().getCompound("CustomTags").contains(getPluginId(container))) nmsStack.getOrCreateTag().getCompound("CustomTags").put(getPluginId(container), new net.minecraft.nbt.CompoundTag());
+			nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).putDouble(key, value);
 			serialize((ItemStack) ((Object) nmsStack));
 		}
 
 		@Override
-		public void putByte(String key, byte value) {
+		public void putByte(PluginContainer container, String key, byte value) {
 			net.minecraft.world.item.ItemStack nmsStack = getVanillaStack();
-			nmsStack.getOrCreateTag().putByte(key, value);
+			if(!nmsStack.getOrCreateTag().contains("CustomTags")) nmsStack.getOrCreateTag().put("CustomTags", new net.minecraft.nbt.CompoundTag());
+			if(!nmsStack.getOrCreateTag().getCompound("CustomTags").contains(getPluginId(container))) nmsStack.getOrCreateTag().getCompound("CustomTags").put(getPluginId(container), new net.minecraft.nbt.CompoundTag());
+			nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).putByte(key, value);
 			serialize((ItemStack) ((Object) nmsStack));
 		}
 
 		@Override
-		public void putBoolean(String key, boolean value) {
+		public void putBoolean(PluginContainer container, String key, boolean value) {
 			net.minecraft.world.item.ItemStack nmsStack = getVanillaStack();
-			nmsStack.getOrCreateTag().putBoolean(key, value);
+			if(!nmsStack.getOrCreateTag().contains("CustomTags")) nmsStack.getOrCreateTag().put("CustomTags", new net.minecraft.nbt.CompoundTag());
+			if(!nmsStack.getOrCreateTag().getCompound("CustomTags").contains(getPluginId(container))) nmsStack.getOrCreateTag().getCompound("CustomTags").put(getPluginId(container), new net.minecraft.nbt.CompoundTag());
+			nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).putBoolean(key, value);
 			serialize((ItemStack) ((Object) nmsStack));
 		}
 
 		@Override
-		public void putIntArray(String key, int[] value) {
+		public void putIntArray(PluginContainer container, String key, int[] value) {
 			net.minecraft.world.item.ItemStack nmsStack = getVanillaStack();
-			nmsStack.getOrCreateTag().putIntArray(key, value);
+			if(!nmsStack.getOrCreateTag().contains("CustomTags")) nmsStack.getOrCreateTag().put("CustomTags", new net.minecraft.nbt.CompoundTag());
+			if(!nmsStack.getOrCreateTag().getCompound("CustomTags").contains(getPluginId(container))) nmsStack.getOrCreateTag().getCompound("CustomTags").put(getPluginId(container), new net.minecraft.nbt.CompoundTag());
+			nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).putIntArray(key, value);
 			serialize((ItemStack) ((Object) nmsStack));
 		}
 
 		@Override
-		public void putIntList(String key, List<Integer> value) {
+		public void putIntList(PluginContainer container, String key, List<Integer> value) {
 			net.minecraft.world.item.ItemStack nmsStack = getVanillaStack();
-			nmsStack.getOrCreateTag().putIntArray(key, value);
+			if(!nmsStack.getOrCreateTag().contains("CustomTags")) nmsStack.getOrCreateTag().put("CustomTags", new net.minecraft.nbt.CompoundTag());
+			if(!nmsStack.getOrCreateTag().getCompound("CustomTags").contains(getPluginId(container))) nmsStack.getOrCreateTag().getCompound("CustomTags").put(getPluginId(container), new net.minecraft.nbt.CompoundTag());
+			nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).putIntArray(key, value);
 			serialize((ItemStack) ((Object) nmsStack));
 		}
 
 		@Override
-		public void putLongArray(String key, long[] value) {
+		public void putLongArray(PluginContainer container, String key, long[] value) {
 			net.minecraft.world.item.ItemStack nmsStack = getVanillaStack();
-			nmsStack.getOrCreateTag().putLongArray(key, value);
+			if(!nmsStack.getOrCreateTag().contains("CustomTags")) nmsStack.getOrCreateTag().put("CustomTags", new net.minecraft.nbt.CompoundTag());
+			if(!nmsStack.getOrCreateTag().getCompound("CustomTags").contains(getPluginId(container))) nmsStack.getOrCreateTag().getCompound("CustomTags").put(getPluginId(container), new net.minecraft.nbt.CompoundTag());
+			nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).putLongArray(key, value);
 			serialize((ItemStack) ((Object) nmsStack));
 		}
 
 		@Override
-		public void putLongList(String key, List<Long> value) {
+		public void putLongList(PluginContainer container, String key, List<Long> value) {
 			net.minecraft.world.item.ItemStack nmsStack = getVanillaStack();
-			nmsStack.getOrCreateTag().putLongArray(key, value);
+			if(!nmsStack.getOrCreateTag().contains("CustomTags")) nmsStack.getOrCreateTag().put("CustomTags", new net.minecraft.nbt.CompoundTag());
+			if(!nmsStack.getOrCreateTag().getCompound("CustomTags").contains(getPluginId(container))) nmsStack.getOrCreateTag().getCompound("CustomTags").put(getPluginId(container), new net.minecraft.nbt.CompoundTag());
+			nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).putLongArray(key, value);
 			serialize((ItemStack) ((Object) nmsStack));
 		}
 
 		@Override
-		public void putByteArray(String key, byte[] value) {
+		public void putByteArray(PluginContainer container, String key, byte[] value) {
 			net.minecraft.world.item.ItemStack nmsStack = getVanillaStack();
-			nmsStack.getOrCreateTag().putByteArray(key, value);
+			if(!nmsStack.getOrCreateTag().contains("CustomTags")) nmsStack.getOrCreateTag().put("CustomTags", new net.minecraft.nbt.CompoundTag());
+			if(!nmsStack.getOrCreateTag().getCompound("CustomTags").contains(getPluginId(container))) nmsStack.getOrCreateTag().getCompound("CustomTags").put(getPluginId(container), new net.minecraft.nbt.CompoundTag());
+			nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).putByteArray(key, value);
 			serialize((ItemStack) ((Object) nmsStack));
 		}
 
 		@Override
-		public void putTag(String key, CompoundTag tag) {
-			putString("CustomTags", createStringFromCustomTag(key, tag, new StringWriter()));
+		public void putTag(PluginContainer container, String key, CompoundTag tag) {
+			putString(container, key, createStringFromCustomTag(tag, new StringWriter()));
 		}
 
 		@Override
-		public Set<String> getAllKeys() {
+		public Set<String> getAllKeys(PluginContainer container) {
 			net.minecraft.world.item.ItemStack nmsStack = getVanillaStack();
-			return nmsStack.getOrCreateTag().getAllKeys();
+			return nmsStack.getOrCreateTag().contains("CustomTags") && nmsStack.getOrCreateTag().getCompound("CustomTags").contains(getPluginId(container)) ? nmsStack.getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).getAllKeys() : new HashSet<String>();
 		}
 
 		@Override
-		public Optional<String> getString(String key) {
-			return containsTag(key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getString(key)) : Optional.empty();
+		public Optional<String> getString(PluginContainer container, String key) {
+			return containsTag(container, key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).getString(key)) : Optional.empty();
 		}
 
 		@Override
-		public Optional<UUID> getUUID(String key) {
-			return containsTag(key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getUUID(key)) : Optional.empty();
+		public Optional<UUID> getUUID(PluginContainer container, String key) {
+			return containsTag(container, key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).getUUID(key)) : Optional.empty();
 		}
 
 		@Override
-		public Optional<Short> getShort(String key) {
-			return containsTag(key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getShort(key)) : Optional.empty();
+		public Optional<Short> getShort(PluginContainer container, String key) {
+			return containsTag(container, key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).getShort(key)) : Optional.empty();
 		}
 
 		@Override
-		public Optional<Integer> getInteger(String key) {
-			return containsTag(key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getInt(key)) : Optional.empty();
+		public Optional<Integer> getInteger(PluginContainer container, String key) {
+			return containsTag(container, key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).getInt(key)) : Optional.empty();
 		}
 
 		@Override
-		public Optional<Long> getLong(String key) {
-			return containsTag(key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getLong(key)) : Optional.empty();
+		public Optional<Long> getLong(PluginContainer container, String key) {
+			return containsTag(container, key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).getLong(key)) : Optional.empty();
 		}
 
 		@Override
-		public Optional<Float> getFloat(String key) {
-			return containsTag(key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getFloat(key)) : Optional.empty();
+		public Optional<Float> getFloat(PluginContainer container, String key) {
+			return containsTag(container, key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).getFloat(key)) : Optional.empty();
 		}
 
 		@Override
-		public Optional<Double> getDouble(String key) {
-			return containsTag(key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getDouble(key)) : Optional.empty();
+		public Optional<Double> getDouble(PluginContainer container, String key) {
+			return containsTag(container, key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).getDouble(key)) : Optional.empty();
 		}
 
 		@Override
-		public Optional<Byte> getByte(String key) {
-			return containsTag(key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getByte(key)) : Optional.empty();
+		public Optional<Byte> getByte(PluginContainer container, String key) {
+			return containsTag(container, key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).getByte(key)) : Optional.empty();
 		}
 
 		@Override
-		public Optional<Boolean> getBoolean(String key) {
-			return containsTag(key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getBoolean(key)) : Optional.empty();
+		public Optional<Boolean> getBoolean(PluginContainer container, String key) {
+			return containsTag(container, key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).getBoolean(key)) : Optional.empty();
 		}
 
 		@Override
-		public Optional<int[]> getIntArray(String key) {
-			return containsTag(key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getIntArray(key)) : Optional.empty();
+		public Optional<int[]> getIntArray(PluginContainer container, String key) {
+			return containsTag(container, key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).getIntArray(key)) : Optional.empty();
 		}
 
 		@Override
-		public Optional<List<Integer>> getIntList(String key) {
-			return getIntArray(key).isPresent() ? Optional.ofNullable(Arrays.stream(getIntArray(key).get()).boxed().collect(Collectors.toList())) : Optional.empty();
+		public Optional<List<Integer>> getIntList(PluginContainer container, String key) {
+			return getIntArray(container, key).isPresent() ? Optional.ofNullable(Arrays.stream(getIntArray(container, key).get()).boxed().collect(Collectors.toList())) : Optional.empty();
 		}
 
 		@Override
-		public Optional<long[]> getLongArray(String key) {
-			return containsTag(key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getLongArray(key)) : Optional.empty();
+		public Optional<long[]> getLongArray(PluginContainer container, String key) {
+			return containsTag(container, key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).getLongArray(key)) : Optional.empty();
 		}
 
 		@Override
-		public Optional<List<Long>> getLongList(String key) {
-			return getLongArray(key).isPresent() ? Optional.ofNullable(Arrays.stream(getLongArray(key).get()).boxed().collect(Collectors.toList())) : Optional.empty();
+		public Optional<List<Long>> getLongList(PluginContainer container, String key) {
+			return getLongArray(container, key).isPresent() ? Optional.ofNullable(Arrays.stream(getLongArray(container, key).get()).boxed().collect(Collectors.toList())) : Optional.empty();
 		}
 
 		@Override
-		public Optional<byte[]> getByteArray(String key) {
-			return containsTag(key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getByteArray(key)) : Optional.empty();
+		public Optional<byte[]> getByteArray(PluginContainer container, String key) {
+			return containsTag(container, key) ? Optional.ofNullable(getVanillaStack().getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).getByteArray(key)) : Optional.empty();
 		}
 
 		@Override
-		public <T extends CompoundTag> Optional<T> getTag(String key, Class<T> clazz) {
-			return !getString("CustomTags").isPresent() || clazz == null ? Optional.empty() : createTagFromString(getString("CustomTags").get(), clazz);
+		public <T extends CompoundTag> Optional<T> getTag(PluginContainer container, String key, Class<T> clazz) {
+			return !getString(container, key).isPresent() || clazz == null ? Optional.empty() : createTagFromString(getString(container, key).get(), clazz);
 		}
 
 		@Override
-		public int size() {
-			return getVanillaStack().getOrCreateTag().size();
+		public int size(PluginContainer container) {
+			return getVanillaStack().getOrCreateTag().contains("CustomTags") && getVanillaStack().getOrCreateTag().getCompound("CustomTags").contains(getPluginId(container)) ? getVanillaStack().getOrCreateTag().getCompound("CustomTags").getCompound(getPluginId(container)).size() : 0;
 		}
 
 		private net.minecraft.world.item.ItemStack getVanillaStack() {
