@@ -25,13 +25,14 @@ import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
-import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
+import org.spongepowered.configurate.gson.GsonConfigurationLoader;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.plugin.PluginContainer;
 
 import net.kyori.adventure.key.Key;
+
 import sawfowl.localeapi.api.serializetools.SerializeOptions;
 
 @ConfigSerializable
@@ -95,7 +96,7 @@ public class SerializedItemStack {
 			//itemStack = ItemStackUtil.fromNative(nmsStack);
 			if(nbt != null) {
 				try {
-					itemStack = ItemStack.builder().fromContainer(itemStack.toContainer().set(DataQuery.of("UnsafeData"), DataFormats.HOCON.get().read(nbt))).build();
+					itemStack = ItemStack.builder().fromContainer(itemStack.toContainer().set(DataQuery.of("UnsafeData"), DataFormats.JSON.get().read(nbt))).build();
 				} catch (InvalidDataException | IOException e) {
 					e.printStackTrace();
 				}
@@ -181,7 +182,7 @@ public class SerializedItemStack {
 		//itemSubType = nmsStack.getDamageValue();
 		if(itemStack.toContainer().get(DataQuery.of("UnsafeData")).isPresent()) {
 			try {
-				nbt = DataFormats.HOCON.get().write((DataView) itemStack.toContainer().get(DataQuery.of("UnsafeData")).get());
+				nbt = DataFormats.JSON.get().write((DataView) itemStack.toContainer().get(DataQuery.of("UnsafeData")).get());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -190,7 +191,7 @@ public class SerializedItemStack {
 	}
 
 	private String createStringFromCustomTag(CompoundTag tag, StringWriter sink) {
-		HoconConfigurationLoader loader = createWriter(sink);
+		GsonConfigurationLoader loader = createWriter(sink);
 		ConfigurationNode node = loader.createNode();
 		try {
 			node.set(CompoundTag.class, tag);
@@ -217,12 +218,12 @@ public class SerializedItemStack {
 		return node.virtual() || node.empty() ? Optional.empty() : Optional.ofNullable(node.get(clazz));
 	}
 
-	private HoconConfigurationLoader createWriter(StringWriter sink) {
-		return HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).sink(() -> new BufferedWriter(sink)).build();
+	private GsonConfigurationLoader createWriter(StringWriter sink) {
+		return GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).sink(() -> new BufferedWriter(sink)).build();
 	}
 
-	private HoconConfigurationLoader createLoader(StringReader source) {
-		return HoconConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).source(() -> new BufferedReader(source)).build();
+	private GsonConfigurationLoader createLoader(StringReader source) {
+		return GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).source(() -> new BufferedReader(source)).build();
 	}
 
 	private ConfigurationNode serializeNodeFromString(String string) {

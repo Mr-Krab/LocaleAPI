@@ -1,4 +1,4 @@
-package sawfowl.localeapi.apiclasses.serializers;
+package sawfowl.localeapi.apiclasses.serializers.itemstack;
 
 import java.lang.reflect.Type;
 
