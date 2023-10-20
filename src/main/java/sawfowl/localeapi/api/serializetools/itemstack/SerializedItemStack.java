@@ -31,6 +31,8 @@ import org.spongepowered.configurate.objectmapping.meta.Setting;
 import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.plugin.PluginContainer;
 
+import com.google.gson.JsonParser;
+
 import net.kyori.adventure.key.Key;
 
 import sawfowl.localeapi.api.serializetools.SerializeOptions;
@@ -61,7 +63,7 @@ public class SerializedItemStack {
 	private ItemStack itemStack;
 	private CompoundNBT compoundNBT;
 
-	public String getType() {
+	public String getItemTypeAsString() {
 		return itemType;
 	}
 
@@ -88,8 +90,8 @@ public class SerializedItemStack {
 	 */
 	public ItemStack getItemStack() {
 		if(itemStack != null) return itemStack.copy();
-		if(getOptItemType().isPresent()) {
-			itemStack = ItemStack.of(getOptItemType().get());
+		if(getItemType().isPresent()) {
+			itemStack = ItemStack.of(getItemType().get());
 			itemStack.setQuantity(itemQuantity);
 			//net.minecraft.world.item.ItemStack nmsStack = ItemStackUtil.toNative(itemStack);
 			//nmsStack.setDamageValue(itemSubType);
@@ -108,7 +110,7 @@ public class SerializedItemStack {
 	/**
 	 * Getting {@link ItemType}
 	 */
-	public Optional<ItemType> getOptItemType() {
+	public Optional<ItemType> getItemType() {
 		return Sponge.game().registry(RegistryTypes.ITEM_TYPE).findValue(ResourceKey.resolve(itemType));
 	}
 
@@ -116,7 +118,7 @@ public class SerializedItemStack {
 	 * The resulting value can be used to display the item in chat.
 	 */
 	public Key getItemKey() {
-		return getOptItemType().isPresent() ? Key.key(itemType) : Key.key("air");
+		return getItemType().isPresent() ? Key.key(itemType) : Key.key("air");
 	}
 
 	/**
@@ -132,6 +134,11 @@ public class SerializedItemStack {
 	public void setQuantity(int quantity) {
 		itemQuantity = quantity;
 	}
+
+	public SerializedItemStackJsonNbt toSerializedItemStack() {
+		return new SerializedItemStackJsonNbt(itemType, 0, nbt == null ? null : JsonParser.parseString(nbt).getAsJsonObject());
+	}
+
 /*
 	public boolean isForgeItem() {
 		try {
@@ -249,7 +256,7 @@ public class SerializedItemStack {
 			if(nmsStack.getOrCreateTag().getCompound("PluginTags").getCompound(getPluginId(container)).isEmpty()) nmsStack.getOrCreateTag().getCompound("PluginTags").remove(getPluginId(container));
 			if(nmsStack.getOrCreateTag().getCompound("PluginTags").isEmpty()) nmsStack.getOrCreateTag().remove("PluginTags");
 			if(nmsStack.getOrCreateTag().isEmpty()) {
-				itemStack = ItemStack.of(getOptItemType().get());
+				itemStack = ItemStack.of(getItemType().get());
 				itemStack.setQuantity(itemQuantity);
 			} else {
 				serialize((ItemStack) ((Object) nmsStack));

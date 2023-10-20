@@ -3,6 +3,7 @@ package sawfowl.localeapi.api.serializetools;
 import java.nio.file.Path;
 
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurationNode;
@@ -17,12 +18,14 @@ import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 import org.spongepowered.configurate.yaml.NodeStyle;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
+import com.google.gson.JsonObject;
+
 import net.kyori.adventure.serializer.configurate4.ConfigurateComponentSerializer;
-import net.minecraft.world.level.block.state.BlockState;
+
 import sawfowl.localeapi.api.ConfigTypes;
-import sawfowl.localeapi.apiclasses.serializers.JsonCollectionSerializers;
 import sawfowl.localeapi.apiclasses.serializers.itemstack.ItemStackSerializer;
 import sawfowl.localeapi.apiclasses.serializers.itemstack.PlainItemStackSerializer;
+import sawfowl.localeapi.apiclasses.serializers.json.JsonObjectSerializer;
 
 /**
  * These options disable serialization of objects not marked by the <b>@Setting</b> annotation.
@@ -73,10 +76,11 @@ public class SerializeOptions {
 
 	private static final TypeSerializer<ItemStack> ITEMSTACK_SERIALIZER_1 = new PlainItemStackSerializer();
 	private static final TypeSerializer<ItemStack> ITEMSTACK_SERIALIZER_2 = new ItemStackSerializer();
+	private static final TypeSerializer<JsonObject> JSONOBJECT_SERIALIZER = new JsonObjectSerializer();
 	public static final ObjectMapper.Factory FACTORY = ObjectMapper.factoryBuilder().addNodeResolver(NodeResolver.onlyWithSetting()).build();
-	public static final TypeSerializerCollection SERIALIZER_COLLECTION_VARIANT_1 = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(FACTORY).register(ItemStack.class, ITEMSTACK_SERIALIZER_1).register(BlockState.class, Sponge.game().configManager().serializers().get(BlockState.class)).registerAll(TypeSerializerCollection.defaults()).registerAll(ConfigurateComponentSerializer.configurate().serializers()).registerAll(JsonCollectionSerializers.SERIALIZERS).build();
-	public static final TypeSerializerCollection SERIALIZER_COLLECTION_VARIANT_2 = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(FACTORY).register(ItemStack.class, ITEMSTACK_SERIALIZER_2).register(BlockState.class, Sponge.game().configManager().serializers().get(BlockState.class)).registerAll(TypeSerializerCollection.defaults()).registerAll(ConfigurateComponentSerializer.configurate().serializers()).registerAll(JsonCollectionSerializers.SERIALIZERS).build();
-	public static final TypeSerializerCollection SERIALIZER_COLLECTION_VARIANT_3 = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(FACTORY).registerAll(Sponge.game().configManager().serializers()).registerAll(ConfigurateComponentSerializer.configurate().serializers()).registerAll(JsonCollectionSerializers.SERIALIZERS).build();
+	public static final TypeSerializerCollection SERIALIZER_COLLECTION_VARIANT_1 = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(FACTORY).register(ItemStack.class, ITEMSTACK_SERIALIZER_1).register(BlockState.class, Sponge.game().configManager().serializers().get(BlockState.class)).registerAll(TypeSerializerCollection.defaults()).registerAll(ConfigurateComponentSerializer.configurate().serializers()).register(JsonObject.class, JSONOBJECT_SERIALIZER).build();
+	public static final TypeSerializerCollection SERIALIZER_COLLECTION_VARIANT_2 = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(FACTORY).register(ItemStack.class, ITEMSTACK_SERIALIZER_2).register(BlockState.class, Sponge.game().configManager().serializers().get(BlockState.class)).registerAll(TypeSerializerCollection.defaults()).registerAll(ConfigurateComponentSerializer.configurate().serializers()).register(JsonObject.class, JSONOBJECT_SERIALIZER).build();
+	public static final TypeSerializerCollection SERIALIZER_COLLECTION_VARIANT_3 = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(FACTORY).registerAll(Sponge.game().configManager().serializers()).registerAll(ConfigurateComponentSerializer.configurate().serializers()).register(JsonObject.class, JSONOBJECT_SERIALIZER).build();
 	public static final ConfigurationOptions OPTIONS_VARIANT_1 = ConfigurationOptions.defaults().serializers(SERIALIZER_COLLECTION_VARIANT_1);
 	public static final ConfigurationOptions OPTIONS_VARIANT_2 = ConfigurationOptions.defaults().serializers(SERIALIZER_COLLECTION_VARIANT_2);
 	public static final ConfigurationOptions OPTIONS_VARIANT_3 = ConfigurationOptions.defaults().serializers(SERIALIZER_COLLECTION_VARIANT_3);
