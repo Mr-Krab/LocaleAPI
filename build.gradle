@@ -61,20 +61,24 @@ sponge {
 		}
 	}
 }
-/*
+
 task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
+	archiveClassifier = 'sources'
+	from sourceSets.main.allSource
+	exclude('sawfowl/localeapi/apiclasses/**')
+	exclude('sawfowl/localeapi/utils/**')
+	exclude('sawfowl/localeapi/API.java')
+	exclude('sawfowl/localeapi/LocaleAPI.java')
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
+	archiveClassifier = 'javadoc'
+	from javadoc.destinationDir
 }
 
 artifacts {
-    archives sourcesJar
-    archives javadocJar
+	archives sourcesJar
+	archives javadocJar
 }
 
 configurations {
@@ -86,6 +90,9 @@ configurations {
 javadoc {
 	options.encoding = 'UTF-8'
 	source configurations.doc.collect { zipTree(it) }
-*///	include '**/*.java'
-/*	options.addStringOption('Xdoclint:none', '-quiet')
-}*/
+	include 'sawfowl/localeapi/api/*.java'
+	include 'sawfowl/localeapi/api/event/*.java'
+	include 'sawfowl/localeapi/api/serializetools/*.java'
+	include 'sawfowl/localeapi/api/serializetools/itemstack/*.java'
+	options.addStringOption('Xdoclint:none', '-quiet')
+}
