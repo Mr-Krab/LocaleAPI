@@ -31,6 +31,7 @@ import org.spongepowered.configurate.objectmapping.meta.Setting;
 import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.plugin.PluginContainer;
 
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import net.kyori.adventure.key.Key;
@@ -197,12 +198,15 @@ public class SerializedItemStack {
 		this.itemStack = itemStack;
 	}
 
-	private String createStringFromCustomTag(CompoundTag tag, StringWriter sink) {
+	private String createStringFromCustomTag(CompoundTag tag) {
+		StringWriter sink = new StringWriter();
 		GsonConfigurationLoader loader = createWriter(sink);
 		ConfigurationNode node = loader.createNode();
 		try {
-			node.set(CompoundTag.class, tag);
-			if(!node.node("__class__").virtual()) node.removeChild("__class__");
+			if(tag.toJsonObject() == null) {
+				node.set(CompoundTag.class, tag);
+				if(!node.node("__class__").virtual()) node.removeChild("__class__");
+			} else node.set(JsonObject.class, tag.toJsonObject());
 			loader.save(node);
 		} catch (ConfigurateException e) {
 			e.printStackTrace();
@@ -397,7 +401,7 @@ public class SerializedItemStack {
 
 		@Override
 		public void putTag(PluginContainer container, String key, CompoundTag tag) {
-			putString(container, key, createStringFromCustomTag(tag, new StringWriter()));
+			putString(container, key, createStringFromCustomTag(tag));
 		}
 
 		@Override
