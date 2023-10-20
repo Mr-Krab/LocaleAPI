@@ -135,7 +135,7 @@ public class SerializedItemStack {
 		itemQuantity = quantity;
 	}
 
-	public SerializedItemStackJsonNbt toSerializedItemStack() {
+	public SerializedItemStackJsonNbt toSerializedItemStackJsonNbt() {
 		return new SerializedItemStackJsonNbt(itemType, 0, nbt == null ? null : JsonParser.parseString(nbt).getAsJsonObject());
 	}
 
