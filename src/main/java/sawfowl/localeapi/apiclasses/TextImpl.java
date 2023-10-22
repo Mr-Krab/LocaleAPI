@@ -61,42 +61,66 @@ public class TextImpl implements Text {
 	}
 
 	@Override
+	public Text append(Component component) {
+		this.component = this.component.append(component);
+		updatePlainString();
+		return this;
+	}
+
+	@Override
+	public Text append(Text text) {
+		return append(text.get());
+	}
+
+	@Override
 	public String toPlain() {
 		return plainString;
 	}
 
+	@Override
 	public Text replace(String key, Component value) {
 		component = component.replaceText(TextReplacementConfig.builder().match(key).replacement(value).build());
 		return this;
 	}
 
+	@Override
+	public Text replace(String key, Text value) {
+		return replace(key, value.get());
+	}
+
+	@Override
 	public Text replace(String key, String value) {
 		return replace(key, TextUtils.deserialize(value));
 	}
 
 	@Override
-	public Text replace(String[] keys, String[] values) {
+	public Text replace(String key, Object value) {
+		return replace(key, value.toString());
+	}
+
+	@Override
+	public Text replace(String[] keys, String... values) {
 		replace(replaceMap(keys, values));
 		updatePlainString();
 		return this;
 	}
 
 	@Override
-	public Text replace(String[] keys, Object[] values) {
+	public Text replace(String[] keys, Object... values) {
 		replace(replaceMap(keys, values));
 		updatePlainString();
 		return this;
 	}
 
 	@Override
-	public Text replaceComponents(String[] keys, Component[] values) {
+	public Text replace(String[] keys, Component... values) {
 		replaceComponents(replaceMapComponents(keys, values));
 		updatePlainString();
 		return this;
 	}
 
 	@Override
-	public Text replaceTexts(String[] keys, Text[] values) {
+	public Text replace(String[] keys, Text... values) {
 		replaceComponents(replaceMapTexts(keys, values));
 		updatePlainString();
 		return this;

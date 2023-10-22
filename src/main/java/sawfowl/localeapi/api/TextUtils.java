@@ -1,5 +1,7 @@
 package sawfowl.localeapi.api;
 
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.spongepowered.api.adventure.SpongeComponents;
@@ -90,7 +92,7 @@ public class TextUtils {
 	/**
 	 * String to {@link Component} conversion.
 	 */
-	public static final  Component deserialize(String string) {
+	public static final Component deserialize(String string) {
 		if(isLegacyDecor(string)) {
 			return deserializeLegacy(string);
 		} else try {
@@ -105,6 +107,24 @@ public class TextUtils {
 	 */
 	public static boolean isLegacyDecor(String string) {
 		return string.indexOf('&') != -1 /*&& !string.endsWith("&")*/ && isStyleChar(string.charAt(string.indexOf("&") + 1));
+	}
+
+
+	/**
+	 * Time formatting.
+	 */
+	public static Component timeFormat(long timeSecond, Locale locale, Component day, Component hour, Component minute, Component second) {
+		long timeMinute = TimeUnit.SECONDS.toMinutes(timeSecond);
+		long timeHour = TimeUnit.SECONDS.toHours(timeSecond);
+		long timeDays = TimeUnit.SECONDS.toDays(timeSecond);
+		if(timeDays == 0) {
+			if(timeHour == 0) {
+				if(timeMinute == 0) {
+					return Text.of(String.format((timeSecond > 9 ? "%02d" : "%01d"), timeSecond) + "%second%").replace("%second%", second).get();
+				} else return Text.of(String.format((timeMinute > 9 ? "%02d" : "%01d"), timeMinute) + "%minute%" + (timeSecond - (timeMinute * 60) > 0 ? " " + String.format((timeSecond - (timeMinute * 60) > 9 ? "%02d" : "%01d"), timeSecond - (timeMinute * 60)) + "%second%" : "")).replace(new String[] {"%minute%", "%second%"}, minute, second).get();
+			} else return Text.of(String.format((timeHour > 9 ? "%02d" : "%01d"), timeHour) + "%hour%" + (timeMinute - (timeHour * 60) > 0 ? " " + String.format((timeMinute - (timeHour * 60) > 9 ? "%02d" : "%01d"), timeMinute - (timeHour * 60)) + "%minute%" : "")).replace(new String[] {"%hour%", "%minute%"}, hour, minute).get();
+		}
+		return Text.of(String.format((timeDays > 9 ? "%02d" : "%01d"), timeDays) + "%days% " + String.format((timeHour - (timeDays * 24) > 9 ? "%02d" : "%01d"), timeHour - (timeDays * 24)) + "%hour%" + (timeMinute - (timeHour * 60) > 0 ? " " + String.format((timeMinute - (timeHour * 60) > 9 ? "%02d" : "%01d"), timeMinute - (timeHour * 60)) + "%minute%" : "")).replace(new String[] {"%days%", "%hour%", "%minute%"}, day, hour, minute).get();
 	}
 
 	private static boolean isStyleChar(char ch) {

@@ -36,24 +36,54 @@ public interface Text extends DataSerializable {
 	String toPlain();
 
 	/**
-	 * This method works similarly to {@link String#replace(String, String)}
+	 * Appends a component to this text.
 	 */
-	Text replace(String[] keys, String[] values);
+	Text append(Component component);
+
+	/**
+	 * Appends a text to this text.
+	 */
+	Text append(Text text);
 
 	/**
 	 * This method works similarly to {@link String#replace(String, String)}
 	 */
-	Text replace(String[] keys, Object[] values);
+	Text replace(String key, String value);
 
 	/**
 	 * This method works similarly to {@link String#replace(String, String)}
 	 */
-	Text replaceComponents(String[] keys, Component[] values);
+	Text replace(String key, Component value);
 
 	/**
 	 * This method works similarly to {@link String#replace(String, String)}
 	 */
-	Text replaceTexts(String[] keys, Text[] values);
+	Text replace(String key, Text value);
+
+	/**
+	 * This method works similarly to {@link String#replace(String, String)}
+	 */
+	Text replace(String key, Object value);
+
+	/**
+	 * This method works similarly to {@link String#replace(String, String)}
+	 */
+	Text replace(String[] keys, String... values);
+
+	/**
+	 * This method works similarly to {@link String#replace(String, String)}
+	 */
+	Text replace(String[] keys, Object... values);
+
+	/**
+	 * This method works similarly to {@link String#replace(String, String)}
+	 */
+	Text replace(String[] keys, Component... values);
+
+	/**
+	 * This method works similarly to {@link String#replace(String, String)}
+	 */
+	Text replace(String[] keys, Text... values);
 
 	/**
 	 * Adding the execution of arbitrary code when you click on text.<br>
