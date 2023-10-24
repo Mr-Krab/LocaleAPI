@@ -18,7 +18,7 @@ public class TextUtils {
 	 * Adding the execution of arbitrary code when you click on text.<br>
 	 * It is used {@link #createCallBack(Component, Consumer)}
 	 */
-	public Component createCallBack(Component component, Runnable runnable) {
+	public static Component createCallBack(Component component, Runnable runnable) {
 		return createCallBack(component, cause -> {
 			runnable.run();
 		});
@@ -28,7 +28,7 @@ public class TextUtils {
 	 * Adding the execution of arbitrary code when you click on text.<br>
 	 * It is used {@link SpongeComponents#executeCallback(callback)}
 	 */
-	public Component createCallBack(Component component, Consumer<CommandCause> callback) {
+	public static Component createCallBack(Component component, Consumer<CommandCause> callback) {
 		return component.clickEvent(SpongeComponents.executeCallback(callback));
 	}
 
