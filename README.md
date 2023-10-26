@@ -9,8 +9,14 @@ public class Main {
 	private Main instance;
 	private Logger logger;
 	private static LocaleService localeService;
+	private PluginContainer pluginContainer;
 	public LocaleService getLocaleService() {
 		return localeService;
+	}
+
+	@Inject
+	public Main(PluginContainer pluginContainer, @ConfigDir(sharedRoot = false) Path configDirectory) {
+		this.pluginContainer = pluginContainer;
 	}
 
 	// Get API. Variant 1. This happens in event `ConstructPluginEvent`.  It's recommended if LocaleAPI is mandatory.
@@ -32,18 +38,18 @@ public class Main {
 
 	public void testLocales() {
 		if(!localeService.localesExist(instance)) {
-			localeService.createPluginLocale(instance, ConfigTypes.HOCON, Locales.DEFAULT);
-			//		                          ^^ Main class or "pluginid".
-			localeService.createPluginLocale(instance, ConfigTypes.HOCON, Locales.DEFAULT);
+			localeService.createPluginLocale(pluginContainer, ConfigTypes.HOCON, Locales.DEFAULT);
+			//		                          ^^ pluginContainer or "pluginid".
+			localeService.createPluginLocale(pluginContainer, ConfigTypes.HOCON, Locales.DEFAULT);
 			getLocaleUtil(Locales.DEFAULT).checkString("Your string for localization.", "Optional comment", "Path");
 		}
 		// Get message from locale. You can get and use the player's localization 'player.locale();'.
 		// The boolean parameter defines what type of string serializer will be used.
-		logger.info(getLocaleUtil(Locales.DEFAULT).getComponent(false, "Path"));
+		logger.info(getLocaleUtil(Locales.DEFAULT).getComponent("Path"));
 	}
 
-	public AbstractLocaleUtil getLocaleUtil(Locale locale) {
-		return localeService.getOrDefaultLocale(instance, locale);
+	public PluginLocale getPluginLocale(Locale locale) {
+		return localeService.getOrDefaultLocale(pluginContainer, locale);
 	}
 }
 ```
@@ -58,5 +64,5 @@ repositories {
 }
 dependencies {
 	...
-	implementation 'com.github.SawFowl:LocaleAPI:2.6.0'
+	implementation 'com.github.SawFowl:LocaleAPI:3.0.0'
 }
