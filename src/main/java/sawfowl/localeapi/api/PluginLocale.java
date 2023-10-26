@@ -36,7 +36,6 @@ public interface PluginLocale {
 	/**
 	 * Getteng deserialized {@link Component} from locale configuration node.
 	 * 
-	 * @param json - If true, then the {@link Component} will be received from the JSON string.
 	 * @param path - Path in the config file.
 	 * @return {@link Component}
 	 */
@@ -45,7 +44,6 @@ public interface PluginLocale {
 	/**
 	 * Getting a deserialized list of {@link Component} classes from the locale configuration node. 
 	 * 
-	 * @param json - If true, then the list of {@link Component} classes will be obtained from JSON strings.
 	 * @param path - Path in the config file.
 	 * @return "List&lt;Component&gt;"
 	 */
