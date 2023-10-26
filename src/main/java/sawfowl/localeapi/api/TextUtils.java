@@ -40,7 +40,7 @@ public class TextUtils {
 	}
 
 	/**
-	 * It is used {@link GsonComponentSerializer.gson()}
+	 * It is used {@link GsonComponentSerializer#gson()}
 	 */
 	public static final String serializeJson(Component component) {
 		return component == null ? "" : GsonComponentSerializer.gson().serialize(component);
@@ -54,7 +54,7 @@ public class TextUtils {
 	}
 
 	/**
-	 * It is used {@link GsonComponentSerializer.gson()}
+	 * It is used {@link GsonComponentSerializer#gson()}
 	 */
 	public static final Component deserializeJson(String string) {
 		return string == null ? Component.empty() : GsonComponentSerializer.gson().deserialize(string);
