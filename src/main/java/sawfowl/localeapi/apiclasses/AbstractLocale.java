@@ -58,12 +58,12 @@ public abstract class AbstractLocale implements PluginLocale {
 
 	@Override
 	public Text getText(Object... path) {
-		return Text.of(getString(path));
+		return Text.of(getComponent(path));
 	}
 
 	@Override
 	public List<Text> getTexts(Object... path) {
-		return getListStrings(path).stream().map(Text::of).toList();
+		return getListComponents(path).stream().map(Text::of).toList();
 	}
 
 	@Override

@@ -15,13 +15,12 @@ import org.spongepowered.api.data.persistence.Queries;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextReplacementConfig;
-
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import sawfowl.localeapi.api.Text;
 import sawfowl.localeapi.api.TextUtils;
 
 public class TextImpl implements Text {
 
-	private String plainString = "";
 	private Component component = Component.empty();
 
 	public Builder builder() {
@@ -32,12 +31,11 @@ public class TextImpl implements Text {
 			}
 			@Override
 			public Text fromString(String string) {
-				return fromComponent(TextUtils.deserialize(string));
+				return fromComponent(TextUtils.deserialize(string == null ? "" : string));
 			}
 			@Override
 			public Text fromComponent(Component component) {
-				TextImpl.this.component = component;
-				updatePlainString();
+				TextImpl.this.component = component == null ? Component.empty() : component;
 				return build();
 			}
 		};
@@ -63,7 +61,6 @@ public class TextImpl implements Text {
 	@Override
 	public Text append(Component component) {
 		this.component = this.component.append(component);
-		updatePlainString();
 		return this;
 	}
 
@@ -74,7 +71,7 @@ public class TextImpl implements Text {
 
 	@Override
 	public String toPlain() {
-		return plainString;
+		return PlainTextComponentSerializer.plainText().serialize(component);
 	}
 
 	@Override
@@ -101,28 +98,24 @@ public class TextImpl implements Text {
 	@Override
 	public Text replace(String[] keys, String... values) {
 		replace(replaceMap(keys, values));
-		updatePlainString();
 		return this;
 	}
 
 	@Override
 	public Text replace(String[] keys, Object... values) {
 		replace(replaceMap(keys, values));
-		updatePlainString();
 		return this;
 	}
 
 	@Override
 	public Text replace(String[] keys, Component... values) {
 		replaceComponents(replaceMapComponents(keys, values));
-		updatePlainString();
 		return this;
 	}
 
 	@Override
 	public Text replace(String[] keys, Text... values) {
 		replaceComponents(replaceMapTexts(keys, values));
-		updatePlainString();
 		return this;
 	}
 
@@ -179,10 +172,6 @@ public class TextImpl implements Text {
 		}
 		*/
 		return IntStream.range(0, keys.length).boxed().collect(Collectors.toMap(i -> keys[i], i -> values.length > i ? values[i].get() : Component.empty()));
-	}
-
-	private void updatePlainString() {
-		plainString = TextUtils.clearDecorations(component);
 	}
 
 }

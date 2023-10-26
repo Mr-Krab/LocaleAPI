@@ -36,41 +36,42 @@ public class TextUtils {
 	 * It is used {@link LegacyComponentSerializer#legacyAmpersand()}
 	 */
 	public static final String serializeLegacy(Component component) {
-		return LegacyComponentSerializer.legacyAmpersand().serialize(component);
+		return component == null ? "" : LegacyComponentSerializer.legacyAmpersand().serialize(component);
 	}
 
 	/**
 	 * It is used {@link GsonComponentSerializer.gson()}
 	 */
 	public static final String serializeJson(Component component) {
-		return GsonComponentSerializer.gson().serialize(component);
+		return component == null ? "" : GsonComponentSerializer.gson().serialize(component);
 	}
 
 	/**
 	 * It is used {@link LegacyComponentSerializer#legacyAmpersand()}
 	 */
 	public static final Component deserializeLegacy(String string) {
-		return LegacyComponentSerializer.legacyAmpersand().deserialize(string);
+		return string == null ? Component.empty() : LegacyComponentSerializer.legacyAmpersand().deserialize(string);
 	}
 
 	/**
 	 * It is used {@link GsonComponentSerializer.gson()}
 	 */
 	public static final Component deserializeJson(String string) {
-		return GsonComponentSerializer.gson().deserialize(string);
+		return string == null ? Component.empty() : GsonComponentSerializer.gson().deserialize(string);
 	}
 
 	/**
 	 * Removing all decorations from the text.
 	 */
 	public static final String clearDecorations(Component component) {
-		return clearDecorations(serializeLegacy(component));
+		return component == null ? "" : clearDecorations(serializeLegacy(component));
 	}
 
 	/**
 	 * Removing all decorations from the text.
 	 */
 	public static final String clearDecorations(String string) {
+		if(string == null) return "";
 		while(string.indexOf('&') != -1 && !string.endsWith("&") && isStyleChar(string.charAt(string.indexOf("&") + 1))) string = string.replaceAll("&" + string.charAt(string.indexOf("&") + 1), "");
 		return string;
 	}
@@ -79,20 +80,21 @@ public class TextUtils {
 	 * Removing all decorations from the text.
 	 */
 	public static final Component removeDecorations(Component component) {
-		return removeDecorations(serializeLegacy(component));
+		return component == null ? Component.empty() : removeDecorations(serializeLegacy(component));
 	}
 
 	/**
 	 * Removing all decorations from the text.
 	 */
 	public static final Component removeDecorations(String string) {
-		return deserializeLegacy(clearDecorations(string));
+		return string == null ? Component.empty() : deserializeLegacy(clearDecorations(string));
 	}
 
 	/**
 	 * String to {@link Component} conversion.
 	 */
 	public static final Component deserialize(String string) {
+		if(string == null) return Component.empty();
 		if(isLegacyDecor(string)) {
 			return deserializeLegacy(string);
 		} else try {
