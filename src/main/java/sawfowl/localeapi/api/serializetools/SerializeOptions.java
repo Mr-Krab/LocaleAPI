@@ -65,7 +65,6 @@ public class SerializeOptions {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T, C extends ConfigurationNode> ConfigurationLoader<C> createConfigLoader(Class<T> loaderClass, Class<C> nodeClass, Path path, ConfigTypes configType, int itemStackSerializerVariant) {
-		createHoconConfigurationLoader(itemStackSerializerVariant).path(path).build();
 		switch (configType) {
 		case HOCON: return (ConfigurationLoader<C>) createHoconConfigurationLoader(itemStackSerializerVariant).path(path).build();
 		case YAML: return (ConfigurationLoader<C>) createYamlConfigurationLoader(itemStackSerializerVariant).path(path).build();
