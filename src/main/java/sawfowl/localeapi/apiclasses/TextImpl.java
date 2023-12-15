@@ -132,6 +132,12 @@ public class TextImpl implements Text {
 		return this;
 	}
 
+	@Override
+	public Text removeDecorations() {
+		component = TextUtils.removeDecorations(component);
+		return this;
+	}
+
 	private void replace(Map<String, String> map) {
 		map.forEach((k, v) -> replace(k, v));
 	}
@@ -141,36 +147,14 @@ public class TextImpl implements Text {
 	}
 
 	private Map<String, String> replaceMap(String[] keys, Object[] values) {
-		/*Map<String, String> map = new HashMap<String, String>();
-		int i = 0;
-		for(String key : keys) {
-			if(i >= keys.length || i >= values.length) break;
-			map.put(key, values[i].toString());
-			i++;
-		}*/
 		return IntStream.range(0, keys.length).boxed().collect(Collectors.toMap(i -> keys[i], i -> values.length > i ? values[i].toString() : ""));
 	}
 
 	private Map<String, Component> replaceMapComponents(String[] keys, Component[] values) {
-		/*Map<String, Component> map = new HashMap<String, Component>();
-		int i = 0;
-		for(String key : keys) {
-			if(i >= keys.length || i >= values.length) break;
-			map.put(key, values[i]);
-			i++;
-		}*/
 		return IntStream.range(0, keys.length).boxed().collect(Collectors.toMap(i -> keys[i], i -> values.length > i ? values[i] : Component.empty()));
 	}
 
 	private Map<String, Component> replaceMapTexts(String[] keys, Text[] values) {
-		/*Map<String, Component> map = new HashMap<String, Component>();
-		int i = 0;
-		for(String key : keys) {
-			if(i >= keys.length || i >= values.length) break;
-			map.put(key, values[i].get());
-			i++;
-		}
-		*/
 		return IntStream.range(0, keys.length).boxed().collect(Collectors.toMap(i -> keys[i], i -> values.length > i ? values[i].get() : Component.empty()));
 	}
 

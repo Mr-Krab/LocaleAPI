@@ -13,12 +13,14 @@ import org.apache.logging.log4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.util.locale.Locales;
+import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.serialize.SerializationException;
 
 import net.kyori.adventure.text.Component;
 
 import sawfowl.localeapi.LocaleAPI;
 import sawfowl.localeapi.api.ConfigTypes;
+import sawfowl.localeapi.api.LocaleReference;
 import sawfowl.localeapi.api.LocaleService;
 import sawfowl.localeapi.api.PluginLocale;
 import sawfowl.localeapi.api.Text;
@@ -27,12 +29,12 @@ import sawfowl.localeapi.api.TextUtils;
 public abstract class AbstractLocale implements PluginLocale {
 
 
-	final LocaleService localeService;
-	final Logger logger;
-	final String pluginID;
-	final boolean thisIsDefault;
-	final Path path;
-	final String locale;
+	protected final LocaleService localeService;
+	protected final Logger logger;
+	protected final String pluginID;
+	protected final boolean thisIsDefault;
+	protected final Path path;
+	protected final String locale;
 	public AbstractLocale(LocaleService localeService, Logger logger, Path path, String pluginID, String locale) {
 		this.localeService = localeService;
 		this.logger = logger;
@@ -46,6 +48,8 @@ public abstract class AbstractLocale implements PluginLocale {
 
 	abstract void setComment(String comment, Object... path);
 
+	protected abstract void reloadReference() throws ConfigurateException;
+	
 	@Override
 	public Component getComponent(Object... path) {
 		if(thisIsDefault && getLocaleNode(path).virtual()) return TextUtils.deserializeLegacy("&cPath " + getPathName(path) + " not exist!");
@@ -115,7 +119,6 @@ public abstract class AbstractLocale implements PluginLocale {
 			try {
 				if(json) {
 					getLocaleNode(path).setList(Component.class, components);
-					//getLocaleNode(path).setList(String.class, components.stream().map(TextUtils::serializeJson).toList());
 				} else getLocaleNode(path).setList(String.class, components.stream().map(TextUtils::serializeLegacy).toList());
 				if(comment != null) setComment(comment, path);
 				return true;
@@ -171,6 +174,18 @@ public abstract class AbstractLocale implements PluginLocale {
 
 	protected String getPathName(Object... path) {
 		return "[" + String.join(", ", Stream.of(path).map(Object::toString).toArray(String[]::new)) + "]";
+	}
+
+	protected void setDefaultReference() {
+		Class<? extends LocaleReference> defaultReference = localeService.getDefaultReference(pluginID);
+		if(defaultReference == null || asReference(defaultReference) != null) return;
+		try {
+			setLocaleReference(defaultReference);
+			reloadReference();
+			defaultReference = null;
+		} catch (ConfigurateException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

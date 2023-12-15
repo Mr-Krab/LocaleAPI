@@ -3,7 +3,9 @@ package sawfowl.localeapi.api;
 import java.util.List;
 
 import org.spongepowered.api.event.lifecycle.RegisterBuilderEvent;
+import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
+import org.spongepowered.configurate.serialize.SerializationException;
 
 import net.kyori.adventure.text.Component;
 
@@ -122,5 +124,34 @@ public interface PluginLocale {
 	 * @return false if the path already exists. <br>true if path is created.
 	 */
 	boolean checkListStrings(List<String> strings, String comment, Object... path);
+
+	/**
+	 * Assign a serializable class to this localization.<br>
+	 * If no data has been previously written to this localization, it will be applied from the specified class.
+	 * 
+	 * @param <T> reference - The serializable class extends {@link LocaleReference}
+	 * @throws SerializationException
+	 * @throws ConfigurateException
+	 */
+	<T extends LocaleReference> void setLocaleReference(Class<T> reference) throws SerializationException, ConfigurateException;
+
+	/**
+	 * Assign a serializable class to this localization.<br>
+	 * If no data has been previously written to this localization, it will be applied from the specified class.<br>
+	 * This method accepts the created class object and applies all the data written to it, as well as performs saving to disk.
+	 * 
+	 * @param <T> reference - The serializable class extends {@link LocaleReference}
+	 * @throws SerializationException
+	 * @throws ConfigurateException
+	 */
+	<T extends LocaleReference> void setLocaleReference(T reference) throws SerializationException, ConfigurateException;
+
+	/**
+	 * Getting the serializable class from the given localization if it was previously assigned.
+	 * 
+	 * @param <T> clazz - The serializable class extends {@link LocaleReference}
+	 * @return Serializable class, or null if no class assignment was previously made.
+	 */
+	<T extends LocaleReference> T asReference(Class<T> clazz);
 
 }

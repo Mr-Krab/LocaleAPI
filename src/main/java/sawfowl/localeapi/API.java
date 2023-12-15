@@ -21,6 +21,7 @@ import org.spongepowered.plugin.PluginContainer;
 
 import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.EnumLocales;
+import sawfowl.localeapi.api.LocaleReference;
 import sawfowl.localeapi.api.LocaleService;
 import sawfowl.localeapi.api.PluginLocale;
 import sawfowl.localeapi.api.serializetools.SerializeOptions;
@@ -35,6 +36,7 @@ class API implements LocaleService {
 
 	private Map<String, Map<Locale, PluginLocale>> pluginLocales;
 	private Map<String, Integer> stackSerializers;
+	private Map<String, Class<? extends LocaleReference>> defaultReferences;
 	private List<Locale> locales;
 	private WatchThread watchThread;
 	private Path configDirectory;
@@ -47,6 +49,7 @@ class API implements LocaleService {
 		configDirectory = path;
 		pluginLocales = new HashMap<String, Map<Locale, PluginLocale>>();
 		stackSerializers = new HashMap<String, Integer>();
+		defaultReferences = new HashMap<String, Class<? extends LocaleReference>>();
 		locales = EnumLocales.getLocales();
 		watchThread = new WatchThread(this, logger, path);
 		watchThread.start();
@@ -223,6 +226,21 @@ class API implements LocaleService {
 
 	public int getItemStackSerializerVariant(String plugin) {
 		return stackSerializers.getOrDefault(plugin, 1);
+	}
+
+	@Override
+	public <T extends LocaleReference> void setDefaultReference(PluginContainer container, Class<? extends LocaleReference> defaultReference) {
+		defaultReferences.put(container.metadata().id(), defaultReference);
+	}
+
+	@Override
+	public <T extends LocaleReference> Class<? extends LocaleReference> getDefaultReference(PluginContainer container) {
+		return getDefaultReference(container.metadata().id());
+	}
+
+	@Override
+	public <T extends LocaleReference> Class<? extends LocaleReference> getDefaultReference(String pluginID) {
+		return defaultReferences.containsKey(pluginID) ? defaultReferences.get(pluginID) : null;
 	}
 
 }

@@ -97,6 +97,11 @@ public interface Text extends DataSerializable {
 	 */
 	Text createCallBack(Consumer<CommandCause> callback);
 
+	/**
+	 * Removing all decorations from the text.
+	 */
+	Text removeDecorations();
+
 	public interface Builder extends AbstractBuilder<Text>, org.spongepowered.api.util.Builder<Text, Builder> {
 
 		Text fromComponent(Component component);
