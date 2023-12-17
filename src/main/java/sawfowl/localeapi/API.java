@@ -13,14 +13,18 @@ import java.util.Optional;
 
 import org.apache.logging.log4j.Logger;
 
+import org.spongepowered.api.Server;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.Order;
+import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
 import org.spongepowered.api.event.lifecycle.StoppedGameEvent;
 import org.spongepowered.api.util.locale.Locales;
 import org.spongepowered.plugin.PluginContainer;
 
 import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.EnumLocales;
+import sawfowl.localeapi.api.LocaleReference;
 import sawfowl.localeapi.api.LocaleService;
 import sawfowl.localeapi.api.PluginLocale;
 import sawfowl.localeapi.api.serializetools.SerializeOptions;
@@ -35,6 +39,7 @@ class API implements LocaleService {
 
 	private Map<String, Map<Locale, PluginLocale>> pluginLocales;
 	private Map<String, Integer> stackSerializers;
+	private Map<String, Class<? extends LocaleReference>> defaultReferences;
 	private List<Locale> locales;
 	private WatchThread watchThread;
 	private Path configDirectory;
@@ -47,9 +52,9 @@ class API implements LocaleService {
 		configDirectory = path;
 		pluginLocales = new HashMap<String, Map<Locale, PluginLocale>>();
 		stackSerializers = new HashMap<String, Integer>();
+		defaultReferences = new HashMap<String, Class<? extends LocaleReference>>();
 		locales = EnumLocales.getLocales();
 		watchThread = new WatchThread(this, logger, path);
-		watchThread.start();
 		allowSystem = locales.contains(system) || locales.stream().filter(locale -> (locale.toLanguageTag().equals(system.toLanguageTag()))).findFirst().isPresent();
 		Sponge.eventManager().registerListeners(LocaleAPI.getPluginContainer(), this);
 	}
@@ -140,20 +145,15 @@ class API implements LocaleService {
 			return;
 		}
 		File localePath = new File(this.configDirectory + File.separator + pluginID);
-		if(!localePath.exists()) {
-			localePath.mkdir();
-		}
+		if(!localePath.exists()) localePath.mkdir();
 		if(!pluginLocales.containsKey(pluginID)) pluginLocales.put(pluginID, new HashMap<Locale, PluginLocale>());
-		for(Locale locale : this.locales) {
-			saveAssets(pluginID, locale);
-		}
+		for(Locale locale : this.locales) saveAssets(pluginID, locale);
 		localesExist(pluginID);
 		updateWatch(pluginID);
 	}
 
 	public PluginLocale createPluginLocale(PluginContainer plugin, ConfigTypes configType, Locale locale) {
-		String pluginID = getPluginID(plugin);
-		return createPluginLocale(pluginID, configType, locale);
+		return createPluginLocale(getPluginID(plugin), configType, locale);
 	}
 
 	public PluginLocale createPluginLocale(String pluginID, ConfigTypes configType, Locale locale) {
@@ -203,6 +203,11 @@ class API implements LocaleService {
 		return pluginLocales.containsKey(pluginID) && pluginLocales.get(pluginID).containsKey(Locales.DEFAULT);
 	}
 
+	@Listener(order = Order.LAST)
+	public void onCompleteLoad(StartedEngineEvent<Server> event) {
+		watchThread.start();
+	}
+
 	@Listener
 	public void stopWatch(StoppedGameEvent event) {
 		if(event == null) return;
@@ -223,6 +228,22 @@ class API implements LocaleService {
 
 	public int getItemStackSerializerVariant(String plugin) {
 		return stackSerializers.getOrDefault(plugin, 1);
+	}
+
+	@Override
+	public void setDefaultReference(PluginContainer container, Class<? extends LocaleReference> defaultReference) {
+		if(defaultReferences.containsKey(container.metadata().id())) defaultReferences.remove(container.metadata().id());
+		defaultReferences.put(container.metadata().id(), defaultReference);
+	}
+
+	@Override
+	public <T extends LocaleReference> Class<? extends LocaleReference> getDefaultReference(PluginContainer container) {
+		return getDefaultReference(container.metadata().id());
+	}
+
+	@Override
+	public <T extends LocaleReference> Class<? extends LocaleReference> getDefaultReference(String pluginID) {
+		return defaultReferences.containsKey(pluginID) ? defaultReferences.get(pluginID) : null;
 	}
 
 }

@@ -100,6 +100,10 @@ public class WatchLocales {
 				for(ConfigTypes configType : ConfigTypes.values()) {
 					String configTypeName = configType.toString();
 					if(fileName.contains(configTypeName)) {
+						if(configType == ConfigTypes.PROPERTIES && localeService.getDefaultReference(pluginID) != null) {
+							logger.warn("[FileWatcher] The \"" + fileName + "\" localization for the \"" + pluginID + "\" plugin cannot be loaded, because the plugin uses \"Reference\" localization classes.");
+							return;
+						}
 						int localesSizeBefore = localeService.getPluginLocales(pluginID).size();
 						logger.info("[FileWatcher] New locale file found -> \"" + fileName + "\" for plugin \"" + pluginID + "\"! Loading...");
 						PluginLocale localeconfig = localeService.createPluginLocale(pluginID, configType, locale);

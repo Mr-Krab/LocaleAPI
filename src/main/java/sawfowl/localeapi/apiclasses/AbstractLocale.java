@@ -13,12 +13,14 @@ import org.apache.logging.log4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.util.locale.Locales;
+import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.serialize.SerializationException;
 
 import net.kyori.adventure.text.Component;
 
 import sawfowl.localeapi.LocaleAPI;
 import sawfowl.localeapi.api.ConfigTypes;
+import sawfowl.localeapi.api.LocaleReference;
 import sawfowl.localeapi.api.LocaleService;
 import sawfowl.localeapi.api.PluginLocale;
 import sawfowl.localeapi.api.Text;
@@ -27,12 +29,12 @@ import sawfowl.localeapi.api.TextUtils;
 public abstract class AbstractLocale implements PluginLocale {
 
 
-	final LocaleService localeService;
-	final Logger logger;
-	final String pluginID;
-	final boolean thisIsDefault;
-	final Path path;
-	final String locale;
+	protected final LocaleService localeService;
+	protected final Logger logger;
+	protected final String pluginID;
+	protected final boolean thisIsDefault;
+	protected final Path path;
+	protected final String locale;
 	public AbstractLocale(LocaleService localeService, Logger logger, Path path, String pluginID, String locale) {
 		this.localeService = localeService;
 		this.logger = logger;
@@ -40,6 +42,7 @@ public abstract class AbstractLocale implements PluginLocale {
 		this.pluginID = pluginID;
 		this.locale = locale;
 		thisIsDefault = locale.equals(Locales.DEFAULT.toLanguageTag());
+		setDefaultReference();
 	}
 
 	abstract ConfigTypes getType();
@@ -95,7 +98,7 @@ public abstract class AbstractLocale implements PluginLocale {
 
 	@Override
 	public boolean checkComponent(boolean json, Component component, String comment, Object... path) {
-		if(getLocaleNode(path).empty()) {
+		if(getLocaleNode(path).empty() || !fileExists()) {
 			try {
 				if(json) {
 					getLocaleNode(path).set(Component.class, component);
@@ -111,11 +114,10 @@ public abstract class AbstractLocale implements PluginLocale {
 
 	@Override
 	public boolean checkListComponents(boolean json, List<Component> components, String comment, Object... path) {
-		if(getLocaleNode(path).empty()) {
+		if(getLocaleNode(path).empty() || !fileExists()) {
 			try {
 				if(json) {
 					getLocaleNode(path).setList(Component.class, components);
-					//getLocaleNode(path).setList(String.class, components.stream().map(TextUtils::serializeJson).toList());
 				} else getLocaleNode(path).setList(String.class, components.stream().map(TextUtils::serializeLegacy).toList());
 				if(comment != null) setComment(comment, path);
 				return true;
@@ -128,7 +130,7 @@ public abstract class AbstractLocale implements PluginLocale {
 
 	@Override
 	public boolean checkString(String string, String comment, Object... path) {
-		if(getLocaleNode(path).empty()) {
+		if(getLocaleNode(path).empty() || !fileExists()) {
 			try {
 				getLocaleNode(path).set(string);
 				if(comment != null) setComment(comment, path);
@@ -142,7 +144,7 @@ public abstract class AbstractLocale implements PluginLocale {
 
 	@Override
 	public boolean checkListStrings(List<String> strings, String comment, Object... path) {
-		if(getLocaleNode(path).empty()) {
+		if(getLocaleNode(path).empty() || !fileExists()) {
 			try {
 				getLocaleNode(path).setList(String.class, strings);
 				if(comment != null) setComment(comment, path);
@@ -151,7 +153,12 @@ public abstract class AbstractLocale implements PluginLocale {
 				logger.error(e.getLocalizedMessage());
 			}
 		}
-		return false;
+		return !false;
+	}
+
+	@Override
+	public boolean fileExists() {
+		return path.toFile().exists();
 	}
 
 	protected void freezeWatcher() {
@@ -171,6 +178,19 @@ public abstract class AbstractLocale implements PluginLocale {
 
 	protected String getPathName(Object... path) {
 		return "[" + String.join(", ", Stream.of(path).map(Object::toString).toArray(String[]::new)) + "]";
+	}
+
+	protected void setDefaultReference() {
+		if(getType() == ConfigTypes.PROPERTIES) return;
+		Class<? extends LocaleReference> defaultReference = localeService.getDefaultReference(pluginID);
+		if(defaultReference == null || asReference(defaultReference) != null) return;
+		try {
+			setLocaleReference(defaultReference);
+			if(!path.toFile().exists() || !getLocaleRootNode().empty()) saveLocaleNode();
+			defaultReference = null;
+		} catch (ConfigurateException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

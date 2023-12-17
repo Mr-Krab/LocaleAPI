@@ -12,32 +12,32 @@ public interface LocaleService {
 	 * Getting the system locale.<br>
 	 * If Sponge does not support your system locale, the default locale for Sponge will be selected.
 	 */
-	public Locale getSystemOrDefaultLocale();
+	Locale getSystemOrDefaultLocale();
 
 	/**
 	 * List of all localizations of the game.
 	 * 
 	 */
-	public List<Locale> getLocalesList();
+	List<Locale> getLocalesList();
 
 	/**
 	 * The default locale. Used in a localization map.
 	 */
-	public Locale getDefaultLocale();
+	Locale getDefaultLocale();
 
 	/**
 	 * Getting a map of plugin localizations with Sponge config files. <br>
 	 * 
 	 * @param plugin - A class annotated with '@Plugin'.
 	 */
-	public Map<Locale, PluginLocale> getPluginLocales(PluginContainer plugin);
+	Map<Locale, PluginLocale> getPluginLocales(PluginContainer plugin);
 
 	/**
 	 * Getting a map of plugin localizations with Sponge config files. <br>
 	 * 
 	 * @param pluginID - Plugin ID.
 	 */
-	public Map<Locale, PluginLocale> getPluginLocales(String pluginID);
+	Map<Locale, PluginLocale> getPluginLocales(String pluginID);
 
 	/**
 	 * Get plugin localization with Sponge config file. <br> <br>
@@ -47,7 +47,7 @@ public interface LocaleService {
 	 * @param plugin - A class annotated with '@Plugin'.
 	 * @param locale - Selected localization. If the selected localization is not found, the default localization will be returned.
 	 */
-	public PluginLocale getOrDefaultLocale(PluginContainer plugin, Locale locale);
+	PluginLocale getOrDefaultLocale(PluginContainer plugin, Locale locale);
 
 	/**
 	 * Get plugin localization with Sponge config file. <br> <br>
@@ -57,21 +57,21 @@ public interface LocaleService {
 	 * @param pluginID - Plugin ID.
 	 * @param locale - Selected localization. If the selected localization is not found, the default localization will be returned.
 	 */
-	public PluginLocale getOrDefaultLocale(String pluginID, Locale locale);
+	PluginLocale getOrDefaultLocale(String pluginID, Locale locale);
 
 	/**
 	 * Save plugin locales from assets.
 	 * 
 	 * @param plugin - A class annotated with '@Plugin'.
 	 */
-	public void saveAssetLocales(PluginContainer plugin);
+	void saveAssetLocales(PluginContainer plugin);
 
 	/**
 	 * Save plugin locales from assets.
 	 * 
 	 * @param pluginID - Plugin ID.
 	 */
-	public void saveAssetLocales(String pluginID);
+	void saveAssetLocales(String pluginID);
 
 	/**
 	 * Creating a plugin localization file.
@@ -79,7 +79,7 @@ public interface LocaleService {
 	 * @param plugin - A class annotated with '@Plugin'.
 	 * @param configType - Selected config type. See enum class 'ConfigTypes'.
 	 */
-	public PluginLocale createPluginLocale(PluginContainer plugin, ConfigTypes configType, Locale locale);
+	PluginLocale createPluginLocale(PluginContainer plugin, ConfigTypes configType, Locale locale);
 
 	/**
 	 * Creating a plugin localization file.
@@ -87,7 +87,7 @@ public interface LocaleService {
 	 * @param pluginID - Plugin ID.
 	 * @param configType - Selected config type. See enum class 'ConfigTypes'.
 	 */
-	public PluginLocale createPluginLocale(String pluginID, ConfigTypes configType, Locale locale);
+	PluginLocale createPluginLocale(String pluginID, ConfigTypes configType, Locale locale);
 
 	/**
 	 * Load plugin locales if exists.
@@ -95,7 +95,7 @@ public interface LocaleService {
 	 * @param plugin - A class annotated with '@Plugin'.
 	 * @return true if loaded.
 	 */
-	public boolean localesExist(PluginContainer plugin);
+	boolean localesExist(PluginContainer plugin);
 
 	/**
 	 * Load plugin locales if exists.
@@ -103,7 +103,7 @@ public interface LocaleService {
 	 * @param pluginID - Plugin ID.
 	 * @return true if loaded.
 	 */
-	public boolean localesExist(String pluginID);
+	boolean localesExist(String pluginID);
 
 	/**
 	 * Selecting serialization variant for items.<br>
@@ -111,16 +111,43 @@ public interface LocaleService {
 	 * <b>2</b> - Advanced recording. Easier to make manual changes to the config. If you have problems with this type of serialization, you should report errors to the LocaleAPI plugin developer.<br>
 	 * <b>3</b> - Using Sponge serializer. Some data will be written in 1 line. If you encounter problems with this type of serialization, you should report bugs to the Sponge developers.<br>
 	 */
-	public void setItemStackSerializerVariant(PluginContainer container, int variant) throws Exception ;
+	void setItemStackSerializerVariant(PluginContainer container, int variant) throws Exception ;
 
 	/**
 	 * Getting the type number of the serialization type of an items.
 	 */
-	public int getItemStackSerializerVariant(PluginContainer container);
+	int getItemStackSerializerVariant(PluginContainer container);
 
 	/**
 	 * Getting the type number of the serialization type of an items.
 	 */
-	public int getItemStackSerializerVariant(String pluginID);
+	int getItemStackSerializerVariant(String pluginID);
+
+	/**
+	 * 
+	 * Set the default serializable class object for all plugin localizations.<br>
+	 * If no data has been previously written to this localization, it will be applied from the specified class.<br>
+	 * This class will be applied automatically to all localizations loaded after its addition.<br>
+	 * Automatic application of this class does not make any changes to the localization data.
+	 * 
+	 * @param <T> defaultReference - The serializable class extends {@link LocaleReference}
+	 * @param container - {@link PluginContainer}
+	 */
+	void setDefaultReference(PluginContainer container, Class<? extends LocaleReference> defaultReference);
+
+	/**
+	 * Get the default serialization class for plugin localizations.<br>
+	 * No type conversion is performed.
+	 * 
+	 * @param <T> - The serializable class extends {@link LocaleReference}
+	 * @param container - {@link PluginContainer}
+	 * @return Serializable class, or null if no class assignment was previously made.
+	 */
+	<T extends LocaleReference> Class<? extends LocaleReference> getDefaultReference(PluginContainer container);
+
+	/**
+	 * Same as {@linkplain #getDefaultReference(PluginContainer)}
+	 */
+	<T extends LocaleReference> Class<? extends LocaleReference> getDefaultReference(String pluginID);
 
 }
