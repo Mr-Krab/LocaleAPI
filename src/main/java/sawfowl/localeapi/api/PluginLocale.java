@@ -154,4 +154,9 @@ public interface PluginLocale {
 	 */
 	<T extends LocaleReference> T asReference(Class<T> clazz);
 
+	/**
+	 * Checking for the existence of a localization file on disk.
+	 */
+	boolean fileExists();
+
 }

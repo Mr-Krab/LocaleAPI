@@ -133,7 +133,7 @@ public interface LocaleService {
 	 * @param <T> defaultReference - The serializable class extends {@link LocaleReference}
 	 * @param container - {@link PluginContainer}
 	 */
-	public <T extends LocaleReference> void setDefaultReference(PluginContainer container, Class<? extends LocaleReference> defaultReference);
+	void setDefaultReference(PluginContainer container, Class<? extends LocaleReference> defaultReference);
 
 	/**
 	 * Get the default serialization class for plugin localizations.<br>
@@ -143,11 +143,11 @@ public interface LocaleService {
 	 * @param container - {@link PluginContainer}
 	 * @return Serializable class, or null if no class assignment was previously made.
 	 */
-	public <T extends LocaleReference> Class<? extends LocaleReference> getDefaultReference(PluginContainer container);
+	<T extends LocaleReference> Class<? extends LocaleReference> getDefaultReference(PluginContainer container);
 
 	/**
 	 * Same as {@linkplain #getDefaultReference(PluginContainer)}
 	 */
-	public <T extends LocaleReference> Class<? extends LocaleReference> getDefaultReference(String pluginID);
+	<T extends LocaleReference> Class<? extends LocaleReference> getDefaultReference(String pluginID);
 
 }

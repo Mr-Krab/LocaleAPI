@@ -41,7 +41,6 @@ public class JsonLocale extends AbstractLocale {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void reload() {
-		setDefaultReference();
 		try {
 			localeNode = configLoader.load();
 			if(localeReference != null && configurationReference != null) localeReference = (ValueReference<LocaleReference, BasicConfigurationNode>) (configurationReference = configLoader.loadToReference()).referenceTo(localeReference.get().getClass());
@@ -54,9 +53,9 @@ public class JsonLocale extends AbstractLocale {
 	public void saveLocaleNode() {
 		freezeWatcher();
 		try {
-			if(configurationReference == null) {
-				configLoader.save(localeNode);
-			} else configurationReference.save();
+			if(localeReference != null && configurationReference != null) {
+				configurationReference.save();
+			} else configLoader.save(localeNode);
 		} catch (IOException e) {
 			logger.error(e.getMessage());
 		}
@@ -75,8 +74,10 @@ public class JsonLocale extends AbstractLocale {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends LocaleReference> void setLocaleReference(Class<T> reference) throws SerializationException, ConfigurateException {
+		if(reference == null) return;
+		if(configLoader == null) configLoader = SerializeOptions.createJsonConfigurationLoader(localeService.getItemStackSerializerVariant(pluginID)).path(this.path).build();
 		localeReference = (ValueReference<LocaleReference, BasicConfigurationNode>) (configurationReference = configLoader.loadToReference()).referenceTo(reference);
-		if(!localeNode.empty()) localeReference.node().from(localeNode);
+		if(localeNode != null && !localeNode.empty()) localeReference.node().from(localeNode);
 		localeNode = localeReference.node();
 	}
 
@@ -84,17 +85,19 @@ public class JsonLocale extends AbstractLocale {
 	public <T extends LocaleReference> void setLocaleReference(T reference) throws SerializationException, ConfigurateException {
 		setLocaleReference(reference.getClass());
 		localeReference.setAndSave(reference);
+		localeNode = localeReference.node();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends LocaleReference> T asReference(Class<T> clazz) {
+		if(localeReference == null)
+			try {
+				setLocaleReference(localeService.getDefaultReference(pluginID));
+			} catch (ConfigurateException e) {
+				e.printStackTrace();
+			}
 		return localeReference == null ? (thisIsDefault ? null : getDefaultLocale().asReference(clazz)) : (T) localeReference.get();
-	}
-
-	@Override
-	protected void reloadReference() throws ConfigurateException {
-		configurationReference.load();
 	}
 
 }

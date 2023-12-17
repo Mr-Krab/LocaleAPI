@@ -252,8 +252,4 @@ public class LegacyLocale extends AbstractLocale {
 		return getDefaultLocale().asReference(clazz);
 	}
 
-	@Override
-	protected void reloadReference() throws ConfigurateException {
-	}
-	
 }

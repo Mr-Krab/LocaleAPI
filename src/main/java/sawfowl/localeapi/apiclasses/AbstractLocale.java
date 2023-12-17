@@ -42,14 +42,13 @@ public abstract class AbstractLocale implements PluginLocale {
 		this.pluginID = pluginID;
 		this.locale = locale;
 		thisIsDefault = locale.equals(Locales.DEFAULT.toLanguageTag());
+		setDefaultReference();
 	}
 
 	abstract ConfigTypes getType();
 
 	abstract void setComment(String comment, Object... path);
 
-	protected abstract void reloadReference() throws ConfigurateException;
-	
 	@Override
 	public Component getComponent(Object... path) {
 		if(thisIsDefault && getLocaleNode(path).virtual()) return TextUtils.deserializeLegacy("&cPath " + getPathName(path) + " not exist!");
@@ -99,7 +98,7 @@ public abstract class AbstractLocale implements PluginLocale {
 
 	@Override
 	public boolean checkComponent(boolean json, Component component, String comment, Object... path) {
-		if(getLocaleNode(path).empty()) {
+		if(getLocaleNode(path).empty() || !fileExists()) {
 			try {
 				if(json) {
 					getLocaleNode(path).set(Component.class, component);
@@ -115,7 +114,7 @@ public abstract class AbstractLocale implements PluginLocale {
 
 	@Override
 	public boolean checkListComponents(boolean json, List<Component> components, String comment, Object... path) {
-		if(getLocaleNode(path).empty()) {
+		if(getLocaleNode(path).empty() || !fileExists()) {
 			try {
 				if(json) {
 					getLocaleNode(path).setList(Component.class, components);
@@ -131,7 +130,7 @@ public abstract class AbstractLocale implements PluginLocale {
 
 	@Override
 	public boolean checkString(String string, String comment, Object... path) {
-		if(getLocaleNode(path).empty()) {
+		if(getLocaleNode(path).empty() || !fileExists()) {
 			try {
 				getLocaleNode(path).set(string);
 				if(comment != null) setComment(comment, path);
@@ -145,7 +144,7 @@ public abstract class AbstractLocale implements PluginLocale {
 
 	@Override
 	public boolean checkListStrings(List<String> strings, String comment, Object... path) {
-		if(getLocaleNode(path).empty()) {
+		if(getLocaleNode(path).empty() || !fileExists()) {
 			try {
 				getLocaleNode(path).setList(String.class, strings);
 				if(comment != null) setComment(comment, path);
@@ -154,7 +153,12 @@ public abstract class AbstractLocale implements PluginLocale {
 				logger.error(e.getLocalizedMessage());
 			}
 		}
-		return false;
+		return !false;
+	}
+
+	@Override
+	public boolean fileExists() {
+		return path.toFile().exists();
 	}
 
 	protected void freezeWatcher() {
@@ -177,11 +181,12 @@ public abstract class AbstractLocale implements PluginLocale {
 	}
 
 	protected void setDefaultReference() {
+		if(getType() == ConfigTypes.PROPERTIES) return;
 		Class<? extends LocaleReference> defaultReference = localeService.getDefaultReference(pluginID);
 		if(defaultReference == null || asReference(defaultReference) != null) return;
 		try {
 			setLocaleReference(defaultReference);
-			reloadReference();
+			if(!path.toFile().exists() || !getLocaleRootNode().empty()) saveLocaleNode();
 			defaultReference = null;
 		} catch (ConfigurateException e) {
 			e.printStackTrace();

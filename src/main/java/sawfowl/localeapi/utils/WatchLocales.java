@@ -101,7 +101,7 @@ public class WatchLocales {
 					String configTypeName = configType.toString();
 					if(fileName.contains(configTypeName)) {
 						if(configType == ConfigTypes.PROPERTIES && localeService.getDefaultReference(pluginID) != null) {
-							logger.warn("[FileWatcher] The \"+" + fileName + "\" localization for the \"+" + pluginID + "\" plugin cannot be loaded from the \"*.properties\" file because the plugin uses \"Reference\" localization classes.");
+							logger.warn("[FileWatcher] The \"" + fileName + "\" localization for the \"" + pluginID + "\" plugin cannot be loaded, because the plugin uses \"Reference\" localization classes.");
 							return;
 						}
 						int localesSizeBefore = localeService.getPluginLocales(pluginID).size();
