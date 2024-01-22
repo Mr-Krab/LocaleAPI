@@ -8,11 +8,11 @@ import net.kyori.adventure.text.Component;
 
 public class TypeTokens {
 
-	public static final TypeToken<SerializedItemStack> SERIALIZED_STACK_TOKEN = new TypeToken<SerializedItemStack>(){};
+	public static final TypeToken<SerializedItemStackPlainNBT> SERIALIZED_STACK_TOKEN = new TypeToken<SerializedItemStackPlainNBT>(){};
 
-	public static final TypeToken<List<SerializedItemStack>> LIST_SERIALIZED_STACKS_TOKEN = new TypeToken<List<SerializedItemStack>>(){};
+	public static final TypeToken<List<SerializedItemStackPlainNBT>> LIST_SERIALIZED_STACKS_TOKEN = new TypeToken<List<SerializedItemStackPlainNBT>>(){};
 
-	public static final TypeToken<Map<String, SerializedItemStack>> MAP_SERIALIZED_STACKS_TOKEN = new TypeToken<Map<String, SerializedItemStack>>(){};
+	public static final TypeToken<Map<String, SerializedItemStackPlainNBT>> MAP_SERIALIZED_STACKS_TOKEN = new TypeToken<Map<String, SerializedItemStackPlainNBT>>(){};
 
 	public static final TypeToken<List<String>> LIST_STRINGS_TOKEN = new TypeToken<List<String>>(){};
 

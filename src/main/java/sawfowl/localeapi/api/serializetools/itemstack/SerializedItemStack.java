@@ -39,14 +39,25 @@ import net.kyori.adventure.key.Key;
 import sawfowl.localeapi.api.serializetools.SerializeOptions;
 
 @ConfigSerializable
+@Deprecated
+/**
+ * Use {@link SerializedItemStackPlainNBT}
+ */
 public class SerializedItemStack {
 
 	SerializedItemStack(){}
 
+	/**
+	 * Use {@link SerializedItemStackPlainNBT}
+	 */
 	public SerializedItemStack(ItemStack itemStack) {
 		serialize(itemStack);
 	}
 
+
+	/**
+	 * Use {@link SerializedItemStackPlainNBT}
+	 */
 	public SerializedItemStack(String type, int quantity, String nbt) {
 		itemType = type;
 		itemQuantity = quantity;

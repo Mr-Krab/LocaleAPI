@@ -103,8 +103,8 @@ public class SerializedItemStackJsonNbt {
 			itemQuantity = quantity;
 		}
 
-		public SerializedItemStack toSerializedItemStack() {
-			return new SerializedItemStack(itemType, 0, nbt.toString());
+		public SerializedItemStackPlainNBT toSerializedItemStack() {
+			return new SerializedItemStackPlainNBT(itemType, 0, nbt.toString());
 		}
 
 		private void serialize(ItemStack itemStack) {
