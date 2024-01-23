@@ -60,7 +60,10 @@ public class JsonObjectSerializer implements TypeSerializer<JsonObject> {
 	private void serializeJsonArray(JsonArray jsonArray, ConfigurationNode node) throws SerializationException {
 		List<Object> toSet = new ArrayList<Object>();
 		for(JsonElement element : jsonArray.asList()) {
-			if(element.isJsonArray()) {
+			if(element.isJsonObject()) {
+				toSet.add(getMapToWrite(element.getAsJsonObject().asMap()));
+				if(!toSet.isEmpty()) node.set(toSet);
+			} else if(element.isJsonArray()) {
 				toSet.add(getListToWrite(element.getAsJsonArray()));
 				if(!toSet.isEmpty()) node.set(toSet);
 			} else if(element.isJsonObject()) {

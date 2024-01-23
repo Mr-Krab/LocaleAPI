@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.leangen.geantyref.TypeToken;
+
 import net.kyori.adventure.text.Component;
 
 public class TypeTokens {
@@ -25,5 +26,14 @@ public class TypeTokens {
 	public static final TypeToken<Integer> INTEGER_TOKEN = new TypeToken<Integer>(){};
 
 	public static final TypeToken<Double> DOUBLE_TOKEN = new TypeToken<Double>(){};
+
+	public static <T> TypeToken<T> createToken(Class<T> clazz) {
+		return TypeToken.get(clazz);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> TypeToken<T> createToken(T object) {
+		return createToken((Class<T>) object.getClass());
+	}
 
 }

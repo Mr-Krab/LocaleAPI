@@ -7,6 +7,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -35,6 +36,7 @@ import com.google.gson.JsonParser;
 
 import net.kyori.adventure.key.Key;
 
+import sawfowl.localeapi.api.ClassUtils;
 import sawfowl.localeapi.api.serializetools.SerializeOptions;
 
 @ConfigSerializable
@@ -87,10 +89,7 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 		if(getItemType().isPresent()) {
 			itemStack = ItemStack.of(getItemType().get());
 			itemStack.setQuantity(itemQuantity);
-			//net.minecraft.world.item.ItemStack nmsStack = ItemStackUtil.toNative(itemStack);
-			//nmsStack.setDamageValue(itemSubType);
-			//itemStack = ItemStackUtil.fromNative(nmsStack);
-			if(nbt != null) {
+			if(nbt != null && !nbt.equals("")) {
 				try {
 					itemStack = ItemStack.builder().fromContainer(itemStack.toContainer().set(DataQuery.of("UnsafeData"), DataFormats.JSON.get().read(nbt))).build();
 				} catch (InvalidDataException | IOException e) {
@@ -161,7 +160,6 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 	@Override
 	public String toString() {
 		return  "ItemType: " + itemType +
-				//", ItemSubType: " + itemSubType +
 				", Quantity: " + itemQuantity + 
 				", Nbt: " + getNBT();
 	}
@@ -186,7 +184,7 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 		try {
 			if(tag.toJsonObject() == null) {
 				node.set(tag.getClass(), tag);
-				if(!node.node("__class__").virtual()) node.removeChild("__class__");
+				//if(!node.node("__class__").virtual()) node.removeChild("__class__");
 			} else node.set(JsonObject.class, tag.toJsonObject());
 			loader.save(node);
 		} catch (ConfigurateException e) {
@@ -224,7 +222,7 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 		} catch (ConfigurateException e) {
 			e.printStackTrace();
 		}
-		return null;
+		return BasicConfigurationNode.root();
 	}
 
 	private String getPluginId(PluginContainer container) {
@@ -246,8 +244,8 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 	}
 
 	class EditNBT implements TagUtil {
-		private StringReader reader;
 		private StringWriter writer;
+		private StringReader reader;
 		private GsonConfigurationLoader loader;
 		ConfigurationNode node;
 
@@ -256,33 +254,67 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 		}
 
 		private void updateNbt() {
-			if(writer != null) {
-				nbt = node == null || node.empty() ? null : writer.toString();
+			if(writer != null && loader != null && node != null) {
+				try {
+					loader.save(node);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				SerializedItemStackPlainNBT.this.nbt = node.empty() || writer.toString().isEmpty() ? nbt : writer.toString();
 				recreateStack();
 			}
-			reader = new StringReader(nbt != null ? nbt : "");
-			writer = new StringWriter();
-			loader = GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).source(() -> new BufferedReader(reader)).sink(() -> new BufferedWriter(writer)).build();
 			try {
+				reader = new StringReader(nbt != null ? nbt : "");
+				writer = new StringWriter();
+				loader = GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).source(() -> new BufferedReader(reader)).sink(() -> new BufferedWriter(writer)).build();
 				node = nbt != null ? loader.load() : BasicConfigurationNode.root(o -> o.options().serializers(SerializeOptions.selectSerializersCollection(1)));
-			} catch (ConfigurateException | RuntimeException e) {
+			} catch (IOException | RuntimeException e) {
 				node = BasicConfigurationNode.root(o -> o.options().serializers(SerializeOptions.SERIALIZER_COLLECTION_VARIANT_1));
 			}
 		}
 
 		@Override
 		public <T> void putObject(PluginContainer container, String key, T object) {
-			if(object.getClass().isAnnotationPresent(ConfigSerializable.class) && !(object instanceof CompoundTag)) {
+			if(!ClassUtils.isPrimitiveOrBasicDataClass(object)) {
 				try {
-					throw new RuntimeException("Writing serializable objects is restricted to objects implementing the 'sawfowl.localeapi.api.serializetools.itemstack.CompoundTag' interface.");
+					throw new RuntimeException("This method accepts only primitives, or Java base data classes: '" + ClassUtils.getValuesToString() + "'.");
 				} catch (Exception e) {
 				}
+				return;
 			} else try {
 				node.node("PluginTags", getPluginId(container), key).set(object.getClass(), object);
 				updateNbt();
 			} catch (SerializationException e) {
 				e.printStackTrace();
 			}
+		}
+
+		@Override
+		public <T> void putObjects(PluginContainer container, String key, List<T> objects) {
+			if(objects.isEmpty()) return;
+			objects = objects.stream().filter(object -> ClassUtils.isPrimitiveOrBasicDataClass(object)).toList();
+			if(objects.isEmpty()) return;
+			try {
+				node.node("PluginTags", getPluginId(container), key).setList(TypeTokens.createToken(objects.get(0)), objects);
+			} catch (SerializationException e) {
+				e.printStackTrace();
+			}
+			updateNbt();
+		}
+
+		@Override
+		public <K, V> void putObjects(Class<K> mapKey, Class<V> mapValue, PluginContainer container, String key, Map<K, V> objects) {
+			if(objects.isEmpty()) return;
+			objects = objects.entrySet().stream().filter(entry -> ClassUtils.isPrimitiveOrBasicDataClass(entry.getKey()) && ClassUtils.isPrimitiveOrBasicDataClass(entry.getValue())).collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
+			if(objects.isEmpty()) return;
+			objects.forEach((k,v) -> {
+				try {
+					node.node("PluginTags", getPluginId(container), key, k).set(v);
+				} catch (SerializationException e) {
+					e.printStackTrace();
+				}
+			});
+			updateNbt();
 		}
 
 		@Override
@@ -305,36 +337,54 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 
 		@Override
 		public <T> T getObject(Class<T> clazz, PluginContainer container, String key, T def) {
-			if(clazz.isAnnotationPresent(ConfigSerializable.class) && clazz != CompoundTag.class) {
+			if(!ClassUtils.isPrimitiveOrBasicDataClass(clazz)) {
 				try {
-					throw new RuntimeException("Reading serializable objects is restricted to objects implementing the 'sawfowl.localeapi.api.serializetools.itemstack.CompoundTag' interface.");
-				} catch (RuntimeException e) {
+					throw new RuntimeException("This method accepts only primitives, or Java base data classes: '" + ClassUtils.getValuesToString() + "'.");
+				} catch (Exception e) {
 				}
+				return def;
 			} else if(nbt != null && node != null && !node.node("PluginTags", getPluginId(container), key).virtual()) {
 				try {
-					return node.node("PluginTags", getPluginId(container), key).get(clazz);
+					return node.node("PluginTags", getPluginId(container), key).get(clazz, def);
 				} catch (SerializationException e) {
 					e.printStackTrace();
 				}
 			}
-			return null;
+			return def;
 		}
 
 		@Override
 		public <T> List<T> getObjectsList(Class<T> clazz, PluginContainer container, String key, List<T> def) {
-			if(clazz.isAnnotationPresent(ConfigSerializable.class) && clazz != CompoundTag.class) {
+			if(!ClassUtils.isPrimitiveOrBasicDataClass(clazz)) {
 				try {
-					throw new RuntimeException("Reading serializable objects is restricted to objects implementing the 'sawfowl.localeapi.api.serializetools.itemstack.CompoundTag' interface.");
+					throw new RuntimeException("This method accepts only primitives, or Java base data classes: '" + ClassUtils.getValuesToString() + "'.");
 				} catch (RuntimeException e) {
 				}
+				return def;
 			} else if(nbt != null && node != null && !node.node("PluginTags", getPluginId(container), key).virtual()) {
 				try {
-					return node.node("PluginTags", getPluginId(container), key).getList(clazz);
+					return node.node("PluginTags", getPluginId(container), key).getList(clazz, def);
 				} catch (SerializationException e) {
 					e.printStackTrace();
 				}
 			}
-			return null;
+			return def;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public <K, V> Map<K, V> getObjectsMap(Class<K> mapKey, Class<V> mapValue, PluginContainer container, String key, Map<K, V> objects) {
+			if(containsTag(container, key)) {
+				return node.node("PluginTags", getPluginId(container), key).childrenMap().entrySet().stream().collect(Collectors.toMap(entry -> (K) entry.getKey(), entry -> {
+					try {
+						return entry.getValue().get(mapValue);
+					} catch (SerializationException e) {
+						e.printStackTrace();
+					}
+					return null;
+				}));
+			}
+			return objects;
 		}
 
 		@Override

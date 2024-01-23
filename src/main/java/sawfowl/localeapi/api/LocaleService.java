@@ -130,24 +130,23 @@ public interface LocaleService {
 	 * This class will be applied automatically to all localizations loaded after its addition.<br>
 	 * Automatic application of this class does not make any changes to the localization data.
 	 * 
-	 * @param <T> defaultReference - The serializable class extends {@link LocaleReference}
+	 * @param defaultReference - The serializable class extends {@link LocaleReference}
 	 * @param container - {@link PluginContainer}
 	 */
-	void setDefaultReference(PluginContainer container, Class<? extends LocaleReference> defaultReference);
+	<T extends LocaleReference> void setDefaultReference(PluginContainer container, Class<T> defaultReference);
 
 	/**
 	 * Get the default serialization class for plugin localizations.<br>
 	 * No type conversion is performed.
 	 * 
-	 * @param <T> - The serializable class extends {@link LocaleReference}
 	 * @param container - {@link PluginContainer}
 	 * @return Serializable class, or null if no class assignment was previously made.
 	 */
-	<T extends LocaleReference> Class<? extends LocaleReference> getDefaultReference(PluginContainer container);
+	Class<? extends LocaleReference> getDefaultReference(PluginContainer container);
 
 	/**
 	 * Same as {@linkplain #getDefaultReference(PluginContainer)}
 	 */
-	<T extends LocaleReference> Class<? extends LocaleReference> getDefaultReference(String pluginID);
+	Class<? extends LocaleReference> getDefaultReference(String pluginID);
 
 }

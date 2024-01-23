@@ -3,15 +3,24 @@ package sawfowl.localeapi.api.serializetools.itemstack;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 import org.spongepowered.plugin.PluginContainer;
 
+import com.google.gson.JsonObject;
+
+import net.kyori.adventure.text.Component;
+
 public interface TagUtil {
 
 	public <T> void putObject(PluginContainer container, String key, T object);
+
+	public <T> void putObjects(PluginContainer container, String key, List<T> objects);
+
+	public <K, V> void putObjects(Class<K> mapKey, Class<V> mapValue, PluginContainer container, String key, Map<K, V> objects);
 
 	public <T extends CompoundTag> void putCompoundTag(PluginContainer container, String key, T object);
 
@@ -23,11 +32,17 @@ public interface TagUtil {
 
 	public <T> List<T> getObjectsList(Class<T> clazz, PluginContainer container, String key, List<T> def);
 
+	public <K, V> Map<K, V> getObjectsMap(Class<K> mapKey, Class<V> mapValue, PluginContainer container, String key, Map<K, V> objects);
+
 	public <T extends CompoundTag> Optional<T> getCompoundTag(Class<T> clazz, PluginContainer container, String key);
 
 	public Set<String> getAllKeys(PluginContainer container);
 
 	public int size(PluginContainer container);
+
+	default <T> void putObjects(Class<T> clazz, PluginContainer container, String key, @SuppressWarnings("unchecked") T... objects) {
+		putObjects(container, key, Arrays.asList(objects));
+	}
 
 	default <T> T getObject(Class<T> clazz, PluginContainer container, String key) {
 		return getObject(clazz, container, key, null);
@@ -39,7 +54,7 @@ public interface TagUtil {
 
 	@SuppressWarnings("unchecked")
 	default <T> T[] getObjectsArray(Class<T> clazz, PluginContainer container, String key, T[] def) {
-		return getObjectsList(clazz, container, key, Arrays.asList(def)).stream().filter(object -> object != null).toArray(generator -> (T[]) new Object[] {});
+		return !containsTag(container, key) ? def : getObjectsList(clazz, container, key, Arrays.asList(def)).stream().filter(object -> object != null).toArray(generator -> (T[]) new Object[] {});
 	}
 
 	default <T> T[] getObjectsArray(Class<T> clazz, PluginContainer container, String key) {
@@ -83,6 +98,14 @@ public interface TagUtil {
 		return getObject(Boolean.class, container, key);
 	}
 
+	default JsonObject getJsonObject(PluginContainer container, String key) {
+		return getObject(JsonObject.class, container, key);
+	}
+
+	default Component getComponent(PluginContainer container, String key) {
+		return getObject(Component.class, container, key);
+	}
+
 	default String[] getStringArray(PluginContainer container, String key) {
 		return getObjectsArray(String.class, container, key, new String[] {});
 	}
@@ -115,6 +138,14 @@ public interface TagUtil {
 		return getObjectsArray(Byte.class, container, key, new Byte[] {});
 	}
 
+	default JsonObject[] getJsonObjectArray(PluginContainer container, String key) {
+		return getObjectsArray(JsonObject.class, container, key);
+	}
+
+	default Component[] getComponentArray(PluginContainer container, String key) {
+		return getObjectsArray(Component.class, container, key);
+	}
+
 	default List<String> getStringList(PluginContainer container, String key) {
 		return getObjectsList(String.class, container, key);
 	}
@@ -145,6 +176,14 @@ public interface TagUtil {
 
 	default List<Byte> getByteList(PluginContainer container, String key) {
 		return getObjectsList(Byte.class, container, key);
+	}
+
+	default List<JsonObject> getJsonObjectList(PluginContainer container, String key) {
+		return getObjectsList(JsonObject.class, container, key);
+	}
+
+	default List<Component> getComponentList(PluginContainer container, String key) {
+		return getObjectsList(Component.class, container, key);
 	}
 
 }
