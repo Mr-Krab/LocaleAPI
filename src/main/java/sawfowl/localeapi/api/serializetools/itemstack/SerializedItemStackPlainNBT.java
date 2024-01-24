@@ -61,7 +61,7 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 	@Setting("NBT")
 	private String nbt;
 	private ItemStack itemStack;
-	private TagUtil compoundNBT;
+	private TagUtil.Advanced tagUtil;
 
 	public String getItemTypeAsString() {
 		return itemType;
@@ -85,6 +85,10 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 	 * Getting {@link ItemStack}
 	 */
 	public ItemStack getItemStack() {
+		if(tagUtil != null) {
+			((EditNBT) tagUtil).clear();
+			tagUtil = null;
+		}
 		if(itemStack != null) return itemStack.copy();
 		if(getItemType().isPresent()) {
 			itemStack = ItemStack.of(getItemType().get());
@@ -115,10 +119,10 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 	}
 
 	/**
-	 * Getting a tag collection is similar to what's in Minecraft code.
+	 * Gaining access to the NBT tags of an item.
 	 */
-	public TagUtil getOrCreateTag() {
-		return compoundNBT != null ? compoundNBT : (compoundNBT = /*isForgeItem() ? new ForgeNBT() :*/ new EditNBT());
+	public TagUtil.Advanced getOrCreateTag() {
+		return tagUtil == null ? tagUtil = new EditNBT() : tagUtil;
 	}
 
 	/**
@@ -161,7 +165,7 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 	public String toString() {
 		return  "ItemType: " + itemType +
 				", Quantity: " + itemQuantity + 
-				", Nbt: " + getNBT();
+				", Nbt: " + nbt;
 	}
 
 	private void serialize(ItemStack itemStack) {
@@ -177,63 +181,6 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 		this.itemStack = itemStack;
 	}
 
-	private <T extends CompoundTag> String createStringFromCustomTag(T tag) {
-		StringWriter sink = new StringWriter();
-		GsonConfigurationLoader loader = createWriter(sink);
-		ConfigurationNode node = loader.createNode();
-		try {
-			if(tag.toJsonObject() == null) {
-				node.set(tag.getClass(), tag);
-				//if(!node.node("__class__").virtual()) node.removeChild("__class__");
-			} else node.set(JsonObject.class, tag.toJsonObject());
-			loader.save(node);
-		} catch (ConfigurateException e) {
-			e.printStackTrace();
-		}
-		node = null;
-		loader = null;
-		return sink.toString();
-	}
-
-	private <T extends CompoundTag> Optional<T> createTagFromString(String string, Class<T> clazz) {
-		try {
-			return tagFromNode(serializeNodeFromString(string), clazz);
-		} catch (ConfigurateException e) {
-			e.printStackTrace();
-			return Optional.empty();
-		}
-	}
-
-	private <T extends CompoundTag> Optional<T> tagFromNode(ConfigurationNode node, Class<T> clazz) throws SerializationException {
-		return node.virtual() || node.empty() ? Optional.empty() : Optional.ofNullable(node.get(clazz));
-	}
-
-	private GsonConfigurationLoader createWriter(StringWriter sink) {
-		return GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).sink(() -> new BufferedWriter(sink)).build();
-	}
-
-	private GsonConfigurationLoader createLoader(StringReader source) {
-		return GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).source(() -> new BufferedReader(source)).build();
-	}
-
-	private ConfigurationNode serializeNodeFromString(String string) {
-		try {
-			return createLoader(new StringReader(string)).load();
-		} catch (ConfigurateException e) {
-			e.printStackTrace();
-		}
-		return BasicConfigurationNode.root();
-	}
-
-	private String getPluginId(PluginContainer container) {
-		return container.metadata().id();
-	}
-
-	private void recreateStack() {
-		itemStack = null;
-		getItemStack();
-	}
-
 	@Override
 	public JsonObject toJsonObject() {
 		JsonObject object = new JsonObject();
@@ -243,11 +190,11 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 		return object;
 	}
 
-	class EditNBT implements TagUtil {
+	class EditNBT implements TagUtil.Advanced {
 		private StringWriter writer;
 		private StringReader reader;
 		private GsonConfigurationLoader loader;
-		ConfigurationNode node;
+		private ConfigurationNode node;
 
 		EditNBT() {
 			updateNbt();
@@ -305,11 +252,9 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 		@Override
 		public <K, V> void putObjects(Class<K> mapKey, Class<V> mapValue, PluginContainer container, String key, Map<K, V> objects) {
 			if(objects.isEmpty()) return;
-			objects = objects.entrySet().stream().filter(entry -> ClassUtils.isPrimitiveOrBasicDataClass(entry.getKey()) && ClassUtils.isPrimitiveOrBasicDataClass(entry.getValue())).collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
-			if(objects.isEmpty()) return;
 			objects.forEach((k,v) -> {
 				try {
-					node.node("PluginTags", getPluginId(container), key, k).set(v);
+					if(ClassUtils.isPrimitiveOrBasicDataClass(k) && ClassUtils.isPrimitiveOrBasicDataClass(v)) node.node("PluginTags", getPluginId(container), key, k).set(v);
 				} catch (SerializationException e) {
 					e.printStackTrace();
 				}
@@ -401,7 +346,72 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 		public int size(PluginContainer container) {
 			return nbt != null && node != null ? 0 : node.node("PluginTags", getPluginId(container)).childrenMap().size();
 		}
-		
+
+		private <T extends CompoundTag> String createStringFromCustomTag(T tag) {
+			JsonObject json = tag.toJsonObject();
+			if(json == null) {
+				StringWriter sink = new StringWriter();
+				GsonConfigurationLoader loader = createWriter(sink);
+				ConfigurationNode node = loader.createNode();
+				try {
+					node.set(tag.getClass(), tag);
+					loader.save(node);
+				} catch (ConfigurateException e) {
+					e.printStackTrace();
+				}
+				node = null;
+				loader = null;
+				return sink.toString();
+			}
+			return json.toString();
+		}
+
+		private <T extends CompoundTag> Optional<T> createTagFromString(String string, Class<T> clazz) {
+			try {
+				return tagFromNode(serializeNodeFromString(string), clazz);
+			} catch (ConfigurateException e) {
+				e.printStackTrace();
+				return Optional.empty();
+			}
+		}
+
+		private <T extends CompoundTag> Optional<T> tagFromNode(ConfigurationNode node, Class<T> clazz) throws SerializationException {
+			return node.virtual() || node.empty() ? Optional.empty() : Optional.ofNullable(node.get(clazz));
+		}
+
+		private GsonConfigurationLoader createWriter(StringWriter sink) {
+			return GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).sink(() -> new BufferedWriter(sink)).build();
+		}
+
+		private GsonConfigurationLoader createLoader(StringReader source) {
+			return GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).source(() -> new BufferedReader(source)).build();
+		}
+
+		private ConfigurationNode serializeNodeFromString(String string) {
+			try {
+				return createLoader(new StringReader(string)).load();
+			} catch (ConfigurateException e) {
+				e.printStackTrace();
+			}
+			return BasicConfigurationNode.root();
+		}
+
+		private String getPluginId(PluginContainer container) {
+			return container.metadata().id();
+		}
+
+		private void recreateStack() {
+			itemStack = null;
+			getItemStack();
+		}
+
+		private void clear() {
+			writer = null;
+			reader = null;
+			loader = null;
+			node = null;
+		}
+
 	}
 
 }

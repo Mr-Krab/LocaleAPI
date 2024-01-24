@@ -10,180 +10,210 @@ import java.util.UUID;
 
 import org.spongepowered.plugin.PluginContainer;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import net.kyori.adventure.text.Component;
 
 public interface TagUtil {
 
-	public <T> void putObject(PluginContainer container, String key, T object);
-
-	public <T> void putObjects(PluginContainer container, String key, List<T> objects);
-
-	public <K, V> void putObjects(Class<K> mapKey, Class<V> mapValue, PluginContainer container, String key, Map<K, V> objects);
-
 	public <T extends CompoundTag> void putCompoundTag(PluginContainer container, String key, T object);
 
-	public boolean containsTag(PluginContainer container, String key);
+	<T extends CompoundTag> Optional<T> getCompoundTag(Class<T> clazz, PluginContainer container, String key);
+
+	boolean containsTag(PluginContainer container, String key);
 
 	public void removeTag(PluginContainer container, String key);
 
-	public <T> T getObject(Class<T> clazz, PluginContainer container, String key, T def);
+	interface Json extends TagUtil {
 
-	public <T> List<T> getObjectsList(Class<T> clazz, PluginContainer container, String key, List<T> def);
+		void putNbtPluginObject(PluginContainer container, String key, JsonElement object);
 
-	public <K, V> Map<K, V> getObjectsMap(Class<K> mapKey, Class<V> mapValue, PluginContainer container, String key, Map<K, V> objects);
+		JsonElement getJsonObject(PluginContainer container, String key);
 
-	public <T extends CompoundTag> Optional<T> getCompoundTag(Class<T> clazz, PluginContainer container, String key);
+		default String getString(PluginContainer container, String key) {
+			JsonElement element = getJsonObject(container, key);
+			return element != null && element.isJsonPrimitive() && element.getAsJsonPrimitive().isString() ? element.getAsString() : null;
+		}
 
-	public Set<String> getAllKeys(PluginContainer container);
+		default Number getNumber(PluginContainer container, String key) {
+			JsonElement element = getJsonObject(container, key);
+			return element != null && element.isJsonPrimitive() && element.getAsJsonPrimitive().isNumber() ? element.getAsNumber() : null;
+		}
 
-	public int size(PluginContainer container);
+		default Boolean getBoolean(PluginContainer container, String key) {
+			JsonElement element = getJsonObject(container, key);
+			return element != null && element.isJsonPrimitive() && element.getAsJsonPrimitive().isBoolean() ? element.getAsBoolean() : null;
+		}
 
-	default <T> void putObjects(Class<T> clazz, PluginContainer container, String key, @SuppressWarnings("unchecked") T... objects) {
-		putObjects(container, key, Arrays.asList(objects));
 	}
 
-	default <T> T getObject(Class<T> clazz, PluginContainer container, String key) {
-		return getObject(clazz, container, key, null);
-	}
+	interface Advanced extends TagUtil {
 
-	default <T> List<T> getObjectsList(Class<T> clazz, PluginContainer container, String key) {
-		return getObjectsList(clazz, container, key, new ArrayList<T>());
-	}
+		public <T> void putObject(PluginContainer container, String key, T object);
 
-	@SuppressWarnings("unchecked")
-	default <T> T[] getObjectsArray(Class<T> clazz, PluginContainer container, String key, T[] def) {
-		return !containsTag(container, key) ? def : getObjectsList(clazz, container, key, Arrays.asList(def)).stream().filter(object -> object != null).toArray(generator -> (T[]) new Object[] {});
-	}
+		public <T> void putObjects(PluginContainer container, String key, List<T> objects);
 
-	default <T> T[] getObjectsArray(Class<T> clazz, PluginContainer container, String key) {
-		return getObjectsArray(clazz, container, key, null);
-		
-	}
+		public <K, V> void putObjects(Class<K> mapKey, Class<V> mapValue, PluginContainer container, String key, Map<K, V> objects);
 
-	default String getString(PluginContainer container, String key) {
-		return getObject(String.class, container, key);
-	}
+		public <T> T getObject(Class<T> clazz, PluginContainer container, String key, T def);
 
-	default UUID getUUID(PluginContainer container, String key) {
-		return getObject(UUID.class, container, key);
-	}
+		public <T> List<T> getObjectsList(Class<T> clazz, PluginContainer container, String key, List<T> def);
 
-	default Short getShort(PluginContainer container, String key) {
-		return getObject(Short.class, container, key);
-	}
+		public <K, V> Map<K, V> getObjectsMap(Class<K> mapKey, Class<V> mapValue, PluginContainer container, String key, Map<K, V> objects);
 
-	default Integer getInteger(PluginContainer container, String key) {
-		return getObject(Integer.class, container, key);
-	}
+		public <T extends CompoundTag> Optional<T> getCompoundTag(Class<T> clazz, PluginContainer container, String key);
 
-	default Long getLong(PluginContainer container, String key) {
-		return getObject(Long.class, container, key);
-	}
+		public Set<String> getAllKeys(PluginContainer container);
 
-	default Float getFloat(PluginContainer container, String key) {
-		return getObject(Float.class, container, key);
-	}
+		public int size(PluginContainer container);
 
-	default Double getDouble(PluginContainer container, String key) {
-		return getObject(Double.class, container, key);
-	}
+		default <T> void putObjects(Class<T> clazz, PluginContainer container, String key, @SuppressWarnings("unchecked") T... objects) {
+			putObjects(container, key, Arrays.asList(objects));
+		}
 
-	default Byte getByte(PluginContainer container, String key) {
-		return getObject(Byte.class, container, key);
-	}
+		default <T> T getObject(Class<T> clazz, PluginContainer container, String key) {
+			return getObject(clazz, container, key, null);
+		}
 
-	default Boolean getBoolean(PluginContainer container, String key) {
-		return getObject(Boolean.class, container, key);
-	}
+		default <T> List<T> getObjectsList(Class<T> clazz, PluginContainer container, String key) {
+			return getObjectsList(clazz, container, key, new ArrayList<T>());
+		}
 
-	default JsonObject getJsonObject(PluginContainer container, String key) {
-		return getObject(JsonObject.class, container, key);
-	}
+		@SuppressWarnings("unchecked")
+		default <T> T[] getObjectsArray(Class<T> clazz, PluginContainer container, String key, T[] def) {
+			return !containsTag(container, key) ? def : getObjectsList(clazz, container, key, Arrays.asList(def)).stream().filter(object -> object != null).toArray(generator -> (T[]) new Object[] {});
+		}
 
-	default Component getComponent(PluginContainer container, String key) {
-		return getObject(Component.class, container, key);
-	}
+		default <T> T[] getObjectsArray(Class<T> clazz, PluginContainer container, String key) {
+			return getObjectsArray(clazz, container, key, null);
+			
+		}
 
-	default String[] getStringArray(PluginContainer container, String key) {
-		return getObjectsArray(String.class, container, key, new String[] {});
-	}
+		default String getString(PluginContainer container, String key) {
+			return getObject(String.class, container, key);
+		}
 
-	default UUID[] getUUIDArray(PluginContainer container, String key) {
-		return getObjectsArray(UUID.class, container, key, new UUID[] {});
-	}
+		default UUID getUUID(PluginContainer container, String key) {
+			return getObject(UUID.class, container, key);
+		}
 
-	default Short[] getShortArray(PluginContainer container, String key) {
-		return getObjectsArray(Short.class, container, key, new Short[] {});
-	}
+		default Short getShort(PluginContainer container, String key) {
+			return getObject(Short.class, container, key);
+		}
 
-	default Integer[] getIntegerArray(PluginContainer container, String key) {
-		return getObjectsArray(Integer.class, container, key, new Integer[] {});
-	}
+		default Integer getInteger(PluginContainer container, String key) {
+			return getObject(Integer.class, container, key);
+		}
 
-	default Long[] getLongArray(PluginContainer container, String key) {
-		return getObjectsArray(Long.class, container, key, new Long[] {});
-	}
+		default Long getLong(PluginContainer container, String key) {
+			return getObject(Long.class, container, key);
+		}
 
-	default Float[] getFloatArray(PluginContainer container, String key) {
-		return getObjectsArray(Float.class, container, key, new Float[] {});
-	}
+		default Float getFloat(PluginContainer container, String key) {
+			return getObject(Float.class, container, key);
+		}
 
-	default Double[] getDoubleArray(PluginContainer container, String key) {
-		return getObjectsArray(Double.class, container, key, new Double[] {});
-	}
+		default Double getDouble(PluginContainer container, String key) {
+			return getObject(Double.class, container, key);
+		}
 
-	default Byte[] getByteArray(PluginContainer container, String key) {
-		return getObjectsArray(Byte.class, container, key, new Byte[] {});
-	}
+		default Byte getByte(PluginContainer container, String key) {
+			return getObject(Byte.class, container, key);
+		}
 
-	default JsonObject[] getJsonObjectArray(PluginContainer container, String key) {
-		return getObjectsArray(JsonObject.class, container, key);
-	}
+		default Boolean getBoolean(PluginContainer container, String key) {
+			return getObject(Boolean.class, container, key);
+		}
 
-	default Component[] getComponentArray(PluginContainer container, String key) {
-		return getObjectsArray(Component.class, container, key);
-	}
+		default JsonObject getJsonObject(PluginContainer container, String key) {
+			return getObject(JsonObject.class, container, key);
+		}
 
-	default List<String> getStringList(PluginContainer container, String key) {
-		return getObjectsList(String.class, container, key);
-	}
+		default Component getComponent(PluginContainer container, String key) {
+			return getObject(Component.class, container, key);
+		}
 
-	default List<UUID> getUUIDList(PluginContainer container, String key) {
-		return getObjectsList(UUID.class, container, key);
-	}
+		default String[] getStringArray(PluginContainer container, String key) {
+			return getObjectsArray(String.class, container, key, new String[] {});
+		}
 
-	default List<Short> getShortList(PluginContainer container, String key) {
-		return getObjectsList(Short.class, container, key);
-	}
+		default UUID[] getUUIDArray(PluginContainer container, String key) {
+			return getObjectsArray(UUID.class, container, key, new UUID[] {});
+		}
 
-	default List<Integer> getIntegerList(PluginContainer container, String key) {
-		return getObjectsList(Integer.class, container, key);
-	}
+		default Short[] getShortArray(PluginContainer container, String key) {
+			return getObjectsArray(Short.class, container, key, new Short[] {});
+		}
 
-	default List<Long> getLongList(PluginContainer container, String key) {
-		return getObjectsList(Long.class, container, key);
-	}
+		default Integer[] getIntegerArray(PluginContainer container, String key) {
+			return getObjectsArray(Integer.class, container, key, new Integer[] {});
+		}
 
-	default List<Float> getFloatList(PluginContainer container, String key) {
-		return getObjectsList(Float.class, container, key);
-	}
+		default Long[] getLongArray(PluginContainer container, String key) {
+			return getObjectsArray(Long.class, container, key, new Long[] {});
+		}
 
-	default List<Double> getDoubleList(PluginContainer container, String key) {
-		return getObjectsList(Double.class, container, key);
-	}
+		default Float[] getFloatArray(PluginContainer container, String key) {
+			return getObjectsArray(Float.class, container, key, new Float[] {});
+		}
 
-	default List<Byte> getByteList(PluginContainer container, String key) {
-		return getObjectsList(Byte.class, container, key);
-	}
+		default Double[] getDoubleArray(PluginContainer container, String key) {
+			return getObjectsArray(Double.class, container, key, new Double[] {});
+		}
 
-	default List<JsonObject> getJsonObjectList(PluginContainer container, String key) {
-		return getObjectsList(JsonObject.class, container, key);
-	}
+		default Byte[] getByteArray(PluginContainer container, String key) {
+			return getObjectsArray(Byte.class, container, key, new Byte[] {});
+		}
 
-	default List<Component> getComponentList(PluginContainer container, String key) {
-		return getObjectsList(Component.class, container, key);
+		default JsonObject[] getJsonObjectArray(PluginContainer container, String key) {
+			return getObjectsArray(JsonObject.class, container, key);
+		}
+
+		default Component[] getComponentArray(PluginContainer container, String key) {
+			return getObjectsArray(Component.class, container, key);
+		}
+
+		default List<String> getStringList(PluginContainer container, String key) {
+			return getObjectsList(String.class, container, key);
+		}
+
+		default List<UUID> getUUIDList(PluginContainer container, String key) {
+			return getObjectsList(UUID.class, container, key);
+		}
+
+		default List<Short> getShortList(PluginContainer container, String key) {
+			return getObjectsList(Short.class, container, key);
+		}
+
+		default List<Integer> getIntegerList(PluginContainer container, String key) {
+			return getObjectsList(Integer.class, container, key);
+		}
+
+		default List<Long> getLongList(PluginContainer container, String key) {
+			return getObjectsList(Long.class, container, key);
+		}
+
+		default List<Float> getFloatList(PluginContainer container, String key) {
+			return getObjectsList(Float.class, container, key);
+		}
+
+		default List<Double> getDoubleList(PluginContainer container, String key) {
+			return getObjectsList(Double.class, container, key);
+		}
+
+		default List<Byte> getByteList(PluginContainer container, String key) {
+			return getObjectsList(Byte.class, container, key);
+		}
+
+		default List<JsonObject> getJsonObjectList(PluginContainer container, String key) {
+			return getObjectsList(JsonObject.class, container, key);
+		}
+
+		default List<Component> getComponentList(PluginContainer container, String key) {
+			return getObjectsList(Component.class, container, key);
+		}
+
 	}
 
 }
