@@ -1,10 +1,6 @@
 package sawfowl.localeapi.api.serializetools.itemstack;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +18,6 @@ import org.spongepowered.api.data.persistence.InvalidDataException;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.registry.RegistryTypes;
-import org.spongepowered.configurate.BasicConfigurationNode;
-import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.gson.GsonConfigurationLoader;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
@@ -39,6 +33,9 @@ import net.kyori.adventure.key.Key;
 import sawfowl.localeapi.api.ClassUtils;
 import sawfowl.localeapi.api.serializetools.SerializeOptions;
 
+/**
+ * The class is intended for working with item data when it is necessary to access it before registering item data in the registry.
+ */
 @ConfigSerializable
 public class SerializedItemStackPlainNBT implements CompoundTag {
 
@@ -191,9 +188,6 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 	}
 
 	class EditNBT implements TagUtil.Advanced {
-		private StringWriter writer;
-		private StringReader reader;
-		private GsonConfigurationLoader loader;
 		private ConfigurationNode node;
 
 		EditNBT() {
@@ -201,22 +195,19 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 		}
 
 		private void updateNbt() {
-			if(writer != null && loader != null && node != null) {
+			if(node != null) {
 				try {
-					loader.save(node);
-				} catch (IOException e) {
+					SerializedItemStackPlainNBT.this.nbt = node.empty() ? null : node.get(JsonObject.class).toString();
+				} catch (SerializationException e) {
 					e.printStackTrace();
 				}
-				SerializedItemStackPlainNBT.this.nbt = node.empty() || writer.toString().isEmpty() ? nbt : writer.toString();
 				recreateStack();
 			}
+			node = GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).build().createNode();
 			try {
-				reader = new StringReader(nbt != null ? nbt : "");
-				writer = new StringWriter();
-				loader = GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).source(() -> new BufferedReader(reader)).sink(() -> new BufferedWriter(writer)).build();
-				node = nbt != null ? loader.load() : BasicConfigurationNode.root(o -> o.options().serializers(SerializeOptions.selectSerializersCollection(1)));
-			} catch (IOException | RuntimeException e) {
-				node = BasicConfigurationNode.root(o -> o.options().serializers(SerializeOptions.SERIALIZER_COLLECTION_VARIANT_1));
+				if(nbt != null && nbt.length() > 0) node.set(JsonObject.class, JsonParser.parseString(nbt).getAsJsonObject());
+			} catch (SerializationException e) {
+				e.printStackTrace();
 			}
 		}
 
@@ -264,7 +255,18 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 
 		@Override
 		public <T extends CompoundTag> void putCompoundTag(PluginContainer container, String key, T object) {
-			putObject(container, key, createStringFromCustomTag(object));
+			if(object.toJsonObject() != null) {
+				try {
+					node.node("PluginTags", getPluginId(container), key).set(JsonObject.class, object.toJsonObject());
+				} catch (SerializationException e) {
+					e.printStackTrace();
+				}
+			} else try {
+				node.node("PluginTags", getPluginId(container), key).set(object.getClass(), object);
+			} catch (SerializationException e) {
+				e.printStackTrace();
+			}
+			updateNbt();
 		}
 
 		@Override
@@ -334,7 +336,12 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 
 		@Override
 		public <T extends CompoundTag> Optional<T> getCompoundTag(Class<T> clazz, PluginContainer container, String key) {
-			return containsTag(container, key) ? createTagFromString(getString(container, key), clazz) : Optional.empty();
+			try {
+				return containsTag(container, key) ? Optional.ofNullable(node.get(clazz)) : Optional.empty();
+			} catch (SerializationException e) {
+				e.printStackTrace();
+			}
+			return Optional.empty();
 		}
 
 		@Override
@@ -347,55 +354,6 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 			return nbt != null && node != null ? 0 : node.node("PluginTags", getPluginId(container)).childrenMap().size();
 		}
 
-		private <T extends CompoundTag> String createStringFromCustomTag(T tag) {
-			JsonObject json = tag.toJsonObject();
-			if(json == null) {
-				StringWriter sink = new StringWriter();
-				GsonConfigurationLoader loader = createWriter(sink);
-				ConfigurationNode node = loader.createNode();
-				try {
-					node.set(tag.getClass(), tag);
-					loader.save(node);
-				} catch (ConfigurateException e) {
-					e.printStackTrace();
-				}
-				node = null;
-				loader = null;
-				return sink.toString();
-			}
-			return json.toString();
-		}
-
-		private <T extends CompoundTag> Optional<T> createTagFromString(String string, Class<T> clazz) {
-			try {
-				return tagFromNode(serializeNodeFromString(string), clazz);
-			} catch (ConfigurateException e) {
-				e.printStackTrace();
-				return Optional.empty();
-			}
-		}
-
-		private <T extends CompoundTag> Optional<T> tagFromNode(ConfigurationNode node, Class<T> clazz) throws SerializationException {
-			return node.virtual() || node.empty() ? Optional.empty() : Optional.ofNullable(node.get(clazz));
-		}
-
-		private GsonConfigurationLoader createWriter(StringWriter sink) {
-			return GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).sink(() -> new BufferedWriter(sink)).build();
-		}
-
-		private GsonConfigurationLoader createLoader(StringReader source) {
-			return GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).source(() -> new BufferedReader(source)).build();
-		}
-
-		private ConfigurationNode serializeNodeFromString(String string) {
-			try {
-				return createLoader(new StringReader(string)).load();
-			} catch (ConfigurateException e) {
-				e.printStackTrace();
-			}
-			return BasicConfigurationNode.root();
-		}
-
 		private String getPluginId(PluginContainer container) {
 			return container.metadata().id();
 		}
@@ -406,9 +364,6 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 		}
 
 		private void clear() {
-			writer = null;
-			reader = null;
-			loader = null;
 			node = null;
 		}
 

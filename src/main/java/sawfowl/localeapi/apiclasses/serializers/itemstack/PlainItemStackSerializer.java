@@ -22,7 +22,11 @@ public class PlainItemStackSerializer implements TypeSerializer<ItemStack> {
 
 	@Override
 	public void serialize(Type type, @Nullable ItemStack item, ConfigurationNode node) throws SerializationException {
-		node.set(SerializedItemStackPlainNBT.class, new SerializedItemStackPlainNBT(item));
+		SerializedItemStackPlainNBT stack = new SerializedItemStackPlainNBT(item);
+		node.node("ItemType").set(stack.getItemTypeAsString());
+		node.node("Quantity").set(stack.getQuantity());
+		node.node("NBT").set(stack.getNBT());
+		stack = null;
 	}
 
 }

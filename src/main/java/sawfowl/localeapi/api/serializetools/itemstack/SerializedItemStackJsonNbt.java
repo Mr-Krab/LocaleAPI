@@ -1,10 +1,6 @@
 package sawfowl.localeapi.api.serializetools.itemstack;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -18,7 +14,6 @@ import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.configurate.BasicConfigurationNode;
-import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.gson.GsonConfigurationLoader;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
@@ -38,7 +33,7 @@ import sawfowl.localeapi.api.serializetools.SerializeOptions;
  * The class is intended for working with item data when it is necessary to access it before registering item data in the registry.
  */
 @ConfigSerializable
-public class SerializedItemStackJsonNbt {
+public class SerializedItemStackJsonNbt implements CompoundTag {
 
 	SerializedItemStackJsonNbt(){}
 
@@ -128,6 +123,15 @@ public class SerializedItemStackJsonNbt {
 		}
 
 		@Override
+		public JsonObject toJsonObject() {
+			JsonObject object = new JsonObject();
+			object.addProperty("ItemType", itemType);
+			object.addProperty("Quantity", itemQuantity);
+			if(nbt != null) object.add("NBT", nbt);
+			return object;
+		}
+
+		@Override
 		public String toString() {
 			return  "ItemType: " + itemType +
 					", Quantity: " + itemQuantity + 
@@ -149,22 +153,25 @@ public class SerializedItemStackJsonNbt {
 
 		private class NbtEdit implements TagUtil.Json {
 
-			public void putNbtPluginObject(PluginContainer container, String key, JsonElement object) {
+			public void putJsonElement(PluginContainer container, String key, JsonElement object) {
+				if(object == null) return;
 				if(nbt == null) nbt = new JsonObject();
 				putChildMaps(nbt, "PluginTags", getPluginId(container)).add(key, object);
 				itemStack = null;
 			}
 
 			public <T extends CompoundTag> void putCompoundTag(PluginContainer container, String key, T tag) {
+				if(tag == null) return;
 				if(nbt == null) nbt = new JsonObject();
 				JsonObject json = tag.toJsonObject();
-				putChildMaps(nbt, "PluginTags", getPluginId(container)).addProperty(key, json == null ? createStringFromCustomTag(tag) : json.toString());
-				itemStack = null;
+				if(json == null) json = convertTagToJson(tag);
+				if(json == null) return;
+				putJsonElement(container, key, json);
 				json = null;
 			}
 
 			public boolean containsTag(PluginContainer container, String key) {
-				return nbt != null && containsTag(nbt, 0, "PluginTags", getPluginId(container), key);
+				return nbt != null && containsTag(nbt, "PluginTags", getPluginId(container), key);
 			}
 
 			public void removeTag(PluginContainer container, String key) {
@@ -177,12 +184,27 @@ public class SerializedItemStackJsonNbt {
 				return containsTag(container, key) ? getDeepChildObject(nbt, "PluginTags", getPluginId(container)).get(key) : null;
 			}
 
-			public <T extends CompoundTag> Optional<T> getCompoundTag(Class<T> clazz, PluginContainer container, String key) {
-				return containsTag(container, key) ? createTagFromString(getDeepChildObject(nbt, "PluginTags", getPluginId(container), key).getAsString(), clazz) : Optional.empty();
+			@Override
+			public ConfigurationNode getAsConfigurationNode(PluginContainer container) {
+				try {
+					return containsTag(nbt, "PluginTags", getPluginId(container)) ?
+							GsonConfigurationLoader.builder().defaultOptions(options -> options.serializers(SerializeOptions.selectSerializersCollection(2))).build().createNode().set(JsonElement.class, getDeepChildObject(nbt, "PluginTags", getPluginId(container)).deepCopy()) : BasicConfigurationNode.root(o -> o.options().serializers(SerializeOptions.selectSerializersCollection(2)));
+				} catch (SerializationException e) {
+					e.printStackTrace();
+				}
+				return BasicConfigurationNode.root(o -> o.options().serializers(SerializeOptions.selectSerializersCollection(2)));
 			}
 
-			private boolean containsTag(JsonObject root, int currentElement, String... keys) {
-				return root != null && root.has(keys[currentElement]) && (currentElement == keys.length || (root.get(keys[currentElement]).isJsonObject() && containsTag(root.get(keys[currentElement]).getAsJsonObject(), currentElement++, keys)));
+			public <T extends CompoundTag> Optional<T> getCompoundTag(Class<T> clazz, PluginContainer container, String key) {
+				return containsTag(container, key) ? Optional.ofNullable(convertJsonToTag(clazz, getDeepChildObject(nbt, "PluginTags", getPluginId(container), key))) : Optional.empty();
+			}
+
+			private boolean containsTag(JsonObject root, String... keys) {
+				if(root == null) return false;
+				for(String key : keys) {
+					return root.has(key) && (keys.length == 1 || (root.get(key).isJsonObject() && containsTag(root.get(key).getAsJsonObject(), Arrays.copyOfRange(keys, 1, keys.length))));
+				}
+				return true;
 			}
 
 			private JsonObject putChildMaps(JsonObject root, String... keys) {
@@ -212,57 +234,31 @@ public class SerializedItemStackJsonNbt {
 				} else keys = null;
 			}
 
-			private <T extends CompoundTag> String createStringFromCustomTag(T tag) {
-				JsonObject json = tag.toJsonObject();
-				if(json == null) {
-					StringWriter sink = new StringWriter();
-					GsonConfigurationLoader loader = createWriter(sink);
-					ConfigurationNode node = loader.createNode();
-					try {
-						node.set(tag.getClass(), tag);
-						loader.save(node);
-					} catch (ConfigurateException e) {
-						e.printStackTrace();
-					}
-					node = null;
-					loader = null;
-					return sink.toString();
-				}
-				return json.toString();
-			}
-
-			private <T extends CompoundTag> Optional<T> createTagFromString(String string, Class<T> clazz) {
+			private <T extends CompoundTag> JsonObject convertTagToJson(T tag) {
 				try {
-					return tagFromNode(serializeNodeFromString(string), clazz);
-				} catch (ConfigurateException e) {
+					return BasicConfigurationNode.root(o -> o.options().serializers(SerializeOptions.SERIALIZER_COLLECTION_VARIANT_1)).set(tag.getClass(), tag).get(JsonObject.class);
+				} catch (SerializationException | RuntimeException e) {
 					e.printStackTrace();
-					return Optional.empty();
 				}
+				return null;
 			}
 
-			private <T extends CompoundTag> Optional<T> tagFromNode(ConfigurationNode node, Class<T> clazz) throws SerializationException {
-				return node.virtual() || node.empty() ? Optional.empty() : Optional.ofNullable(node.get(clazz));
-			}
-
-			private GsonConfigurationLoader createWriter(StringWriter sink) {
-				return GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).sink(() -> new BufferedWriter(sink)).build();
-			}
-
-			private GsonConfigurationLoader createLoader(StringReader source) {
-				return GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).source(() -> new BufferedReader(source)).build();
+			private <T extends CompoundTag> T convertJsonToTag(Class<T> clazz, JsonObject jsonObject) {
+				try {
+					return BasicConfigurationNode.root(o -> o.options().serializers(SerializeOptions.SERIALIZER_COLLECTION_VARIANT_1)).set(JsonObject.class, jsonObject).get(clazz);
+				} catch (SerializationException | RuntimeException e) {
+					e.printStackTrace();
+				}
+				return null;
 			}
 
 			private String getPluginId(PluginContainer container) {
 				return container.metadata().id();
 			}
 
-			private ConfigurationNode serializeNodeFromString(String string) {
-				try {
-					return createLoader(new StringReader(string)).load();
-				} catch (ConfigurateException e) {
-					e.printStackTrace();
-				}
-				return BasicConfigurationNode.root();
+			@Override
+			public int size(PluginContainer container) {
+				return nbt == null || !nbt.has("PluginTags") || !nbt.getAsJsonObject("PluginTags").has(getPluginId(container)) ? 0 : nbt.getAsJsonObject("PluginTags").getAsJsonObject(getPluginId(container)).size();
 			}
 
 		}

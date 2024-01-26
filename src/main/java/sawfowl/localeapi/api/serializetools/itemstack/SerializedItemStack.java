@@ -41,14 +41,14 @@ import sawfowl.localeapi.api.serializetools.SerializeOptions;
 @ConfigSerializable
 @Deprecated
 /**
- * Use {@link SerializedItemStackPlainNBT}
+ * Use {@link SerializedItemStackPlainNBT} or {@link SerializedItemStackJsonNbt}
  */
 public class SerializedItemStack {
 
 	SerializedItemStack(){}
 
 	/**
-	 * Use {@link SerializedItemStackPlainNBT}
+	 * Use {@link SerializedItemStackPlainNBT} or {@link SerializedItemStackJsonNbt}
 	 */
 	public SerializedItemStack(ItemStack itemStack) {
 		serialize(itemStack);
@@ -151,16 +151,6 @@ public class SerializedItemStack {
 		return new SerializedItemStackJsonNbt(itemType, 0, nbt == null ? null : JsonParser.parseString(nbt).getAsJsonObject());
 	}
 
-/*
-	public boolean isForgeItem() {
-		try {
-			Class.forName("net.minecraft.item.ItemStack");
-			return true;
-		} catch (Exception e) {
-			return false;
-		}
-	}
-*/
 	@Override
 	public int hashCode() {
 		return Objects.hash(itemQuantity, itemStack, itemType, nbt);
@@ -506,221 +496,5 @@ public class SerializedItemStack {
 		}
 		
 	}
-/*
-	class ForgeNBT implements CompoundNBT {
 
-		@Override
-		public void remove(String key) {
-			net.minecraft.item.ItemStack nmsStack = getForgeStack();
-			if(!nmsStack.hasTag() || !nmsStack.getOrCreateTag().contains(key)) return;
-			nmsStack.getOrCreateTag().remove(key);
-			if(nmsStack.getOrCreateTag().isEmpty()) {
-				itemStack = ItemStack.of(getOptItemType().get());
-				itemStack.setQuantity(itemQuantity);
-			} else {
-				serialize((ItemStack) ((Object) nmsStack));
-			}
-		}
-
-		@Override
-		public boolean containsTag(String key) {
-			net.minecraft.item.ItemStack nmsStack = getForgeStack();
-			return nmsStack.hasTag() && nmsStack.getOrCreateTag().contains(key);
-		}
-
-		@Override
-		public void putString(String key, String value) {
-			net.minecraft.item.ItemStack nmsStack = getForgeStack();
-			nmsStack.getOrCreateTag().putString(key, value);
-			serialize((ItemStack) ((Object) nmsStack));
-		}
-
-		@Override
-		public void putUUID(String key, UUID value) {
-			net.minecraft.item.ItemStack nmsStack = getForgeStack();
-			nmsStack.getOrCreateTag().putUUID(key, value);
-			serialize((ItemStack) ((Object) nmsStack));
-		}
-
-		@Override
-		public void putShort(String key, short value) {
-			net.minecraft.item.ItemStack nmsStack = getForgeStack();
-			nmsStack.getOrCreateTag().putShort(key, value);
-			serialize((ItemStack) ((Object) nmsStack));
-		}
-
-		@Override
-		public void putInteger(String key, int value) {
-			net.minecraft.item.ItemStack nmsStack = getForgeStack();
-			nmsStack.getOrCreateTag().putInt(key, value);
-			serialize((ItemStack) ((Object) nmsStack));
-		}
-
-		@Override
-		public void putLong(String key, long value) {
-			net.minecraft.item.ItemStack nmsStack = getForgeStack();
-			nmsStack.getOrCreateTag().putLong(key, value);
-			serialize((ItemStack) ((Object) nmsStack));
-		}
-
-		@Override
-		public void putFloat(String key, float value) {
-			net.minecraft.item.ItemStack nmsStack = getForgeStack();
-			nmsStack.getOrCreateTag().putFloat(key, value);
-			serialize((ItemStack) ((Object) nmsStack));
-		}
-
-		@Override
-		public void putDouble(String key, double value) {
-			net.minecraft.item.ItemStack nmsStack = getForgeStack();
-			nmsStack.getOrCreateTag().putDouble(key, value);
-			serialize((ItemStack) ((Object) nmsStack));
-		}
-
-		@Override
-		public void putByte(String key, byte value) {
-			net.minecraft.item.ItemStack nmsStack = getForgeStack();
-			nmsStack.getOrCreateTag().putByte(key, value);
-			serialize((ItemStack) ((Object) nmsStack));
-		}
-
-		@Override
-		public void putBoolean(String key, boolean value) {
-			net.minecraft.item.ItemStack nmsStack = getForgeStack();
-			nmsStack.getOrCreateTag().putBoolean(key, value);
-			serialize((ItemStack) ((Object) nmsStack));
-		}
-
-		@Override
-		public void putIntArray(String key, int[] value) {
-			net.minecraft.item.ItemStack nmsStack = getForgeStack();
-			nmsStack.getOrCreateTag().putIntArray(key, value);
-			serialize((ItemStack) ((Object) nmsStack));
-		}
-
-		@Override
-		public void putIntList(String key, List<Integer> value) {
-			net.minecraft.item.ItemStack nmsStack = getForgeStack();
-			nmsStack.getOrCreateTag().putIntArray(key, value);
-			serialize((ItemStack) ((Object) nmsStack));
-		}
-
-		@Override
-		public void putLongArray(String key, long[] value) {
-			net.minecraft.item.ItemStack nmsStack = getForgeStack();
-			nmsStack.getOrCreateTag().putLongArray(key, value);
-			serialize((ItemStack) ((Object) nmsStack));
-		}
-
-		@Override
-		public void putLongList(String key, List<Long> value) {
-			net.minecraft.item.ItemStack nmsStack = getForgeStack();
-			nmsStack.getOrCreateTag().putLongArray(key, value);
-			serialize((ItemStack) ((Object) nmsStack));
-		}
-
-		@Override
-		public void putByteArray(String key, byte[] value) {
-			net.minecraft.item.ItemStack nmsStack = getForgeStack();
-			nmsStack.getOrCreateTag().putByteArray(key, value);
-			serialize((ItemStack) ((Object) nmsStack));
-		}
-
-		@Override
-		public void putTag(String key, CompoundTag tag) {
-			putString(key, createStringFromCustomTag(key, tag));
-		}
-
-		@Override
-		public Set<String> getAllKeys() {
-			net.minecraft.item.ItemStack nmsStack = getForgeStack();
-			return nmsStack.getOrCreateTag().getAllKeys();
-		}
-
-		@Override
-		public Optional<String> getString(String key) {
-			return containsTag(key) ? Optional.ofNullable(getForgeStack().getOrCreateTag().getString(key)) : Optional.empty();
-		}
-
-		@Override
-		public Optional<UUID> getUUID(String key) {
-			return containsTag(key) ? Optional.ofNullable(getForgeStack().getOrCreateTag().getUUID(key)) : Optional.empty();
-		}
-
-		@Override
-		public Optional<Short> getShort(String key) {
-			return containsTag(key) ? Optional.ofNullable(getForgeStack().getOrCreateTag().getShort(key)) : Optional.empty();
-		}
-
-		@Override
-		public Optional<Integer> getInteger(String key) {
-			return containsTag(key) ? Optional.ofNullable(getForgeStack().getOrCreateTag().getInt(key)) : Optional.empty();
-		}
-
-		@Override
-		public Optional<Long> getLong(String key) {
-			return containsTag(key) ? Optional.ofNullable(getForgeStack().getOrCreateTag().getLong(key)) : Optional.empty();
-		}
-
-		@Override
-		public Optional<Float> getFloat(String key) {
-			return containsTag(key) ? Optional.ofNullable(getForgeStack().getOrCreateTag().getFloat(key)) : Optional.empty();
-		}
-
-		@Override
-		public Optional<Double> getDouble(String key) {
-			return containsTag(key) ? Optional.ofNullable(getForgeStack().getOrCreateTag().getDouble(key)) : Optional.empty();
-		}
-
-		@Override
-		public Optional<Byte> getByte(String key) {
-			return containsTag(key) ? Optional.ofNullable(getForgeStack().getOrCreateTag().getByte(key)) : Optional.empty();
-		}
-
-		@Override
-		public Optional<Boolean> getBoolean(String key) {
-			return containsTag(key) ? Optional.ofNullable(getForgeStack().getOrCreateTag().getBoolean(key)) : Optional.empty();
-		}
-
-		@Override
-		public Optional<int[]> getIntArray(String key) {
-			return containsTag(key) ? Optional.ofNullable(getForgeStack().getOrCreateTag().getIntArray(key)) : Optional.empty();
-		}
-
-		@Override
-		public Optional<List<Integer>> getIntList(String key) {
-			return getIntArray(key).isPresent() ? Optional.ofNullable(Arrays.stream(getIntArray(key).get()).boxed().collect(Collectors.toList())) : Optional.empty();
-		}
-
-		@Override
-		public Optional<long[]> getLongArray(String key) {
-			return containsTag(key) ? Optional.ofNullable(getForgeStack().getOrCreateTag().getLongArray(key)) : Optional.empty();
-		}
-
-		@Override
-		public Optional<List<Long>> getLongList(String key) {
-			return getLongArray(key).isPresent() ? Optional.ofNullable(Arrays.stream(getLongArray(key).get()).boxed().collect(Collectors.toList())) : Optional.empty();
-		}
-
-		@Override
-		public Optional<byte[]> getByteArray(String key) {
-			return containsTag(key) ? Optional.ofNullable(getForgeStack().getOrCreateTag().getByteArray(key)) : Optional.empty();
-		}
-
-		@Override
-		public Optional<CompoundTag> getTag(String key, Class<CompoundTag> clazz) {
-			return !getString(key).isPresent() || clazz == null ? Optional.empty() : createTagFromString(getString(key).get(), clazz);
-		}
-
-		@Override
-		public int size() {
-			return getForgeStack().getOrCreateTag().size();
-		}
-
-		private net.minecraft.item.ItemStack getForgeStack() {
-			return (net.minecraft.item.ItemStack) ((Object) getItemStack());
-		}
-
-	}
-*/
 }

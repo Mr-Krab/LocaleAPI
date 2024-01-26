@@ -8,12 +8,18 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.plugin.PluginContainer;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+
+import sawfowl.localeapi.api.TextUtils;
 
 public interface TagUtil {
 
@@ -25,11 +31,29 @@ public interface TagUtil {
 
 	public void removeTag(PluginContainer container, String key);
 
+	public int size(PluginContainer container);
+
 	interface Json extends TagUtil {
 
-		void putNbtPluginObject(PluginContainer container, String key, JsonElement object);
+		void putJsonElement(PluginContainer container, String key, JsonElement object);
 
 		JsonElement getJsonObject(PluginContainer container, String key);
+
+		ConfigurationNode getAsConfigurationNode(PluginContainer container);
+
+		default void putComponent(PluginContainer container, String key, Component component) {
+			putJsonElement(container, key, JsonParser.parseString(GsonComponentSerializer.gson().serialize(component)));
+		}
+
+		default void putComponents(PluginContainer container, String key, List<Component> components) {
+			JsonArray array = new JsonArray();
+			components.forEach(component -> array.add(JsonParser.parseString(GsonComponentSerializer.gson().serialize(component))));
+			putJsonElement(container, key, array);
+		}
+
+		default void putComponents(PluginContainer container, String key, Component... components) {
+			putComponents(container, key, Arrays.asList(components));
+		}
 
 		default String getString(PluginContainer container, String key) {
 			JsonElement element = getJsonObject(container, key);
@@ -44,6 +68,20 @@ public interface TagUtil {
 		default Boolean getBoolean(PluginContainer container, String key) {
 			JsonElement element = getJsonObject(container, key);
 			return element != null && element.isJsonPrimitive() && element.getAsJsonPrimitive().isBoolean() ? element.getAsBoolean() : null;
+		}
+
+		default Component getComponent(PluginContainer container, String key) {
+			JsonElement tag = getJsonObject(container, key);
+			return tag != null && tag.isJsonObject() || (tag.isJsonPrimitive() && tag.getAsJsonPrimitive().isString()) ? TextUtils.deserialize(tag.toString()) : null;
+		}
+
+		default List<Component> getComponents(PluginContainer container, String key) {
+			JsonElement tag = getJsonObject(container, key);
+			return tag.isJsonArray() ? tag.getAsJsonArray().asList().stream().map(json -> json.isJsonObject() || (json.isJsonPrimitive() && json.getAsJsonPrimitive().isString()) ? GsonComponentSerializer.gson().deserialize(json.toString()) : Component.empty()).toList() : null;
+		}
+
+		default ConfigurationNode getAsConfigurationNode(PluginContainer container, String key) {
+			return getAsConfigurationNode(container).node(key);
 		}
 
 	}
@@ -65,8 +103,6 @@ public interface TagUtil {
 		public <T extends CompoundTag> Optional<T> getCompoundTag(Class<T> clazz, PluginContainer container, String key);
 
 		public Set<String> getAllKeys(PluginContainer container);
-
-		public int size(PluginContainer container);
 
 		default <T> void putObjects(Class<T> clazz, PluginContainer container, String key, @SuppressWarnings("unchecked") T... objects) {
 			putObjects(container, key, Arrays.asList(objects));
