@@ -37,7 +37,7 @@ public interface TagUtil {
 
 		void putJsonElement(PluginContainer container, String key, JsonElement object);
 
-		JsonElement getJsonObject(PluginContainer container, String key);
+		Optional<JsonElement> getJsonObject(PluginContainer container, String key);
 
 		ConfigurationNode getAsConfigurationNode(PluginContainer container);
 
@@ -55,29 +55,24 @@ public interface TagUtil {
 			putComponents(container, key, Arrays.asList(components));
 		}
 
-		default String getString(PluginContainer container, String key) {
-			JsonElement element = getJsonObject(container, key);
-			return element != null && element.isJsonPrimitive() && element.getAsJsonPrimitive().isString() ? element.getAsString() : null;
+		default Optional<String> getString(PluginContainer container, String key) {
+			return getJsonObject(container, key).filter(object -> object.isJsonPrimitive() && object.getAsJsonPrimitive().isString()).map(object -> object.getAsString());
 		}
 
-		default Number getNumber(PluginContainer container, String key) {
-			JsonElement element = getJsonObject(container, key);
-			return element != null && element.isJsonPrimitive() && element.getAsJsonPrimitive().isNumber() ? element.getAsNumber() : null;
+		default Optional<Number> getNumber(PluginContainer container, String key) {
+			return getJsonObject(container, key).filter(object -> object.isJsonPrimitive() && object.getAsJsonPrimitive().isNumber()).map(object -> object.getAsNumber());
 		}
 
-		default Boolean getBoolean(PluginContainer container, String key) {
-			JsonElement element = getJsonObject(container, key);
-			return element != null && element.isJsonPrimitive() && element.getAsJsonPrimitive().isBoolean() ? element.getAsBoolean() : null;
+		default Optional<Boolean> getBoolean(PluginContainer container, String key) {
+			return getJsonObject(container, key).filter(object -> object.isJsonPrimitive() && object.getAsJsonPrimitive().isBoolean()).map(object -> object.getAsBoolean());
 		}
 
-		default Component getComponent(PluginContainer container, String key) {
-			JsonElement tag = getJsonObject(container, key);
-			return tag != null && tag.isJsonObject() || (tag.isJsonPrimitive() && tag.getAsJsonPrimitive().isString()) ? TextUtils.deserialize(tag.toString()) : null;
+		default Optional<Component> getComponent(PluginContainer container, String key) {
+			return getJsonObject(container, key).filter(object -> object.isJsonObject() || object.isJsonPrimitive()).map(object -> TextUtils.deserialize(object.toString()));
 		}
 
 		default List<Component> getComponents(PluginContainer container, String key) {
-			JsonElement tag = getJsonObject(container, key);
-			return tag.isJsonArray() ? tag.getAsJsonArray().asList().stream().map(json -> json.isJsonObject() || (json.isJsonPrimitive() && json.getAsJsonPrimitive().isString()) ? GsonComponentSerializer.gson().deserialize(json.toString()) : Component.empty()).toList() : null;
+			return getJsonObject(container, key).filter(object -> object.isJsonArray()).map(object -> object.getAsJsonArray().asList().stream().map(element -> element.isJsonObject() || (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()) ? GsonComponentSerializer.gson().deserialize(element.toString()) : Component.empty()).toList()).orElse(new ArrayList<Component>());
 		}
 
 		default ConfigurationNode getAsConfigurationNode(PluginContainer container, String key) {
@@ -126,48 +121,48 @@ public interface TagUtil {
 			
 		}
 
-		default String getString(PluginContainer container, String key) {
-			return getObject(String.class, container, key);
+		default Optional<String> getString(PluginContainer container, String key) {
+			return Optional.ofNullable(getObject(String.class, container, key));
 		}
 
-		default UUID getUUID(PluginContainer container, String key) {
-			return getObject(UUID.class, container, key);
+		default Optional<UUID> getUUID(PluginContainer container, String key) {
+			return Optional.ofNullable(getObject(UUID.class, container, key));
 		}
 
-		default Short getShort(PluginContainer container, String key) {
-			return getObject(Short.class, container, key);
+		default Optional<Short> getShort(PluginContainer container, String key) {
+			return Optional.ofNullable(getObject(Short.class, container, key));
 		}
 
-		default Integer getInteger(PluginContainer container, String key) {
-			return getObject(Integer.class, container, key);
+		default Optional<Integer> getInteger(PluginContainer container, String key) {
+			return Optional.ofNullable(getObject(Integer.class, container, key));
 		}
 
-		default Long getLong(PluginContainer container, String key) {
-			return getObject(Long.class, container, key);
+		default Optional<Long> getLong(PluginContainer container, String key) {
+			return Optional.ofNullable(getObject(Long.class, container, key));
 		}
 
-		default Float getFloat(PluginContainer container, String key) {
-			return getObject(Float.class, container, key);
+		default Optional<Float> getFloat(PluginContainer container, String key) {
+			return Optional.ofNullable(getObject(Float.class, container, key));
 		}
 
-		default Double getDouble(PluginContainer container, String key) {
-			return getObject(Double.class, container, key);
+		default Optional<Double> getDouble(PluginContainer container, String key) {
+			return Optional.ofNullable(getObject(Double.class, container, key));
 		}
 
-		default Byte getByte(PluginContainer container, String key) {
-			return getObject(Byte.class, container, key);
+		default Optional<Byte> getByte(PluginContainer container, String key) {
+			return Optional.ofNullable(getObject(Byte.class, container, key));
 		}
 
-		default Boolean getBoolean(PluginContainer container, String key) {
-			return getObject(Boolean.class, container, key);
+		default Optional<Boolean> getBoolean(PluginContainer container, String key) {
+			return Optional.ofNullable(getObject(Boolean.class, container, key));
 		}
 
-		default JsonObject getJsonObject(PluginContainer container, String key) {
-			return getObject(JsonObject.class, container, key);
+		default Optional<JsonObject> getJsonObject(PluginContainer container, String key) {
+			return Optional.ofNullable(getObject(JsonObject.class, container, key));
 		}
 
-		default Component getComponent(PluginContainer container, String key) {
-			return getObject(Component.class, container, key);
+		default Optional<Component> getComponent(PluginContainer container, String key) {
+			return Optional.ofNullable(getObject(Component.class, container, key));
 		}
 
 		default String[] getStringArray(PluginContainer container, String key) {

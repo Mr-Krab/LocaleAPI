@@ -11,11 +11,14 @@ import java.util.stream.Collectors;
 
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.block.BlockSnapshot;
+import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.data.persistence.DataFormats;
 import org.spongepowered.api.data.persistence.DataQuery;
 import org.spongepowered.api.data.persistence.DataView;
 import org.spongepowered.api.data.persistence.InvalidDataException;
 import org.spongepowered.api.item.ItemType;
+import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.configurate.ConfigurationNode;
@@ -43,6 +46,32 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 
 	public SerializedItemStackPlainNBT(ItemStack itemStack) {
 		serialize(itemStack);
+	}
+
+	public SerializedItemStackPlainNBT(BlockState block) {
+		if(block.type().item().isPresent()) {
+			serialize(ItemStack.of(block.type().item().get(), 1));
+			if(block.toContainer().get(DataQuery.of("UnsafeData")).isPresent()) {
+				try {
+					nbt = DataFormats.JSON.get().write((DataView) block.toContainer().get(DataQuery.of("UnsafeData")).get());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		} serialize(ItemStack.of(ItemTypes.AIR.get(), 1));
+	}
+
+	public SerializedItemStackPlainNBT(BlockSnapshot block) {
+		if(block.state().type().item().isPresent()) {
+			serialize(ItemStack.of(block.state().type().item().get(), 1));
+			if(block.toContainer().get(DataQuery.of("UnsafeData")).isPresent()) {
+				try {
+					nbt = DataFormats.JSON.get().write((DataView) block.toContainer().get(DataQuery.of("UnsafeData")).get());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		} serialize(ItemStack.of(ItemTypes.AIR.get(), 1));
 	}
 
 	public SerializedItemStackPlainNBT(String type, int quantity, String nbt) {

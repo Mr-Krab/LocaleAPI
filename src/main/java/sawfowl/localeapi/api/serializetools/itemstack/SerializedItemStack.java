@@ -42,6 +42,7 @@ import sawfowl.localeapi.api.serializetools.SerializeOptions;
 @Deprecated
 /**
  * Use {@link SerializedItemStackPlainNBT} or {@link SerializedItemStackJsonNbt}
+ * Will be removed in version 3.3.
  */
 public class SerializedItemStack {
 
@@ -49,6 +50,7 @@ public class SerializedItemStack {
 
 	/**
 	 * Use {@link SerializedItemStackPlainNBT} or {@link SerializedItemStackJsonNbt}
+	 * Will be removed in version 3.3.
 	 */
 	public SerializedItemStack(ItemStack itemStack) {
 		serialize(itemStack);
@@ -57,6 +59,7 @@ public class SerializedItemStack {
 
 	/**
 	 * Use {@link SerializedItemStackPlainNBT}
+	 * Will be removed in version 3.3.
 	 */
 	public SerializedItemStack(String type, int quantity, String nbt) {
 		itemType = type;

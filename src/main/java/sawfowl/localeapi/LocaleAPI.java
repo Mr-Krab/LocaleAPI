@@ -25,7 +25,6 @@ import org.apache.logging.log4j.LogManager;
 import org.spongepowered.api.Server;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockState;
-import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.entity.Entity;
@@ -53,6 +52,7 @@ import com.google.inject.Inject;
 
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.HoverEvent;
 
 import sawfowl.localeapi.api.LocaleService;
 import sawfowl.localeapi.api.Text;
@@ -131,19 +131,19 @@ public class LocaleAPI {
 	}
 
 	private void registerDefaultPlaceholders() {
-		Placeholders.register(ServerPlayer.class, DefaultPlaceholderKeys.PLAYER_NAME, (text, player, def) -> (text.replace(DefaultPlaceholderKeys.PLAYER_NAME, player.name())));
+		Placeholders.register(Nameable.class, DefaultPlaceholderKeys.NAMEABLE, (text, namable, def) -> (text.replace(DefaultPlaceholderKeys.NAMEABLE, namable.name())));
 		Placeholders.register(ServerPlayer.class, DefaultPlaceholderKeys.PLAYER_PING, (text, player, def) -> (text.replace(DefaultPlaceholderKeys.PLAYER_PING, player.connection().latency())));
 		Placeholders.register(Entity.class, DefaultPlaceholderKeys.ENTITY_DISPLAY_NAME, (text, entity, def) -> (text.replace(DefaultPlaceholderKeys.ENTITY_DISPLAY_NAME, entity.getValue(Keys.CUSTOM_NAME).map(value -> value.get()).orElse(entity instanceof Nameable ? Component.text(((Nameable) entity).name()) : (def == null ? Component.text("n/a") : def)))));
 		Placeholders.register(Entity.class, DefaultPlaceholderKeys.ENTITY_UUID, (text, entity, def) -> (text.replace(DefaultPlaceholderKeys.ENTITY_UUID, entity.uniqueId())));
 		Placeholders.register(ServerWorld.class, DefaultPlaceholderKeys.WORLD, (text, world, def) -> (text.replace(DefaultPlaceholderKeys.WORLD, world.key().asString())));
-		Placeholders.register(ServerLocation.class, DefaultPlaceholderKeys.LOCATION, (text, location, def) -> (text.replace(DefaultPlaceholderKeys.WORLD, location.toString())));
-		Placeholders.register(Vector3d.class, DefaultPlaceholderKeys.POSITION_VECTOR3D, (text, vector3d, def) -> (text.replace(DefaultPlaceholderKeys.POSITION_VECTOR3D, vector3d.toString())));
-		Placeholders.register(Vector3i.class, DefaultPlaceholderKeys.POSITION_VECTOR3I, (text, vector3i, def) -> (text.replace(DefaultPlaceholderKeys.POSITION_VECTOR3I, vector3i.toString())));
+		Placeholders.register(ServerLocation.class, DefaultPlaceholderKeys.LOCATION, (text, location, def) -> (text.replace(DefaultPlaceholderKeys.LOCATION, "<" + location.world().key().asString() + ">" + location.blockPosition().toString())));
+		Placeholders.register(Vector3d.class, DefaultPlaceholderKeys.POSITION, (text, vector3d, def) -> (text.replace(DefaultPlaceholderKeys.POSITION, vector3d.toString())));
+		Placeholders.register(Vector3i.class, DefaultPlaceholderKeys.BLOCK_POSITION, (text, vector3i, def) -> (text.replace(DefaultPlaceholderKeys.BLOCK_POSITION, vector3i.toString())));
 		Placeholders.register(ServerPlayer.class, DefaultPlaceholderKeys.PLAYER_PREFIX, (text, player, def) -> (text.replace(DefaultPlaceholderKeys.PLAYER_PREFIX, player.option("prefix").orElse(""))));
 		Placeholders.register(ServerPlayer.class, DefaultPlaceholderKeys.PLAYER_SUFFIX, (text, player, def) -> (text.replace(DefaultPlaceholderKeys.PLAYER_SUFFIX, player.option("suffix").orElse(""))));
 		Placeholders.register(ServerPlayer.class, DefaultPlaceholderKeys.PLAYER_RANK, (text, player, def) -> (text.replace(DefaultPlaceholderKeys.PLAYER_RANK, player.option("rank").orElse(""))));
-		Placeholders.register(ItemStack.class, DefaultPlaceholderKeys.ITEM, (text, item, def) -> (text.replace(DefaultPlaceholderKeys.ITEM, Key.key(ItemTypes.registry().findValueKey(item.type()).map(key -> key.asString()).orElse("air")))));
-		Placeholders.register(BlockState.class, DefaultPlaceholderKeys.BLOCK, (text, block, def) -> (text.replace(DefaultPlaceholderKeys.BLOCK, Key.key(BlockTypes.registry().findValueKey(block.type()).map(key -> key.asString()).orElse("air")))));
+		Placeholders.register(ItemStack.class, DefaultPlaceholderKeys.ITEM, (text, item, def) -> (text.replace(DefaultPlaceholderKeys.ITEM, item.asComponent().hoverEvent(HoverEvent.showItem(Key.key(ItemTypes.registry().findValueKey(item.type()).map(key -> key.asString()).orElse("air")), item.quantity())))));
+		Placeholders.register(BlockState.class, DefaultPlaceholderKeys.BLOCK, (text, block, def) -> (text.replace(DefaultPlaceholderKeys.BLOCK, Component.text("[").append(block.type().item().map(item -> item.asComponent().hoverEvent(HoverEvent.showItem(Key.key(ItemTypes.registry().findValueKey(item).map(key -> key.asString()).orElse("air")), 1))).orElse(block.type().asComponent())).append(Component.text("]")))));
 	}
 
 }

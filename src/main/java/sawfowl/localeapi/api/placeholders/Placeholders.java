@@ -3,6 +3,8 @@ package sawfowl.localeapi.api.placeholders;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.ClassUtils;
+
 import net.kyori.adventure.text.Component;
 
 import sawfowl.localeapi.api.Text;
@@ -27,8 +29,12 @@ public class Placeholders {
 	public static <T> Text apply(Text text, T arg, Component def) {
 		Class<?> clazz = arg.getClass();
 		if(PLACEHOLDERS.containsKey(clazz)) PLACEHOLDERS.get(arg.getClass()).values().forEach(placeholder -> ((Placeholder<T>) placeholder).apply(text, arg, def));
-		for(Class<?> clazz2 : clazz.getClasses()) 
+		for(Class<?> clazz2 : clazz.getClasses()) {
 			if(clazz != clazz2 && PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.get(clazz2).values().forEach(placeholder -> applyOther(text, cast(clazz2, arg), placeholder, def));
+		}
+		for(Class<?> clazz2 : ClassUtils.getAllInterfaces(clazz)) {
+			if(clazz != clazz2 && PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.get(clazz2).values().forEach(placeholder -> applyOther(text, cast(clazz2, arg), placeholder, def));
+		}
 		return text;
 	}
 
@@ -64,19 +70,19 @@ public class Placeholders {
 
 	@SuppressWarnings("unchecked")
 	private static <T> Placeholder<T> cast(T arg, Placeholder<?> placeholder) {
-		return (Placeholder<T>) arg;
+		return (Placeholder<T>) placeholder;
 	}
 
 	public enum DefaultPlaceholderKeys {
 
-		PLAYER_NAME {
+		NAMEABLE {
 			@Override
 			public String textKey() {
-				return "%entity-name%";
+				return "%name%";
 			}
 			@Override
 			public String id() {
-				return "EntityName";
+				return "Name";
 			}
 		},
 		PLAYER_PING {
@@ -92,7 +98,7 @@ public class Placeholders {
 		ENTITY_DISPLAY_NAME {
 			@Override
 			public String textKey() {
-				return "%entity-name%";
+				return "%entity-display-name%";
 			}
 			@Override
 			public String id() {
@@ -129,20 +135,20 @@ public class Placeholders {
 				return "Location";
 			}
 		},
-		POSITION_VECTOR3D {
+		POSITION {
 			@Override
 			public String textKey() {
-				return "%vector3d%";
+				return "%position%";
 			}
 			@Override
 			public String id() {
 				return "Vector3d";
 			}
 		},
-		POSITION_VECTOR3I {
+		BLOCK_POSITION {
 			@Override
 			public String textKey() {
-				return "%vector3i%";
+				return "%block-position%";
 			}
 			@Override
 			public String id() {
