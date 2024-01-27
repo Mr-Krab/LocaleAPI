@@ -231,18 +231,18 @@ class API implements LocaleService {
 	}
 
 	@Override
-	public void setDefaultReference(PluginContainer container, Class<? extends LocaleReference> defaultReference) {
+	public <T extends LocaleReference> void setDefaultReference(PluginContainer container, Class<T> defaultReference) {
 		if(defaultReferences.containsKey(container.metadata().id())) defaultReferences.remove(container.metadata().id());
 		defaultReferences.put(container.metadata().id(), defaultReference);
 	}
 
 	@Override
-	public <T extends LocaleReference> Class<? extends LocaleReference> getDefaultReference(PluginContainer container) {
+	public Class<? extends LocaleReference> getDefaultReference(PluginContainer container) {
 		return getDefaultReference(container.metadata().id());
 	}
 
 	@Override
-	public <T extends LocaleReference> Class<? extends LocaleReference> getDefaultReference(String pluginID) {
+	public Class<? extends LocaleReference> getDefaultReference(String pluginID) {
 		return defaultReferences.containsKey(pluginID) ? defaultReferences.get(pluginID) : null;
 	}
 

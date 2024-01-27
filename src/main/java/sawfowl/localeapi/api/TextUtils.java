@@ -10,6 +10,7 @@ import org.spongepowered.api.command.CommandCause;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 public class TextUtils {
 
@@ -64,7 +65,7 @@ public class TextUtils {
 	 * Removing all decorations from the text.
 	 */
 	public static final String clearDecorations(Component component) {
-		return component == null ? "" : clearDecorations(serializeLegacy(component));
+		return component == null ? "" : clearDecorations(PlainTextComponentSerializer.plainText().serialize(component));
 	}
 
 	/**

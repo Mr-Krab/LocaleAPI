@@ -9,6 +9,8 @@ import org.spongepowered.api.data.persistence.DataSerializable;
 
 import net.kyori.adventure.builder.AbstractBuilder;
 import net.kyori.adventure.text.Component;
+import sawfowl.localeapi.api.placeholders.Placeholders;
+import sawfowl.localeapi.api.placeholders.Placeholders.DefaultPlaceholderKeys;
 
 public interface Text extends DataSerializable {
 
@@ -101,6 +103,26 @@ public interface Text extends DataSerializable {
 	 * Removing all decorations from the text.
 	 */
 	Text removeDecorations();
+
+	default Text replace(Placeholders.DefaultPlaceholderKeys key, String value) {
+		return replace(key.textKey(), value);
+	}
+
+	default Text replace(DefaultPlaceholderKeys key, Component component) {
+		return replace(key.textKey(), component);
+	}
+
+	default Text replace(DefaultPlaceholderKeys key, Object object) {
+		return replace(key.textKey(), object);
+	}
+
+	default <T> Text applyPlaceholders(T target, Component def) {
+		return Placeholders.apply(this, target, def);
+	}
+
+	default <T> Text applyPlaceholders(Component def, Object... args) {
+		return Placeholders.apply(this, def, args);
+	}
 
 	public interface Builder extends AbstractBuilder<Text>, org.spongepowered.api.util.Builder<Text, Builder> {
 

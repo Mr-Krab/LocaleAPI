@@ -9,6 +9,10 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 import org.spongepowered.plugin.PluginContainer;
 
+/**
+ * Will be removed in version 3.3.
+ */
+@Deprecated
 public interface CompoundNBT {
 
 	/**
