@@ -1,4 +1,5 @@
 sawfowl.localeapi.api
 sawfowl.localeapi.api.event
+sawfowl.localeapi.api.placeholders
 sawfowl.localeapi.api.serializetools
 sawfowl.localeapi.api.serializetools.itemstack

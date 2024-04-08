@@ -29,13 +29,13 @@ tasks.withType(JavaCompile) {
 }
 
 dependencies {
-	implementation "org.spongepowered:spongeapi:10.0.0"
+	implementation "org.spongepowered:spongeapi:${api}"
 	implementation "net.kyori:adventure-serializer-configurate4:4.12.0"
 	//implementation fileTree(dir: 'libs', include: '*.jar')
 }
 
 sponge {
-	apiVersion("10.0.0")
+	apiVersion("${api}")
 	loader {
 		name("java_plain")
 		version("1.0")
@@ -57,7 +57,7 @@ sponge {
 		dependency("spongeapi") {
 			optional(false)
 			loadOrder("after")
-			version("10.0.0")
+			version("${api}")
 		}
 	}
 }
@@ -66,7 +66,6 @@ task sourcesJar(type: Jar, dependsOn: classes) {
 	archiveClassifier = 'sources'
 	from sourceSets.main.allSource
 	exclude('sawfowl/localeapi/apiclasses/**')
-	exclude('sawfowl/localeapi/utils/**')
 	exclude('sawfowl/localeapi/API.java')
 	exclude('sawfowl/localeapi/LocaleAPI.java')
 }
@@ -89,10 +88,13 @@ configurations {
 
 javadoc {
 	options.encoding = 'UTF-8'
+	options.links("https://jd.spongepowered.org/spongeapi/${api}")
+	options.links("https://jd.advntr.dev/api/4.16.0/")
 	source configurations.doc.collect { zipTree(it) }
 	include 'sawfowl/localeapi/api/*.java'
 	include 'sawfowl/localeapi/api/event/*.java'
 	include 'sawfowl/localeapi/api/serializetools/*.java'
 	include 'sawfowl/localeapi/api/serializetools/itemstack/*.java'
+	include 'sawfowl/localeapi/api/placeholders/*.java'
 	options.addStringOption('Xdoclint:none', '-quiet')
 }
