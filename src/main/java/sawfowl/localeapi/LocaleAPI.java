@@ -40,6 +40,7 @@ import org.spongepowered.api.event.lifecycle.RegisterBuilderEvent;
 import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.network.ServerConnectionState;
 import org.spongepowered.api.util.Nameable;
 import org.spongepowered.api.world.server.ServerLocation;
 import org.spongepowered.api.world.server.ServerWorld;
@@ -132,7 +133,7 @@ public class LocaleAPI {
 
 	private void registerDefaultPlaceholders() {
 		Placeholders.register(Nameable.class, DefaultPlaceholderKeys.NAMEABLE, (text, namable, def) -> (text.replace(DefaultPlaceholderKeys.NAMEABLE, namable.name())));
-		Placeholders.register(ServerPlayer.class, DefaultPlaceholderKeys.PLAYER_PING, (text, player, def) -> (text.replace(DefaultPlaceholderKeys.PLAYER_PING, player.connection().latency())));
+		Placeholders.register(ServerPlayer.class, DefaultPlaceholderKeys.PLAYER_PING, (text, player, def) -> (text.replace(DefaultPlaceholderKeys.PLAYER_PING, player.connection().state().map(state -> state instanceof ServerConnectionState.Game game ? game.latency() : -1).orElse(-1))));
 		Placeholders.register(Entity.class, DefaultPlaceholderKeys.ENTITY_DISPLAY_NAME, (text, entity, def) -> (text.replace(DefaultPlaceholderKeys.ENTITY_DISPLAY_NAME, entity.getValue(Keys.CUSTOM_NAME).map(value -> value.get()).orElse(entity instanceof Nameable ? Component.text(((Nameable) entity).name()) : (def == null ? Component.text("n/a") : def)))));
 		Placeholders.register(Entity.class, DefaultPlaceholderKeys.ENTITY_UUID, (text, entity, def) -> (text.replace(DefaultPlaceholderKeys.ENTITY_UUID, entity.uniqueId())));
 		Placeholders.register(ServerWorld.class, DefaultPlaceholderKeys.WORLD, (text, world, def) -> (text.replace(DefaultPlaceholderKeys.WORLD, world.key().asString())));

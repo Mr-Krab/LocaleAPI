@@ -95,13 +95,13 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 			if(getItemType().isPresent()) {
 				itemStack = ItemStack.of(getItemType().get());
 				itemStack.setQuantity(itemQuantity);
-				if(nbt != null) {
+				/*if(nbt != null) {
 					try {
 						itemStack = ItemStack.builder().fromContainer(itemStack.toContainer().set(DataQuery.of("UnsafeData"), DataFormats.JSON.get().read(nbt.toString()))).build();
 					} catch (InvalidDataException | IOException e) {
 						e.printStackTrace();
 					}
-				}
+				}*/
 			} else itemStack = ItemStack.empty();
 			return itemStack.copy();
 		}

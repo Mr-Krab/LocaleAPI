@@ -119,13 +119,13 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 		if(getItemType().isPresent()) {
 			itemStack = ItemStack.of(getItemType().get());
 			itemStack.setQuantity(itemQuantity);
-			if(nbt != null && !nbt.equals("")) {
+			/*if(nbt != null && !nbt.equals("")) {
 				try {
 					itemStack = ItemStack.builder().fromContainer(itemStack.toContainer().set(DataQuery.of("UnsafeData"), DataFormats.JSON.get().read(nbt))).build();
 				} catch (InvalidDataException | IOException e) {
 					e.printStackTrace();
 				}
-			}
+			}*/
 		} else itemStack = ItemStack.empty();
 		return itemStack.copy();
 	}
@@ -197,13 +197,13 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 	private void serialize(ItemStack itemStack) {
 		itemType = RegistryTypes.ITEM_TYPE.get().valueKey(itemStack.type()).asString();
 		itemQuantity = itemStack.quantity();
-		if(itemStack.toContainer().get(DataQuery.of("UnsafeData")).isPresent()) {
+		/*if(itemStack.toContainer().get(DataQuery.of("UnsafeData")).isPresent()) {
 			try {
 				nbt = DataFormats.JSON.get().write((DataView) itemStack.toContainer().get(DataQuery.of("UnsafeData")).get());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		}
+		}*/
 		this.itemStack = itemStack;
 	}
 

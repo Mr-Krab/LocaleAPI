@@ -9,7 +9,7 @@ group = "sawfowl.localeapi"
 version = "${major}.${minor}.${patch}-${api}-${suffix}"
 
 java {
-	sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
+	sourceCompatibility = targetCompatibility = JavaVersion.VERSION_21
 }
 
 repositories {
@@ -21,7 +21,7 @@ repositories {
 }
 
 minecraft {
-	version("1.19.4")
+	version("${minecraft}")
 }
 
 tasks.withType(JavaCompile) {
@@ -50,7 +50,7 @@ sponge {
 			description("Lead Developer")
 		}
 		links {
-			homepage("https://ore.spongepowered.org/KrabsCompany/LocaleAPI")
+			homepage("https://ore.spongepowered.org/Semenkovsky_Ivan/LocaleAPI")
 			source("https://github.com/SawFowl/LocaleAPI")
 			issues("https://github.com/SawFowl/LocaleAPI/issues")
 		}
