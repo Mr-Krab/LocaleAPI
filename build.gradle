@@ -2,11 +2,10 @@ plugins {
 	id("java")
 	id("eclipse")
 	id("org.spongepowered.gradle.plugin") version "2.0.2"
-	id("org.spongepowered.gradle.vanilla") version "0.2.1-SNAPSHOT"
 }
 
 group = "sawfowl.localeapi"
-version = "${major}.${minor}.${patch}-${api}-${suffix}"
+version = "${major}.${minor}.${patch}-${suffix}-S${api}"
 
 java {
 	sourceCompatibility = targetCompatibility = JavaVersion.VERSION_21
@@ -20,17 +19,13 @@ repositories {
 	}
 }
 
-minecraft {
-	version("${minecraft}")
-}
-
 tasks.withType(JavaCompile) {
 	options.encoding = 'UTF-8'
 }
 
 dependencies {
 	implementation "org.spongepowered:spongeapi:${api}"
-	implementation "net.kyori:adventure-serializer-configurate4:4.12.0"
+	implementation "net.kyori:adventure-serializer-configurate4:${adventure}"
 	//implementation fileTree(dir: 'libs', include: '*.jar')
 }
 
@@ -43,7 +38,7 @@ sponge {
 	license("GPL-3.0")
 	plugin("localeapi") {
 		displayName(project.name.capitalize())
-		version("${project.version}")
+		version("${major}.${minor}.${patch}")
 		entrypoint("${project.group}.LocaleAPI")
 		description("Locale API for Sponge plugins.")
 		contributor("SawFowl") {

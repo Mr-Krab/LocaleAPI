@@ -50,7 +50,7 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 				if(block.toContainer().get(DataQuery.of("components")).isPresent()) {
 					try {
 						JsonElement json = JsonParser.parseString(DataFormats.JSON.get().write((DataView) block.toContainer().get(DataQuery.of("components")).get()));
-						nbt = json.isJsonObject() ? json.getAsJsonObject() : null;
+						components = json.isJsonObject() ? json.getAsJsonObject() : null;
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -64,7 +64,7 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 				if(block.toContainer().get(DataQuery.of("components")).isPresent()) {
 					try {
 						JsonElement json = JsonParser.parseString(DataFormats.JSON.get().write((DataView) block.toContainer().get(DataQuery.of("components")).get()));
-						nbt = json.isJsonObject() ? json.getAsJsonObject() : null;
+						components = json.isJsonObject() ? json.getAsJsonObject() : null;
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -75,17 +75,19 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 		public SerializedItemStackJsonNbt(String type, int quantity, JsonObject nbt) {
 			itemType = type;
 			itemQuantity = quantity;
-			this.nbt = nbt;
+			this.components = nbt;
 		}
 
 		@Setting("ItemType")
 		private String itemType;
 		@Setting("Quantity")
 		private Integer itemQuantity;
+		@Setting("ComponentsMap")
+		private JsonObject components;
 		@Setting("NBT")
 		private JsonObject nbt;
-		private ItemStack itemStack;
-		private TagUtil.Json tagUtil;
+		private transient ItemStack itemStack;
+		private transient TagUtil.Json tagUtil;
 
 		/**
 		 * Getting {@link ItemStack}
@@ -100,10 +102,18 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 						itemStack = ItemStack.builder()
 								.fromContainer(
 								itemStack.toContainer()
-								.set(DataQuery.of("components"), DataFormats.JSON.get().read(nbt.toString()))
 								.set(DataQuery.of("UnsafeData"), DataFormats.JSON.get().read(nbt.toString()))
-								.set(DataQuery.of("ItemType"), ResourceKey.resolve(itemType)) // TO DO: Remove this when Sponge is fixed to create an item from `Container`. 
-								.set(DataQuery.of("Count"), itemQuantity)
+								).build();
+					} catch (InvalidDataException | IOException e) {
+						e.printStackTrace();
+					}
+				}
+				if(components != null) {
+					try {
+						itemStack = ItemStack.builder()
+								.fromContainer(
+								itemStack.toContainer()
+								.set(DataQuery.of("components"), DataFormats.JSON.get().read(components.toString()))
 								).build();
 					} catch (InvalidDataException | IOException e) {
 						e.printStackTrace();
@@ -127,8 +137,8 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 		/**
 		 * The method returns a copy of the item's NBT tag collection in Json format.
 		 */
-		public JsonObject getNBT() {
-			return nbt == null ? null : nbt.deepCopy();
+		public JsonObject getComponents() {
+			return components == null ? null : components.deepCopy();
 		}
 
 		public Integer getQuantity() {
@@ -157,7 +167,7 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 		}
 
 		public SerializedItemStackPlainNBT toSerializedItemStackPlainNBT() {
-			return new SerializedItemStackPlainNBT(itemType, 0, nbt.toString());
+			return new SerializedItemStackPlainNBT(itemType, 0, components.toString());
 		}
 
 		@Override
@@ -165,7 +175,7 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 			JsonObject object = new JsonObject();
 			object.addProperty("ItemType", itemType);
 			object.addProperty("Quantity", itemQuantity);
-			if(nbt != null) object.add("NBT", nbt);
+			if(components != null) object.add("ComponentsMap", components);
 			return object;
 		}
 
@@ -173,7 +183,7 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 		public String toString() {
 			return  "ItemType: " + itemType +
 					", Quantity: " + itemQuantity + 
-					", Nbt: " + nbt.toString();
+					", Nbt: " + components.toString();
 		}
 
 		private void serialize(ItemStack itemStack) {
@@ -181,7 +191,7 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 			itemQuantity = itemStack.quantity();
 			if(itemStack.toContainer().get(DataQuery.of("components")).isPresent()) {
 				try {
-					nbt = JsonParser.parseString(DataFormats.JSON.get().write((DataView) itemStack.toContainer().get(DataQuery.of("components")).get())).getAsJsonObject();
+					components = JsonParser.parseString(DataFormats.JSON.get().write((DataView) itemStack.toContainer().get(DataQuery.of("components")).get())).getAsJsonObject();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -193,14 +203,14 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 
 			public void putJsonElement(PluginContainer container, String key, JsonElement object) {
 				if(object == null) return;
-				if(nbt == null) nbt = new JsonObject();
-				putChildMaps(nbt, "plugintags", getPluginId(container)).add(key, object);
+				if(components == null) components = new JsonObject();
+				putChildMaps(components, "plugintags", getPluginId(container)).add(key, object);
 				itemStack = null;
 			}
 
 			public <T extends CompoundTag> void putCompoundTag(PluginContainer container, String key, T tag) {
 				if(tag == null) return;
-				if(nbt == null) nbt = new JsonObject();
+				if(components == null) components = new JsonObject();
 				JsonObject json = tag.toJsonObject();
 				if(json == null) json = convertTagToJson(tag);
 				if(json == null) return;
@@ -209,23 +219,23 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 			}
 
 			public boolean containsTag(PluginContainer container, String key) {
-				return nbt != null && containsTag(nbt, "plugintags", getPluginId(container), key);
+				return components != null && containsTag(components, "plugintags", getPluginId(container), key);
 			}
 
 			public void removeTag(PluginContainer container, String key) {
-				JsonObject object = getDeepChildObject(nbt, "plugintags", getPluginId(container));
+				JsonObject object = getDeepChildObject(components, "plugintags", getPluginId(container));
 				if(object.has(key)) object.remove(key);
 				clear(object, "plugintags", getPluginId(container));
 			}
 
 			public Optional<JsonElement> getJsonObject(PluginContainer container, String key) {
-				return containsTag(container, key) ? Optional.ofNullable(getDeepChildObject(nbt, "plugintags", getPluginId(container)).get(key)) : Optional.empty();
+				return containsTag(container, key) ? Optional.ofNullable(getDeepChildObject(components, "plugintags", getPluginId(container)).get(key)) : Optional.empty();
 			}
 
 			@Override
 			public ConfigurationNode getAsConfigurationNode(PluginContainer container) {
-				if(containsTag(nbt, "plugintags", getPluginId(container))) try {
-					return GsonConfigurationLoader.builder().defaultOptions(options -> options.serializers(SerializeOptions.selectSerializersCollection(2))).build().createNode().set(JsonElement.class, getDeepChildObject(nbt, "plugintags", getPluginId(container)).deepCopy());
+				if(containsTag(components, "plugintags", getPluginId(container))) try {
+					return GsonConfigurationLoader.builder().defaultOptions(options -> options.serializers(SerializeOptions.selectSerializersCollection(2))).build().createNode().set(JsonElement.class, getDeepChildObject(components, "plugintags", getPluginId(container)).deepCopy());
 				} catch (SerializationException e) {
 					e.printStackTrace();
 				}
@@ -233,7 +243,7 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 			}
 
 			public <T extends CompoundTag> Optional<T> getCompoundTag(Class<T> clazz, PluginContainer container, String key) {
-				return containsTag(container, key) ? Optional.ofNullable(convertJsonToTag(clazz, getDeepChildObject(nbt, "plugintags", getPluginId(container), key))) : Optional.empty();
+				return containsTag(container, key) ? Optional.ofNullable(convertJsonToTag(clazz, getDeepChildObject(components, "plugintags", getPluginId(container), key))) : Optional.empty();
 			}
 
 			private boolean containsTag(JsonObject root, String... keys) {
@@ -295,7 +305,7 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 
 			@Override
 			public int size(PluginContainer container) {
-				return nbt == null || !nbt.has("plugintags") || !nbt.getAsJsonObject("plugintags").has(getPluginId(container)) ? 0 : nbt.getAsJsonObject("plugintags").getAsJsonObject(getPluginId(container)).size();
+				return components == null || !components.has("plugintags") || !components.getAsJsonObject("plugintags").has(getPluginId(container)) ? 0 : components.getAsJsonObject("plugintags").getAsJsonObject(getPluginId(container)).size();
 			}
 
 		}

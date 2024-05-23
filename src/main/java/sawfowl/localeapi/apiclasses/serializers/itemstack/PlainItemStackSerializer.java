@@ -15,8 +15,8 @@ public class PlainItemStackSerializer implements TypeSerializer<ItemStack> {
 
 	@Override
 	public ItemStack deserialize(Type type, ConfigurationNode node) throws SerializationException {
-		if(!node.node("NBT").virtual() && node.node("NBT").isMap()) return SerializeOptions.SERIALIZER_COLLECTION_VARIANT_2.get(ItemStack.class).deserialize(type, node);
-		if(!node.node("UnsafeData").virtual() && !node.node("UnsafeData").empty() && node.node("UnsafeData").isMap()) return SerializeOptions.SERIALIZER_COLLECTION_VARIANT_3.get(ItemStack.class).deserialize(type, node);
+		if(!node.node("ComponentsMap").virtual() && node.node("ComponentsMap").isMap()) return SerializeOptions.SERIALIZER_COLLECTION_VARIANT_2.get(ItemStack.class).deserialize(type, node);
+		if((!node.node("UnsafeData").virtual() && !node.node("UnsafeData").empty() && node.node("UnsafeData").isMap()) || (!node.node("components").virtual() && !node.node("components").empty() && node.node("components").isMap())) return SerializeOptions.SERIALIZER_COLLECTION_VARIANT_3.get(ItemStack.class).deserialize(type, node);
 		return node.get(SerializedItemStackPlainNBT.class).getItemStack();
 	}
 
@@ -25,7 +25,7 @@ public class PlainItemStackSerializer implements TypeSerializer<ItemStack> {
 		SerializedItemStackPlainNBT stack = new SerializedItemStackPlainNBT(item);
 		node.node("ItemType").set(stack.getItemTypeAsString());
 		node.node("Quantity").set(stack.getQuantity());
-		node.node("NBT").set(stack.getNBT());
+		node.node("ComponentsMap").set(stack.getComponents());
 		stack = null;
 	}
 

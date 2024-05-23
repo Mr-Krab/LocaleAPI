@@ -53,7 +53,7 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 			serialize(ItemStack.of(block.type().item().get(), 1));
 			if(block.toContainer().get(DataQuery.of("components")).isPresent()) {
 				try {
-					nbt = DataFormats.JSON.get().write((DataView) block.toContainer().get(DataQuery.of("components")).get());
+					components = DataFormats.JSON.get().write((DataView) block.toContainer().get(DataQuery.of("components")).get());
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -66,7 +66,7 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 			serialize(ItemStack.of(block.state().type().item().get(), 1));
 			if(block.toContainer().get(DataQuery.of("components")).isPresent()) {
 				try {
-					nbt = DataFormats.JSON.get().write((DataView) block.toContainer().get(DataQuery.of("components")).get());
+					components = DataFormats.JSON.get().write((DataView) block.toContainer().get(DataQuery.of("components")).get());
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -77,17 +77,19 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 	public SerializedItemStackPlainNBT(String type, int quantity, String nbt) {
 		itemType = type;
 		itemQuantity = quantity;
-		this.nbt = nbt;
+		this.components = nbt;
 	}
 
 	@Setting("ItemType")
 	private String itemType;
 	@Setting("Quantity")
 	private Integer itemQuantity;
+	@Setting("ComponentsMap")
+	private String components;
 	@Setting("NBT")
 	private String nbt;
-	private ItemStack itemStack;
-	private TagUtil.Advanced tagUtil;
+	private transient ItemStack itemStack;
+	private transient TagUtil.Advanced tagUtil;
 
 	public String getItemTypeAsString() {
 		return itemType;
@@ -103,8 +105,8 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 	/**
 	 * Get all tags as a string.
 	 */
-	public String getNBT() {
-		return nbt != null ? nbt : "";
+	public String getComponents() {
+		return components != null ? components : "";
 	}
 
 	/**
@@ -121,11 +123,14 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 			itemStack.setQuantity(itemQuantity);
 			if(nbt != null && !nbt.equals("")) {
 				try {
-					itemStack = ItemStack.builder().fromContainer(itemStack.toContainer().set(DataQuery.of("components"), DataFormats.JSON.get().read(nbt))
-							.set(DataQuery.of("UnsafeData"), DataFormats.JSON.get().read(nbt))
-							.set(DataQuery.of("ItemType"), ResourceKey.resolve(itemType)) // TO DO: Remove this when Sponge is fixed to create an item from `Container`.
-							.set(DataQuery.of("Count"), itemQuantity)
-							).build();
+					itemStack = ItemStack.builder().fromContainer(itemStack.toContainer().set(DataQuery.of("UnsafeData"), DataFormats.JSON.get().read(nbt))).build();
+				} catch (InvalidDataException | IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if(components != null && !components.equals("")) {
+				try {
+					itemStack = ItemStack.builder().fromContainer(itemStack.toContainer().set(DataQuery.of("components"), DataFormats.JSON.get().read(components))).build();
 				} catch (InvalidDataException | IOException e) {
 					e.printStackTrace();
 				}
@@ -163,12 +168,12 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 	}
 
 	public SerializedItemStackJsonNbt toSerializedItemStackJsonNbt() {
-		return new SerializedItemStackJsonNbt(itemType, 0, nbt == null ? null : JsonParser.parseString(nbt).getAsJsonObject());
+		return new SerializedItemStackJsonNbt(itemType, 0, components == null ? null : JsonParser.parseString(components).getAsJsonObject());
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(itemQuantity, itemStack, itemType, nbt);
+		return Objects.hash(itemQuantity, itemStack, itemType, components);
 	}
 
 	@Override
@@ -176,11 +181,11 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 		if(this == obj) return true;
 		if(!(obj instanceof SerializedItemStackPlainNBT)) return false;
 		SerializedItemStackPlainNBT other = (SerializedItemStackPlainNBT) obj;
-		return Objects.equals(itemQuantity, other.itemQuantity) && Objects.equals(itemType, other.itemType) && Objects.equals(nbt, other.nbt);
+		return Objects.equals(itemQuantity, other.itemQuantity) && Objects.equals(itemType, other.itemType) && Objects.equals(components, other.components);
 	}
 
 	public boolean equalsWhithoutQuantity(SerializedItemStackPlainNBT itemStack) {
-		return this == itemStack || (Objects.equals(itemType, itemStack.itemType) && Objects.equals(nbt, itemStack.nbt));
+		return this == itemStack || (Objects.equals(itemType, itemStack.itemType) && Objects.equals(components, itemStack.components));
 	}
 
 	public boolean equalsWhithoutNBT(SerializedItemStackPlainNBT itemStack) {
@@ -195,16 +200,18 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 	public String toString() {
 		return  "ItemType: " + itemType +
 				", Quantity: " + itemQuantity + 
-				", Nbt: " + nbt;
+				", Nbt: " + components;
 	}
 
 	private void serialize(ItemStack itemStack) {
 		itemType = RegistryTypes.ITEM_TYPE.get().valueKey(itemStack.type()).asString();
 		itemQuantity = itemStack.quantity();
+		System.out.println("Запись итема в конфиг. Оригинальный контейнер -> " + itemStack.toContainer().keys(false));
+		ItemStack copy = ItemStack.builder().fromContainer(itemStack.toContainer()).build();
+		System.out.println("Запись итема в конфиг. Копия -> " + copy.toContainer().keys(false));
 		if(itemStack.toContainer().get(DataQuery.of("components")).isPresent()) {
 			try {
-				nbt = DataFormats.JSON.get().write((DataView) itemStack.toContainer().get(DataQuery.of("components")).get());
-				System.out.println(nbt);
+				components = DataFormats.JSON.get().write((DataView) itemStack.toContainer().get(DataQuery.of("components")).get());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -217,7 +224,7 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 		JsonObject object = new JsonObject();
 		object.addProperty("ItemType", itemType);
 		object.addProperty("Quantity", itemQuantity);
-		if(nbt != null) object.addProperty("NBT", nbt);
+		if(components != null) object.addProperty("ComponentsMap", components);
 		return object;
 	}
 
@@ -231,7 +238,7 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 		private void updateNbt() {
 			if(node != null) {
 				try {
-					SerializedItemStackPlainNBT.this.nbt = node.empty() ? null : node.get(JsonObject.class).toString();
+					SerializedItemStackPlainNBT.this.components = node.empty() ? null : node.get(JsonObject.class).toString();
 				} catch (SerializationException e) {
 					e.printStackTrace();
 				}
@@ -239,7 +246,7 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 			}
 			node = GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).build().createNode();
 			try {
-				if(nbt != null && nbt.length() > 0) node.set(JsonObject.class, JsonParser.parseString(nbt).getAsJsonObject());
+				if(components != null && components.length() > 0) node.set(JsonObject.class, JsonParser.parseString(components).getAsJsonObject());
 			} catch (SerializationException e) {
 				e.printStackTrace();
 			}
@@ -324,7 +331,7 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 				} catch (Exception e) {
 				}
 				return def;
-			} else if(nbt != null && node != null && !node.node("plugintags", getPluginId(container), key).virtual()) {
+			} else if(components != null && node != null && !node.node("plugintags", getPluginId(container), key).virtual()) {
 				try {
 					return node.node("plugintags", getPluginId(container), key).get(clazz, def);
 				} catch (SerializationException e) {
@@ -342,7 +349,7 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 				} catch (RuntimeException e) {
 				}
 				return def;
-			} else if(nbt != null && node != null && !node.node("plugintags", getPluginId(container), key).virtual()) {
+			} else if(components != null && node != null && !node.node("plugintags", getPluginId(container), key).virtual()) {
 				try {
 					return node.node("plugintags", getPluginId(container), key).getList(clazz, def);
 				} catch (SerializationException e) {
@@ -380,12 +387,12 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 
 		@Override
 		public Set<String> getAllKeys(PluginContainer container) {
-			return nbt != null && node != null ? new HashSet<>() : node.node("plugintags", getPluginId(container)).childrenMap().keySet().stream().map(object -> object.toString()).collect(Collectors.toUnmodifiableSet());
+			return components != null && node != null ? new HashSet<>() : node.node("plugintags", getPluginId(container)).childrenMap().keySet().stream().map(object -> object.toString()).collect(Collectors.toUnmodifiableSet());
 		}
 
 		@Override
 		public int size(PluginContainer container) {
-			return nbt != null && node != null ? 0 : node.node("plugintags", getPluginId(container)).childrenMap().size();
+			return components != null && node != null ? 0 : node.node("plugintags", getPluginId(container)).childrenMap().size();
 		}
 
 		private String getPluginId(PluginContainer container) {
