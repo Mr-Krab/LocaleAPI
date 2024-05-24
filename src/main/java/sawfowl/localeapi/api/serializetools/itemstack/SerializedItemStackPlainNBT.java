@@ -13,6 +13,7 @@ import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockState;
+import org.spongepowered.api.data.persistence.DataContainer;
 import org.spongepowered.api.data.persistence.DataFormats;
 import org.spongepowered.api.data.persistence.DataQuery;
 import org.spongepowered.api.data.persistence.DataView;
@@ -21,13 +22,13 @@ import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.registry.RegistryTypes;
-import org.spongepowered.configurate.ConfigurationNode;
-import org.spongepowered.configurate.gson.GsonConfigurationLoader;
+import org.spongepowered.configurate.BasicConfigurationNode;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.plugin.PluginContainer;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -90,6 +91,7 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 	private String nbt;
 	private transient ItemStack itemStack;
 	private transient TagUtil.Advanced tagUtil;
+	private transient DataContainer itemContainer = DataContainer.createNew();
 
 	public String getItemTypeAsString() {
 		return itemType;
@@ -114,28 +116,23 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 	 */
 	public ItemStack getItemStack() {
 		if(tagUtil != null) {
-			((EditNBT) tagUtil).clear();
 			tagUtil = null;
 		}
 		if(itemStack != null) return itemStack.copy();
 		if(getItemType().isPresent()) {
 			itemStack = ItemStack.of(getItemType().get());
 			itemStack.setQuantity(itemQuantity);
+			if(itemContainer == null) itemContainer = itemStack.toContainer();
 			if(nbt != null && !nbt.equals("")) {
 				try {
-					itemStack = ItemStack.builder().fromContainer(itemStack.toContainer().set(DataQuery.of("UnsafeData"), DataFormats.JSON.get().read(nbt))).build();
+					itemContainer.set(DataQuery.of("UnsafeData"), DataFormats.JSON.get().read(nbt));
 				} catch (InvalidDataException | IOException e) {
 					e.printStackTrace();
 				}
 			}
-			if(components != null && !components.equals("")) {
-				try {
-					itemStack = ItemStack.builder().fromContainer(itemStack.toContainer().set(DataQuery.of("components"), DataFormats.JSON.get().read(components))).build();
-				} catch (InvalidDataException | IOException e) {
-					e.printStackTrace();
-				}
-			}
+			itemStack = ItemStack.builder().fromContainer(itemContainer).build();
 		} else itemStack = ItemStack.empty();
+		itemContainer = null;
 		return itemStack.copy();
 	}
 
@@ -200,18 +197,15 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 	public String toString() {
 		return  "ItemType: " + itemType +
 				", Quantity: " + itemQuantity + 
-				", Nbt: " + components;
+				", ComponentsMap: " + components;
 	}
 
 	private void serialize(ItemStack itemStack) {
 		itemType = RegistryTypes.ITEM_TYPE.get().valueKey(itemStack.type()).asString();
 		itemQuantity = itemStack.quantity();
-		System.out.println("Запись итема в конфиг. Оригинальный контейнер -> " + itemStack.toContainer().keys(false));
-		ItemStack copy = ItemStack.builder().fromContainer(itemStack.toContainer()).build();
-		System.out.println("Запись итема в конфиг. Копия -> " + copy.toContainer().keys(false));
 		if(itemStack.toContainer().get(DataQuery.of("components")).isPresent()) {
 			try {
-				components = DataFormats.JSON.get().write((DataView) itemStack.toContainer().get(DataQuery.of("components")).get());
+				components = DataFormats.JSON.get().write((DataView) (itemContainer = itemStack.toContainer()).get(DataQuery.of("components")).get());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -229,25 +223,16 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 	}
 
 	class EditNBT implements TagUtil.Advanced {
-		private ConfigurationNode node;
 
 		EditNBT() {
-			updateNbt();
+			checkContainer();
 		}
 
 		private void updateNbt() {
-			if(node != null) {
-				try {
-					SerializedItemStackPlainNBT.this.components = node.empty() ? null : node.get(JsonObject.class).toString();
-				} catch (SerializationException e) {
-					e.printStackTrace();
-				}
-				recreateStack();
-			}
-			node = GsonConfigurationLoader.builder().defaultOptions(SerializeOptions.selectOptions(1)).build().createNode();
+			itemStack = null;
 			try {
-				if(components != null && components.length() > 0) node.set(JsonObject.class, JsonParser.parseString(components).getAsJsonObject());
-			} catch (SerializationException e) {
+				components = DataFormats.JSON.get().write(itemContainer);
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
@@ -260,35 +245,30 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 				} catch (Exception e) {
 				}
 				return;
-			} else try {
-				node.node("plugintags", getPluginId(container), key).set(object.getClass(), object);
+			} else {
+				checkContainer();
+				itemContainer.set(createPath(getPluginId(container), key.toLowerCase()), object);
 				updateNbt();
-			} catch (SerializationException e) {
-				e.printStackTrace();
 			}
 		}
 
 		@Override
 		public <T> void putObjects(PluginContainer container, String key, List<T> objects) {
 			if(objects.isEmpty()) return;
+			checkContainer();
 			objects = objects.stream().filter(object -> ClassUtils.isPrimitiveOrBasicDataClass(object)).toList();
 			if(objects.isEmpty()) return;
-			try {
-				node.node("plugintags", getPluginId(container), key).setList(TypeTokens.createToken(objects.get(0)), objects);
-			} catch (SerializationException e) {
-				e.printStackTrace();
-			}
+			itemContainer.set(createPath(getPluginId(container), key.toLowerCase()), objects);
 			updateNbt();
 		}
 
 		@Override
 		public <K, V> void putObjects(Class<K> mapKey, Class<V> mapValue, PluginContainer container, String key, Map<K, V> objects) {
 			if(objects.isEmpty()) return;
+			checkContainer();
 			objects.forEach((k,v) -> {
-				try {
-					if(ClassUtils.isPrimitiveOrBasicDataClass(k) && ClassUtils.isPrimitiveOrBasicDataClass(v)) node.node("plugintags", getPluginId(container), key, k).set(v);
-				} catch (SerializationException e) {
-					e.printStackTrace();
+				if(ClassUtils.isPrimitiveOrBasicDataClass(k) && ClassUtils.isPrimitiveOrBasicDataClass(v)) {
+					itemContainer.set(createPath(getPluginId(container), key.toLowerCase(), k.toString().toLowerCase()), v);
 				}
 			});
 			updateNbt();
@@ -297,13 +277,11 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 		@Override
 		public <T extends CompoundTag> void putCompoundTag(PluginContainer container, String key, T object) {
 			if(object.toJsonObject() != null) {
-				try {
-					node.node("plugintags", getPluginId(container), key).set(JsonObject.class, object.toJsonObject());
-				} catch (SerializationException e) {
-					e.printStackTrace();
-				}
+				checkContainer();
+				itemContainer.set(createPath(getPluginId(container), key.toLowerCase()), object.toJsonObject());
 			} else try {
-				node.node("plugintags", getPluginId(container), key).set(object.getClass(), object);
+				checkContainer();
+				itemContainer.set(createPath(getPluginId(container), key.toLowerCase()), BasicConfigurationNode.root(SerializeOptions.OPTIONS_VARIANT_2).set(object.getClass(), object).get(JsonElement.class));
 			} catch (SerializationException e) {
 				e.printStackTrace();
 			}
@@ -312,15 +290,14 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 
 		@Override
 		public void removeTag(PluginContainer container, String key) {
-			if(!node.node("plugintags", getPluginId(container), key).virtual()) node.node("plugintags", getPluginId(container)).removeChild(key);
-			if(node.node("plugintags", getPluginId(container)).empty()) node.node("plugintags").removeChild(getPluginId(container));
-			if(node.node("plugintags").empty()) node.removeChild("plugintags");
+			checkContainer();
+			if(itemContainer.contains(DataQuery.of("plugintags", getPluginId(container), "tag:" + key.toLowerCase()))) itemContainer.remove(DataQuery.of("plugintags", getPluginId(container), key));
 			updateNbt();
 		}
 
 		@Override
 		public boolean containsTag(PluginContainer container, String key) {
-			return !node.node("plugintags", getPluginId(container), key).virtual();
+			return getItemStack().toContainer().contains(DataQuery.of("plugintags", getPluginId(container), "tag:" + key.toLowerCase()));
 		}
 
 		@Override
@@ -331,13 +308,13 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 				} catch (Exception e) {
 				}
 				return def;
-			} else if(components != null && node != null && !node.node("plugintags", getPluginId(container), key).virtual()) {
+			} /*else if(components != null && node != null && !node.node("plugintags", getPluginId(container), "tag:" + key.toLowerCase()).virtual()) {
 				try {
-					return node.node("plugintags", getPluginId(container), key).get(clazz, def);
+					return node.node("plugintags", getPluginId(container), "tag:" + key.toLowerCase()).get(clazz, def);
 				} catch (SerializationException e) {
 					e.printStackTrace();
 				}
-			}
+			}*/
 			return def;
 		}
 
@@ -349,21 +326,20 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 				} catch (RuntimeException e) {
 				}
 				return def;
-			} else if(components != null && node != null && !node.node("plugintags", getPluginId(container), key).virtual()) {
+			}/* else if(components != null && node != null && !node.node("plugintags", getPluginId(container), "tag:" + key.toLowerCase()).virtual()) {
 				try {
-					return node.node("plugintags", getPluginId(container), key).getList(clazz, def);
+					return node.node("plugintags", getPluginId(container), "tag:" + key.toLowerCase()).getList(clazz, def);
 				} catch (SerializationException e) {
 					e.printStackTrace();
 				}
-			}
+			}*/
 			return def;
 		}
 
-		@SuppressWarnings("unchecked")
 		@Override
 		public <K, V> Map<K, V> getObjectsMap(Class<K> mapKey, Class<V> mapValue, PluginContainer container, String key, Map<K, V> objects) {
-			if(containsTag(container, key)) {
-				return node.node("plugintags", getPluginId(container), key).childrenMap().entrySet().stream().collect(Collectors.toMap(entry -> (K) entry.getKey(), entry -> {
+			/*if(containsTag(container, "tag:" + key.toLowerCase())) {
+				return node.node("plugintags", getPluginId(container), "tag:" + key.toLowerCase()).childrenMap().entrySet().stream().collect(Collectors.toMap(entry -> (K) entry.getKey(), entry -> {
 					try {
 						return entry.getValue().get(mapValue);
 					} catch (SerializationException e) {
@@ -371,41 +347,44 @@ public class SerializedItemStackPlainNBT implements CompoundTag {
 					}
 					return null;
 				}));
-			}
+			}*/
 			return objects;
 		}
 
 		@Override
 		public <T extends CompoundTag> Optional<T> getCompoundTag(Class<T> clazz, PluginContainer container, String key) {
-			try {
-				return containsTag(container, key) ? Optional.ofNullable(node.get(clazz)) : Optional.empty();
+			/*try {
+				return containsTag(container, "tag:" + key.toLowerCase()) ? Optional.ofNullable(node.get(clazz)) : Optional.empty();
 			} catch (SerializationException e) {
 				e.printStackTrace();
-			}
+			}*/
 			return Optional.empty();
 		}
 
 		@Override
 		public Set<String> getAllKeys(PluginContainer container) {
-			return components != null && node != null ? new HashSet<>() : node.node("plugintags", getPluginId(container)).childrenMap().keySet().stream().map(object -> object.toString()).collect(Collectors.toUnmodifiableSet());
+			return getItemStack().toContainer().get(createPath("components", "minecraft:custom_data", "plugintags", getPluginId(container))).map(data -> ((DataView) data).keys(false).stream().map(q -> q.asString('.')).collect(Collectors.toSet())).orElse(new HashSet<String>());
 		}
 
 		@Override
 		public int size(PluginContainer container) {
-			return components != null && node != null ? 0 : node.node("plugintags", getPluginId(container)).childrenMap().size();
+			return getItemStack().toContainer().get(createPath("components", "minecraft:custom_data", "plugintags", getPluginId(container))).map(data -> ((DataView) data).keys(false).size()).orElse(0);
 		}
 
 		private String getPluginId(PluginContainer container) {
 			return container.metadata().id();
 		}
 
-		private void recreateStack() {
-			itemStack = null;
-			getItemStack();
+		private DataQuery createPath(String plugin, String key) {
+			return DataQuery.of("components", "minecraft:custom_data", "plugintags", plugin, key);
 		}
 
-		private void clear() {
-			node = null;
+		private DataQuery createPath(String... path) {
+			return DataQuery.of(path);
+		}
+
+		private void checkContainer() {
+			if(itemContainer == null) itemContainer = getItemStack().toContainer();
 		}
 
 	}
