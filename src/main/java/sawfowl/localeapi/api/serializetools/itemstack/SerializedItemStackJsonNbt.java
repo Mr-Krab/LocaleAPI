@@ -1,13 +1,23 @@
 package sawfowl.localeapi.api.serializetools.itemstack;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockState;
+import org.spongepowered.api.data.persistence.DataContainer;
 import org.spongepowered.api.data.persistence.DataFormats;
 import org.spongepowered.api.data.persistence.DataQuery;
 import org.spongepowered.api.data.persistence.DataView;
@@ -17,26 +27,27 @@ import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.configurate.BasicConfigurationNode;
-import org.spongepowered.configurate.ConfigurationNode;
-import org.spongepowered.configurate.gson.GsonConfigurationLoader;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.plugin.PluginContainer;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSyntaxException;
 
 import net.kyori.adventure.key.Key;
-
+import sawfowl.localeapi.api.ClassUtils;
 import sawfowl.localeapi.api.serializetools.SerializeOptions;
 
 /**
  * The class is intended for working with item data when it is necessary to access it before registering item data in the registry.
  */
 @ConfigSerializable
-public class SerializedItemStackJsonNbt implements CompoundTag {
+public class SerializedItemStackJsonNbt implements PluginComponent {
 
 	SerializedItemStackJsonNbt(){}
 
@@ -47,9 +58,9 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 		public SerializedItemStackJsonNbt(BlockState block) {
 			if(block.type().item().isPresent()) {
 				serialize(ItemStack.of(block.type().item().get(), 1));
-				if(block.toContainer().get(DataQuery.of("components")).isPresent()) {
+				if(block.toContainer().get(DataQuery.of(ComponentUtil.COMPONENTS)).isPresent()) {
 					try {
-						JsonElement json = JsonParser.parseString(DataFormats.JSON.get().write((DataView) block.toContainer().get(DataQuery.of("components")).get()));
+						JsonElement json = JsonParser.parseString(DataFormats.JSON.get().write((DataView) block.toContainer().get(DataQuery.of(ComponentUtil.COMPONENTS)).get()));
 						components = json.isJsonObject() ? json.getAsJsonObject() : null;
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -61,9 +72,9 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 		public SerializedItemStackJsonNbt(BlockSnapshot block) {
 			if(block.state().type().item().isPresent()) {
 				serialize(ItemStack.of(block.state().type().item().get(), 1));
-				if(block.toContainer().get(DataQuery.of("components")).isPresent()) {
+				if(block.toContainer().get(DataQuery.of(ComponentUtil.COMPONENTS)).isPresent()) {
 					try {
-						JsonElement json = JsonParser.parseString(DataFormats.JSON.get().write((DataView) block.toContainer().get(DataQuery.of("components")).get()));
+						JsonElement json = JsonParser.parseString(DataFormats.JSON.get().write((DataView) block.toContainer().get(DataQuery.of(ComponentUtil.COMPONENTS)).get()));
 						components = json.isJsonObject() ? json.getAsJsonObject() : null;
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -87,7 +98,8 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 		@Setting("NBT")
 		private JsonObject nbt;
 		private transient ItemStack itemStack;
-		private transient TagUtil.Json tagUtil;
+		private transient ComponentUtil tagUtil;
+		private transient DataContainer itemContainer = null;
 
 		/**
 		 * Getting {@link ItemStack}
@@ -97,6 +109,7 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 			if(getItemType().isPresent()) {
 				itemStack = ItemStack.of(getItemType().get());
 				itemStack.setQuantity(itemQuantity);
+				if(itemContainer == null) itemContainer = itemStack.toContainer();
 				if(nbt != null) {
 					try {
 						itemStack = ItemStack.builder()
@@ -108,18 +121,9 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 						e.printStackTrace();
 					}
 				}
-				if(components != null) {
-					try {
-						itemStack = ItemStack.builder()
-								.fromContainer(
-								itemStack.toContainer()
-								.set(DataQuery.of("components"), DataFormats.JSON.get().read(components.toString()))
-								).build();
-					} catch (InvalidDataException | IOException e) {
-						e.printStackTrace();
-					}
-				}
+				itemStack = ItemStack.builder().fromContainer(itemContainer).build();
 			} else itemStack = ItemStack.empty();
+			itemContainer = null;
 			return itemStack.copy();
 		}
 
@@ -137,7 +141,7 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 		/**
 		 * The method returns a copy of the item's NBT tag collection in Json format.
 		 */
-		public JsonObject getComponents() {
+		public JsonElement getComponents() {
 			return components == null ? null : components.deepCopy();
 		}
 
@@ -162,8 +166,8 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 		/**
 		 * Gaining access to the NBT tags of an item.
 		 */
-		public TagUtil.Json getOrCreateTag() {
-			return tagUtil == null ? tagUtil = new NbtEdit() : tagUtil;
+		public ComponentUtil getOrCreateComponent() {
+			return tagUtil == null ? tagUtil = new EditNBT() : tagUtil;
 		}
 
 		public SerializedItemStackPlainNBT toSerializedItemStackPlainNBT() {
@@ -183,15 +187,15 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 		public String toString() {
 			return  "ItemType: " + itemType +
 					", Quantity: " + itemQuantity + 
-					", Nbt: " + components.toString();
+					", ComponentsMap: " + components.toString();
 		}
 
 		private void serialize(ItemStack itemStack) {
 			itemType = RegistryTypes.ITEM_TYPE.get().valueKey(itemStack.type()).asString();
 			itemQuantity = itemStack.quantity();
-			if(itemStack.toContainer().get(DataQuery.of("components")).isPresent()) {
+			if(itemStack.toContainer().get(DataQuery.of(ComponentUtil.COMPONENTS)).isPresent()) {
 				try {
-					components = JsonParser.parseString(DataFormats.JSON.get().write((DataView) itemStack.toContainer().get(DataQuery.of("components")).get())).getAsJsonObject();
+					components = JsonParser.parseString(DataFormats.JSON.get().write((DataView) itemStack.toContainer().get(DataQuery.of(ComponentUtil.COMPONENTS)).get())).getAsJsonObject();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -199,115 +203,235 @@ public class SerializedItemStackJsonNbt implements CompoundTag {
 			this.itemStack = itemStack;
 		}
 
-		private class NbtEdit implements TagUtil.Json {
+		private class EditNBT implements ComponentUtil {
 
-			public void putJsonElement(PluginContainer container, String key, JsonElement object) {
-				if(object == null) return;
-				if(components == null) components = new JsonObject();
-				putChildMaps(components, "plugintags", getPluginId(container)).add(key, object);
-				itemStack = null;
-			}
-
-			public <T extends CompoundTag> void putCompoundTag(PluginContainer container, String key, T tag) {
-				if(tag == null) return;
-				if(components == null) components = new JsonObject();
-				JsonObject json = tag.toJsonObject();
-				if(json == null) json = convertTagToJson(tag);
-				if(json == null) return;
-				putJsonElement(container, key, json);
-				json = null;
-			}
-
-			public boolean containsTag(PluginContainer container, String key) {
-				return components != null && containsTag(components, "plugintags", getPluginId(container), key);
-			}
-
-			public void removeTag(PluginContainer container, String key) {
-				JsonObject object = getDeepChildObject(components, "plugintags", getPluginId(container));
-				if(object.has(key)) object.remove(key);
-				clear(object, "plugintags", getPluginId(container));
-			}
-
-			public Optional<JsonElement> getJsonObject(PluginContainer container, String key) {
-				return containsTag(container, key) ? Optional.ofNullable(getDeepChildObject(components, "plugintags", getPluginId(container)).get(key)) : Optional.empty();
-			}
-
-			@Override
-			public ConfigurationNode getAsConfigurationNode(PluginContainer container) {
-				if(containsTag(components, "plugintags", getPluginId(container))) try {
-					return GsonConfigurationLoader.builder().defaultOptions(options -> options.serializers(SerializeOptions.selectSerializersCollection(2))).build().createNode().set(JsonElement.class, getDeepChildObject(components, "plugintags", getPluginId(container)).deepCopy());
-				} catch (SerializationException e) {
-					e.printStackTrace();
-				}
-				return BasicConfigurationNode.root(o -> o.options().serializers(SerializeOptions.selectSerializersCollection(2)));
-			}
-
-			public <T extends CompoundTag> Optional<T> getCompoundTag(Class<T> clazz, PluginContainer container, String key) {
-				return containsTag(container, key) ? Optional.ofNullable(convertJsonToTag(clazz, getDeepChildObject(components, "plugintags", getPluginId(container), key))) : Optional.empty();
-			}
-
-			private boolean containsTag(JsonObject root, String... keys) {
-				if(root == null) return false;
-				for(String key : keys) {
-					return root.has(key) && (keys.length == 1 || (root.get(key).isJsonObject() && containsTag(root.get(key).getAsJsonObject(), Arrays.copyOfRange(keys, 1, keys.length))));
-				}
-				return true;
-			}
-
-			private JsonObject putChildMaps(JsonObject root, String... keys) {
-				for(String key : keys) {
-					if(!root.has(key)) root.add(key, new JsonObject());
-					return putChildMaps(root.get(key).getAsJsonObject(), keys.length == 1 ? new String[] {} : Arrays.copyOfRange(keys, 1, keys.length));
-				}
-				return root;
-			}
-
-			private JsonObject getDeepChildObject(JsonObject root, String... keys) {
-				for(String key : keys) {
-					return root.has(key) ? getDeepChildObject(root.get(key).getAsJsonObject(), keys.length == 1 ? new String[] {} : Arrays.copyOfRange(keys, 1, keys.length)) : root;
-				}
-				return root;
-			}
-
-			private void clear(JsonObject root, String... keys) {
-				if(keys.length == 0) return;
-				String last = keys[keys.length - 1];
-				keys = keys.length < 2 ? new String[] {} : Arrays.copyOfRange(keys, 0, keys.length);
-				JsonObject object = getDeepChildObject(root, keys);
-				if(object.has(last) && object.get(last).isJsonObject() && object.get(last).getAsJsonObject().asMap().isEmpty()) {
-					object.remove(last);
-					clear(root, keys);
-					last = null;
-				} else keys = null;
-			}
-
-			private <T extends CompoundTag> JsonObject convertTagToJson(T tag) {
-				try {
-					return BasicConfigurationNode.root(o -> o.options().serializers(SerializeOptions.SERIALIZER_COLLECTION_VARIANT_1)).set(tag.getClass(), tag).get(JsonObject.class);
-				} catch (SerializationException | RuntimeException e) {
-					e.printStackTrace();
-				}
-				return null;
-			}
-
-			private <T extends CompoundTag> T convertJsonToTag(Class<T> clazz, JsonObject jsonObject) {
-				try {
-					return BasicConfigurationNode.root(o -> o.options().serializers(SerializeOptions.SERIALIZER_COLLECTION_VARIANT_1)).set(JsonObject.class, jsonObject).get(clazz);
-				} catch (SerializationException | RuntimeException e) {
-					e.printStackTrace();
-				}
-				return null;
-			}
-
-			private String getPluginId(PluginContainer container) {
-				return container.metadata().id();
-			}
-
-			@Override
-			public int size(PluginContainer container) {
-				return components == null || !components.has("plugintags") || !components.getAsJsonObject("plugintags").has(getPluginId(container)) ? 0 : components.getAsJsonObject("plugintags").getAsJsonObject(getPluginId(container)).size();
-			}
-
+		EditNBT() {
+			checkContainer();
 		}
+
+		private void updateNbt() {
+			itemStack = null;
+			try {
+				components = JsonParser.parseString(DataFormats.JSON.get().write(itemContainer)).getAsJsonObject();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		public <T> ComponentUtil putObject(PluginContainer container, String key, T object) {
+			if(!ClassUtils.isPrimitiveOrBasicDataClass(object)) {
+				try {
+					throw new RuntimeException("This method accepts only primitives, or Java base data classes: '" + ClassUtils.getValuesToString() + "'.");
+				} catch (Exception e) {
+				}
+			} else {
+				checkContainer();
+				itemContainer.set(createPath(container, key), object);
+				updateNbt();
+			}
+			return this;
+		}
+
+		@Override
+		public <T> ComponentUtil putObjects(PluginContainer container, String key, List<T> objects) {
+			if(objects.isEmpty()) return this;
+			checkContainer();
+			objects = objects.stream().filter(object -> ClassUtils.isPrimitiveOrBasicDataClass(object)).toList();
+			if(objects.isEmpty()) return this;
+			itemContainer.set(createPath(container, key), objects);
+			updateNbt();
+			return this;
+		}
+
+		@Override
+		public <K, V> ComponentUtil putObjects(Class<K> mapKey, Class<V> mapValue, PluginContainer container, String key, Map<K, V> objects) {
+			if(objects.isEmpty()) return this;
+			checkContainer();
+			itemContainer.set(createPath(container, key), objects);
+			updateNbt();
+			return this;
+		}
+
+		@Override
+		public <T extends PluginComponent> ComponentUtil putPluginComponent(PluginContainer container, String key, T object) {
+			JsonObject json = null;
+			if(object.toJsonObject() != null) {
+				json = object.toJsonObject();
+			} else try {
+				json = BasicConfigurationNode.root(SerializeOptions.OPTIONS_VARIANT_2).set(object.getClass(), object).get(JsonObject.class);
+			} catch (SerializationException e) {
+				e.printStackTrace();
+			}
+			if(json == null) return this;
+			checkContainer();
+			putJsonObject(json, COMPONENTS, CUSTOM_DATA, PLUGINCOMPONENTS, getPluginId(container), key);
+			itemStack = null;
+			getItemStack();
+			return this;
+		}
+
+		@Override
+		public ComponentUtil removeComponent(PluginContainer container, String key) {
+			checkContainer();
+			if(itemContainer.contains(createPath(container, key))) itemContainer.remove(DataQuery.of(PLUGINCOMPONENTS, getPluginId(container), key));
+			updateNbt();
+			return this;
+		}
+
+		@Override
+		public boolean containsComponent(PluginContainer container, String key) {
+			return getItemStack().toContainer().contains(createPath(container, key));
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public <T> T getObject(PluginContainer container, String key, T def) {
+			if(containsComponent(container, key)) {
+				Object object = getItemStack().toContainer().get(createPath(container, key)).get();
+				if(!object.getClass().isAssignableFrom(def.getClass())) {
+					try {
+						return (T) BasicConfigurationNode.root(SerializeOptions.OPTIONS_VARIANT_2).set(object).get(def.getClass());
+					} catch (SerializationException e) {
+					}
+				} else return (T) object;
+			}
+			return def;
+		}
+
+		@Override
+		public <T> List<T> getObjectsList(Class<T> clazz, PluginContainer container, String key, List<T> def) {
+			if(containsComponent(container, key)) {
+				Object object = getItemStack().toContainer().get(createPath(container, key)).get();
+				if(object instanceof Collection) {
+					Collection<?> objects = ((Collection<?>) object);
+					if(objects.isEmpty()) return def;
+					List<T> result = new ArrayList<T>();
+					objects.forEach(o -> convert(o, clazz).ifPresent(result::add));
+					object = null;
+					objects = null;
+					if(!result.isEmpty()) return result;
+				} 
+			}
+			return def;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public <K, V> Map<K, V> getObjectsMap(Class<K> mapKey, Class<V> mapValue, PluginContainer container, String key, Map<K, V> def) {
+			if(containsComponent(container, key)) {
+				Object object = getItemStack().toContainer().get(createPath(container, key)).get();
+				if(object instanceof DataView dataView) {
+					@SuppressWarnings("rawtypes")
+					Map objects = new HashMap<>();
+					for(DataQuery childKey : dataView.keys(false)) {
+						Optional<Object> o = dataView.get(childKey);
+						if(o.isPresent() && childKey.iterator().hasNext() && ClassUtils.isPrimitiveOrBasicDataClass(o.get())) objects.put(childKey.iterator().next(), o.get());
+						o = null;
+					}
+					Map<K, V> result = new HashMap<K, V>();
+					objects.forEach((k, v) -> convert(k, mapKey).ifPresent(rk -> convert(v, mapValue).ifPresent(rv -> result.put(rk, rv))));
+					object = null;
+					objects = null;
+					if(!result.isEmpty()) return result;
+				}
+			}
+			return def;
+		}
+
+		@Override
+		public <T extends PluginComponent> Optional<T> getPluginComponent(Class<T> clazz, PluginContainer container, String key) {
+			try {
+				return Optional.ofNullable(BasicConfigurationNode.root(SerializeOptions.OPTIONS_VARIANT_2).set(components).node(CUSTOM_DATA, PLUGINCOMPONENTS, getPluginId(container), key).get(clazz));
+			} catch (SerializationException | JsonSyntaxException e) {
+				return Optional.empty();
+			}
+		}
+
+		@Override
+		public Set<String> getAllKeys(PluginContainer container) {
+			return getItemStack().toContainer().get(createPath(COMPONENTS, CUSTOM_DATA, PLUGINCOMPONENTS, getPluginId(container))).map(data -> ((DataView) data).keys(false).stream().map(q -> q.asString(';')).collect(Collectors.toSet())).orElse(new HashSet<String>());
+		}
+
+		@Override
+		public int size(PluginContainer container) {
+			return getItemStack().toContainer().get(createPath(COMPONENTS, CUSTOM_DATA, PLUGINCOMPONENTS, getPluginId(container))).map(data -> ((DataView) data).keys(false).size()).orElse(0);
+		}
+
+		private String getPluginId(PluginContainer container) {
+			return container.metadata().id();
+		}
+
+		private DataQuery createPath(PluginContainer plugin, String key) {
+			return DataQuery.of(COMPONENTS, CUSTOM_DATA, PLUGINCOMPONENTS, getPluginId(plugin), key);
+		}
+
+		private DataQuery createPath(String... path) {
+			return DataQuery.of(path);
+		}
+
+		private void checkContainer() {
+			if(itemContainer == null) itemContainer = getItemStack().toContainer();
+		}
+
+		@SuppressWarnings("unchecked")
+		private <O, T> Optional<T> convert(O original, Class<T> clazz) {
+			try {
+				return Optional.ofNullable((T) original);
+			} catch (Exception e) {
+				try {
+					if(clazz.isAssignableFrom(Number.class) && original.getClass().isAssignableFrom(CharSequence.class) && NumberUtils.isParsable(original.toString())) {
+						return Optional.ofNullable(BasicConfigurationNode.root(SerializeOptions.OPTIONS_VARIANT_2).set(NumberUtils.createNumber(original.toString())).get(clazz));
+					} else return Optional.ofNullable(BasicConfigurationNode.root(SerializeOptions.OPTIONS_VARIANT_2).set(original).get(clazz));
+				} catch (SerializationException e1) {
+					return Optional.empty();
+				}
+			}
+		}
+
+		private void putJsonObject(JsonObject object, String... keys) {
+			object.asMap().forEach((k,v) -> putJson(v, ArrayUtils.add(keys, k)));
+		}
+
+		private void putJson(JsonElement element, String... keys) {
+			if(element.isJsonArray()) {
+				putJsonArray(element.getAsJsonArray(), 0, keys);
+			} else if(element.isJsonObject()) {
+				putJsonObject(element.getAsJsonObject(), keys);
+			} else if(element.isJsonPrimitive()) putPrimitive(element.getAsJsonPrimitive(), keys);
+		}
+
+		private void putJsonArray(JsonArray array, int arrayNumber, String... keys) {
+			List<Object> objects = new ArrayList<>();
+			array.asList().forEach(element -> {
+				if(element.isJsonArray()) {
+					putJsonArray(element.getAsJsonArray(), arrayNumber + 1, ArrayUtils.add(keys, "" + arrayNumber));
+				} else if(element.isJsonObject()) {
+					element.getAsJsonObject().asMap().forEach((k, v) -> {
+						putJsonObject(v.getAsJsonObject(), ArrayUtils.add(keys, k));
+					});
+				} else if(element.isJsonPrimitive()) {
+					if(element.getAsJsonPrimitive().isNumber()) {
+						objects.add(element.getAsJsonPrimitive().getAsNumber());
+					} else if(element.getAsJsonPrimitive().isBoolean()) {
+						objects.add(element.getAsJsonPrimitive().getAsBoolean());
+					} else if(element.getAsJsonPrimitive().isString()) {
+						objects.add(element.getAsJsonPrimitive().getAsString());
+					}
+				}
+			});
+		}
+
+		private void putPrimitive(JsonPrimitive primitive, String... keys) {
+			if(primitive.isNumber()) {
+				itemContainer.set(createPath(keys), primitive.getAsNumber());
+			} else if(primitive.isBoolean()) {
+				itemContainer.set(createPath(keys), primitive.getAsBoolean());
+			} else if(primitive.isString()) {
+				itemContainer.set(createPath(keys), primitive.getAsString());
+			}
+		}
+
+	}
 
 }

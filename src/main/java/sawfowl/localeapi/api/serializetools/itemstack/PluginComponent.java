@@ -8,7 +8,7 @@ import com.google.gson.JsonObject;
  * This interface is for creating your own NBT tags.
  */
 @ConfigSerializable
-public interface CompoundTag {
+public interface PluginComponent {
 
 	/**
 	 * Convert class objects to json data array.<br>
