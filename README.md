@@ -1,6 +1,6 @@
 # LocaleAPI [![jitpack](https://jitpack.io/v/SawFowl/LocaleAPI.svg)](https://jitpack.io/#SawFowl/LocaleAPI)
 
-API for working with plugin localizations on SpongeAPI8. \
+API for working with plugin localizations on SpongeAPI7+. \
 Test plugin -> <https://github.com/SawFowl/LocaleTestPlugin/tree/API10> \
 javadoc -> <https://sawfowl.github.io/LocaleAPI>
 
