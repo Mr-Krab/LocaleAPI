@@ -37,7 +37,7 @@ public class Main {
 	}
 
 	public void testLocales() {
-		if(!localeService.localesExist(instance)) {
+		if(!localeService.localesExist(pluginContainer)) {
 			localeService.createPluginLocale(pluginContainer, ConfigTypes.HOCON, Locales.DEFAULT);
 			//					^^ pluginContainer or "pluginid".
 			localeService.createPluginLocale(pluginContainer, ConfigTypes.HOCON, Locales.DEFAULT);
