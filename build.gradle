@@ -61,7 +61,7 @@ task sourcesJar(type: Jar, dependsOn: classes) {
 	archiveClassifier = 'sources'
 	from sourceSets.main.allSource
 	exclude('sawfowl/localeapi/apiclasses/**')
-	exclude('sawfowl/localeapi/API.java')
+	exclude('sawfowl/localeapi/ImplementAPI.java')
 	exclude('sawfowl/localeapi/LocaleAPI.java')
 }
 

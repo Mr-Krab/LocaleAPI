@@ -1,7 +1,9 @@
 package sawfowl.localeapi.api.placeholders;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.ClassUtils;
 
@@ -12,12 +14,37 @@ import sawfowl.localeapi.api.TextUtils;
 
 public class Placeholders {
 
-	private static final Map<Class<?>, Map<String, Placeholder<?>>> PLACEHOLDERS = new HashMap<>();
+	private static final Set<Placeholder<?>> SYSTEM_PLACEHOLDERS = new HashSet<>();
+	private static final Map<Class<?>, Set<String>> REGISTERED_PLACEHOLDERS = new HashMap<>();
+	private static final Set<String> REGISTERED_SYSTEM_PLACEHOLDERS = new HashSet<>();
+	private static final Map<Class<?>, Set<Placeholder<?>>> PLACEHOLDERS = new HashMap<>();
 
 	public static <T> boolean register(Class<T> clazz, String id, Placeholder<T> placeholder) {
-		if(PLACEHOLDERS.containsKey(clazz) && PLACEHOLDERS.get(clazz).containsKey(id)) return false;
-		if(!PLACEHOLDERS.containsKey(clazz)) PLACEHOLDERS.put(clazz, new HashMap<>());
-		PLACEHOLDERS.get(clazz).put(id, placeholder);
+		if(clazz == null) return registerSystemPlaceholder(id, placeholder);
+		if(REGISTERED_PLACEHOLDERS.containsKey(clazz) && REGISTERED_PLACEHOLDERS.get(clazz).contains(id)) return false;
+		if(!REGISTERED_PLACEHOLDERS.containsKey(clazz)) REGISTERED_PLACEHOLDERS.put(clazz, new HashSet<>());
+		if(!PLACEHOLDERS.containsKey(clazz)) PLACEHOLDERS.put(clazz, new HashSet<Placeholder<?>>());
+		REGISTERED_PLACEHOLDERS.get(clazz).add(id);
+		boolean result = PLACEHOLDERS.get(clazz).add(placeholder);
+		for(Class<?> clazz2 : clazz.getClasses()) {
+			if(!REGISTERED_PLACEHOLDERS.containsKey(clazz2)) REGISTERED_PLACEHOLDERS.put(clazz2, new HashSet<>());
+			if(!PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.put(clazz2, new HashSet<Placeholder<?>>());
+			REGISTERED_PLACEHOLDERS.get(clazz2).add(id);
+			result |= PLACEHOLDERS.get(clazz2).add(placeholder);
+		}
+		for(Class<?> clazz2 : ClassUtils.getAllInterfaces(clazz)) {
+			if(!REGISTERED_PLACEHOLDERS.containsKey(clazz2)) REGISTERED_PLACEHOLDERS.put(clazz2, new HashSet<>());
+			if(!PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.put(clazz2, new HashSet<Placeholder<?>>());
+			REGISTERED_PLACEHOLDERS.get(clazz2).add(id);
+			result |= PLACEHOLDERS.get(clazz2).add(placeholder);
+		}
+		return result;
+	}
+
+	public static boolean registerSystemPlaceholder(String id, Placeholder<?> placeholder) {
+		if(REGISTERED_SYSTEM_PLACEHOLDERS.contains(id)) return false;
+		REGISTERED_SYSTEM_PLACEHOLDERS.add(id);
+		SYSTEM_PLACEHOLDERS.add(placeholder);
 		return true;
 	}
 
@@ -25,16 +52,22 @@ public class Placeholders {
 		return register(clazz, key.id(), placeholder);
 	}
 
+	public static Text applySystemPlaceholders(Text text, Component def) {
+		SYSTEM_PLACEHOLDERS.forEach(placeholder -> placeholder.apply(text, null, def));
+		return text;
+	}
+
 	@SuppressWarnings({ "unchecked" })
 	public static <T> Text apply(Text text, T arg, Component def) {
+		applySystemPlaceholders(text, def);
 		Class<?> clazz = arg.getClass();
-		if(PLACEHOLDERS.containsKey(clazz)) PLACEHOLDERS.get(arg.getClass()).values().forEach(placeholder -> ((Placeholder<T>) placeholder).apply(text, arg, def));
-		for(Class<?> clazz2 : clazz.getClasses()) {
-			if(clazz != clazz2 && PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.get(clazz2).values().forEach(placeholder -> applyOther(text, cast(clazz2, arg), placeholder, def));
+		if(PLACEHOLDERS.containsKey(clazz)) PLACEHOLDERS.get(arg.getClass()).forEach(placeholder -> ((Placeholder<T>) placeholder).apply(text, arg, def));
+		/*for(Class<?> clazz2 : clazz.getClasses()) {
+			if(clazz != clazz2 && PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.get(clazz2).forEach(placeholder -> applyOther(text, cast(clazz2, arg), placeholder, def));
 		}
 		for(Class<?> clazz2 : ClassUtils.getAllInterfaces(clazz)) {
-			if(clazz != clazz2 && PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.get(clazz2).values().forEach(placeholder -> applyOther(text, cast(clazz2, arg), placeholder, def));
-		}
+			if(clazz != clazz2 && PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.get(clazz2).forEach(placeholder -> applyOther(text, cast(clazz2, arg), placeholder, def));
+		}*/
 		return text;
 	}
 
@@ -58,7 +91,7 @@ public class Placeholders {
 	public static <T> Text apply(String string, String def, T arg) {
 		return apply(Text.of(string), arg, TextUtils.deserialize(def));
 	}
-
+/*
 	private static <T> Text applyOther(Text text, T arg, Placeholder<? extends T> placeholder, Component def) {
 		return cast(arg, placeholder).apply(text, arg, def);
 	}
@@ -72,7 +105,7 @@ public class Placeholders {
 	private static <T> Placeholder<T> cast(T arg, Placeholder<?> placeholder) {
 		return (Placeholder<T>) placeholder;
 	}
-
+*/
 	public enum DefaultPlaceholderKeys {
 
 		NAMEABLE {
@@ -83,16 +116,6 @@ public class Placeholders {
 			@Override
 			public String id() {
 				return "Name";
-			}
-		},
-		PLAYER_PING {
-			@Override
-			public String textKey() {
-				return "%player-ping%";
-			}
-			@Override
-			public String id() {
-				return "PlayerPing";
 			}
 		},
 		ENTITY_DISPLAY_NAME {
@@ -115,6 +138,36 @@ public class Placeholders {
 				return "EntityUUID";
 			}
 		},
+		ENTITY_LOCATION {
+			@Override
+			public String textKey() {
+				return "%entity-location%";
+			}
+			@Override
+			public String id() {
+				return "EntityLocation";
+			}
+		},
+		ENTITY_POSITION {
+			@Override
+			public String textKey() {
+				return "%entity-position%";
+			}
+			@Override
+			public String id() {
+				return "EntityPosition";
+			}
+		},
+		ENTITY_WORLD {
+			@Override
+			public String textKey() {
+				return "%entity-world%";
+			}
+			@Override
+			public String id() {
+				return "EntityWorld";
+			}
+		},
 		WORLD {
 			@Override
 			public String textKey() {
@@ -123,6 +176,16 @@ public class Placeholders {
 			@Override
 			public String id() {
 				return "World";
+			}
+		},
+		WORLD_TIME {
+			@Override
+			public String textKey() {
+				return "%world-time%";
+			}
+			@Override
+			public String id() {
+				return "WorldTime";
 			}
 		},
 		LOCATION {
@@ -155,6 +218,16 @@ public class Placeholders {
 				return "Vector3i";
 			}
 		},
+		PLAYER_PING {
+			@Override
+			public String textKey() {
+				return "%player-ping%";
+			}
+			@Override
+			public String id() {
+				return "PlayerPing";
+			}
+		},
 		PLAYER_PREFIX {
 			@Override
 			public String textKey() {
@@ -185,6 +258,76 @@ public class Placeholders {
 				return "PlayerRank";
 			}
 		},
+		PLAYER_LEVEL {
+			@Override
+			public String textKey() {
+				return "%player-level%";
+			}
+			@Override
+			public String id() {
+				return "PlayerLevel";
+			}
+		},
+		PLAYER_BALANCE {
+			@Override
+			public String textKey() {
+				return "%player-balance%";
+			}
+			@Override
+			public String id() {
+				return "PlayerBalance";
+			}
+		},
+		PLAYER_STATISTIC {
+			@Override
+			public String textKey() {
+				return "%statistic:";
+			}
+			@Override
+			public String id() {
+				return "PlayerStatistic";
+			}
+		},
+		PLAYER_WORLD_TIME {
+			@Override
+			public String textKey() {
+				return "%player-world-time%";
+			}
+			@Override
+			public String id() {
+				return "PlayerWorldTime";
+			}
+		},
+		PLAYER_LOCATION {
+			@Override
+			public String textKey() {
+				return "%player-location%";
+			}
+			@Override
+			public String id() {
+				return "PlayerLocation";
+			}
+		},
+		PLAYER_BLOCK_POSITION {
+			@Override
+			public String textKey() {
+				return "%player-block-position%";
+			}
+			@Override
+			public String id() {
+				return "PlayerBlockPosition";
+			}
+		},
+		ONLINE_PLAYERS {
+			@Override
+			public String textKey() {
+				return "%online-players%";
+			}
+			@Override
+			public String id() {
+				return "OnlinePlayers";
+			}
+		},
 		ITEM {
 			@Override
 			public String textKey() {
@@ -203,6 +346,26 @@ public class Placeholders {
 			@Override
 			public String id() {
 				return "Block";
+			}
+		},
+		SERVER_TPS {
+			@Override
+			public String textKey() {
+				return "%server-tps%";
+			}
+			@Override
+			public String id() {
+				return "TPS";
+			}
+		},
+		SERVER_TICKS {
+			@Override
+			public String textKey() {
+				return "%server-ticks%";
+			}
+			@Override
+			public String id() {
+				return "Ticks";
 			}
 		};
 

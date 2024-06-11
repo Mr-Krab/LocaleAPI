@@ -124,6 +124,10 @@ public interface Text extends DataSerializable {
 		return Placeholders.apply(this, def, args);
 	}
 
+	default <T> Text applySystemPlaceholders(Component def) {
+		return Placeholders.applySystemPlaceholders(this, def);
+	}
+
 	public interface Builder extends AbstractBuilder<Text>, org.spongepowered.api.util.Builder<Text, Builder> {
 
 		Text fromComponent(Component component);
