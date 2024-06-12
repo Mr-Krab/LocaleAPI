@@ -1,9 +1,7 @@
 package sawfowl.localeapi.api.placeholders;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.lang3.ClassUtils;
 
@@ -14,37 +12,18 @@ import sawfowl.localeapi.api.TextUtils;
 
 public class Placeholders {
 
-	private static final Set<Placeholder<?>> SYSTEM_PLACEHOLDERS = new HashSet<>();
-	private static final Map<Class<?>, Set<String>> REGISTERED_PLACEHOLDERS = new HashMap<>();
-	private static final Set<String> REGISTERED_SYSTEM_PLACEHOLDERS = new HashSet<>();
-	private static final Map<Class<?>, Set<Placeholder<?>>> PLACEHOLDERS = new HashMap<>();
+	private static final Map<Class<?>, Map<String, Placeholder<?>>> PLACEHOLDERS = new HashMap<>();
+	private static final Map<String, Placeholder<?>> SYSTEM_PLACEHOLDERS = new HashMap<>();
 
 	public static <T> boolean register(Class<T> clazz, String id, Placeholder<T> placeholder) {
-		if(clazz == null) return registerSystemPlaceholder(id, placeholder);
-		if(REGISTERED_PLACEHOLDERS.containsKey(clazz) && REGISTERED_PLACEHOLDERS.get(clazz).contains(id)) return false;
-		if(!REGISTERED_PLACEHOLDERS.containsKey(clazz)) REGISTERED_PLACEHOLDERS.put(clazz, new HashSet<>());
-		if(!PLACEHOLDERS.containsKey(clazz)) PLACEHOLDERS.put(clazz, new HashSet<Placeholder<?>>());
-		REGISTERED_PLACEHOLDERS.get(clazz).add(id);
-		boolean result = PLACEHOLDERS.get(clazz).add(placeholder);
-		for(Class<?> clazz2 : clazz.getClasses()) {
-			if(!REGISTERED_PLACEHOLDERS.containsKey(clazz2)) REGISTERED_PLACEHOLDERS.put(clazz2, new HashSet<>());
-			if(!PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.put(clazz2, new HashSet<Placeholder<?>>());
-			REGISTERED_PLACEHOLDERS.get(clazz2).add(id);
-			result |= PLACEHOLDERS.get(clazz2).add(placeholder);
+		if(clazz == null) {
+			if(SYSTEM_PLACEHOLDERS.containsKey(id)) return false;
+			SYSTEM_PLACEHOLDERS.put(id, placeholder);
+		} else {
+			if(PLACEHOLDERS.containsKey(clazz) && PLACEHOLDERS.get(clazz).containsKey(id)) return false;
+			if(!PLACEHOLDERS.containsKey(clazz)) PLACEHOLDERS.put(clazz, new HashMap<>());
+			PLACEHOLDERS.get(clazz).put(id, placeholder);
 		}
-		for(Class<?> clazz2 : ClassUtils.getAllInterfaces(clazz)) {
-			if(!REGISTERED_PLACEHOLDERS.containsKey(clazz2)) REGISTERED_PLACEHOLDERS.put(clazz2, new HashSet<>());
-			if(!PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.put(clazz2, new HashSet<Placeholder<?>>());
-			REGISTERED_PLACEHOLDERS.get(clazz2).add(id);
-			result |= PLACEHOLDERS.get(clazz2).add(placeholder);
-		}
-		return result;
-	}
-
-	public static boolean registerSystemPlaceholder(String id, Placeholder<?> placeholder) {
-		if(REGISTERED_SYSTEM_PLACEHOLDERS.contains(id)) return false;
-		REGISTERED_SYSTEM_PLACEHOLDERS.add(id);
-		SYSTEM_PLACEHOLDERS.add(placeholder);
 		return true;
 	}
 
@@ -52,22 +31,22 @@ public class Placeholders {
 		return register(clazz, key.id(), placeholder);
 	}
 
-	public static Text applySystemPlaceholders(Text text, Component def) {
-		SYSTEM_PLACEHOLDERS.forEach(placeholder -> placeholder.apply(text, null, def));
+	@SuppressWarnings({ "unchecked" })
+	public static <T> Text apply(Text text, T arg, Component def) {
+		Class<?> clazz = arg.getClass();
+		if(PLACEHOLDERS.containsKey(clazz)) PLACEHOLDERS.get(arg.getClass()).values().forEach(placeholder -> ((Placeholder<T>) placeholder).apply(text, arg, def));
+		for(Class<?> clazz2 : clazz.getClasses()) {
+			if(clazz != clazz2 && PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.get(clazz2).values().forEach(placeholder -> applyOther(text, cast(clazz2, arg), placeholder, def));
+		}
+		for(Class<?> clazz2 : ClassUtils.getAllInterfaces(clazz)) {
+			if(clazz != clazz2 && PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.get(clazz2).values().forEach(placeholder -> applyOther(text, cast(clazz2, arg), placeholder, def));
+		}
+		applySystemPlaceholders(text, def);
 		return text;
 	}
 
-	@SuppressWarnings({ "unchecked" })
-	public static <T> Text apply(Text text, T arg, Component def) {
-		applySystemPlaceholders(text, def);
-		Class<?> clazz = arg.getClass();
-		if(PLACEHOLDERS.containsKey(clazz)) PLACEHOLDERS.get(arg.getClass()).forEach(placeholder -> ((Placeholder<T>) placeholder).apply(text, arg, def));
-		/*for(Class<?> clazz2 : clazz.getClasses()) {
-			if(clazz != clazz2 && PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.get(clazz2).forEach(placeholder -> applyOther(text, cast(clazz2, arg), placeholder, def));
-		}
-		for(Class<?> clazz2 : ClassUtils.getAllInterfaces(clazz)) {
-			if(clazz != clazz2 && PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.get(clazz2).forEach(placeholder -> applyOther(text, cast(clazz2, arg), placeholder, def));
-		}*/
+	public static Text applySystemPlaceholders(Text text, Component def) {
+		SYSTEM_PLACEHOLDERS.values().forEach(placeholder -> placeholder.apply(text, null, def));
 		return text;
 	}
 
@@ -91,7 +70,7 @@ public class Placeholders {
 	public static <T> Text apply(String string, String def, T arg) {
 		return apply(Text.of(string), arg, TextUtils.deserialize(def));
 	}
-/*
+
 	private static <T> Text applyOther(Text text, T arg, Placeholder<? extends T> placeholder, Component def) {
 		return cast(arg, placeholder).apply(text, arg, def);
 	}
@@ -105,7 +84,7 @@ public class Placeholders {
 	private static <T> Placeholder<T> cast(T arg, Placeholder<?> placeholder) {
 		return (Placeholder<T>) placeholder;
 	}
-*/
+
 	public enum DefaultPlaceholderKeys {
 
 		NAMEABLE {
