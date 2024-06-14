@@ -57,4 +57,16 @@ public interface LocaleReference {
 		return text(component).replace(keys, values).toPlain();
 	}
 
+	default String[] array(String... strings) {
+		return strings;
+	}
+
+	default Component[] array(Component... components) {
+		return components;
+	}
+
+	default Object[] array(Object... objects) {
+		return objects;
+	}
+
 }
