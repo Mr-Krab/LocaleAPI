@@ -1,11 +1,17 @@
 package sawfowl.localeapi.api;
 
+
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextReplacementConfig;
 
 @ConfigSerializable
 public interface LocaleReference {
+
+	default Component deserialize(String string) {
+		return TextUtils.deserialize(string);
+	}
 
 	default Text text(Component component) {
 		return Text.of(component);
@@ -13,6 +19,18 @@ public interface LocaleReference {
 
 	default Text text(String string) {
 		return Text.of(string);
+	}
+
+	default Component replace(Component component, String key, Component value) {
+		return component.replaceText(TextReplacementConfig.builder().match(key).replacement(value).build());
+	}
+
+	default Component replace(Component component, String key, String value) {
+		return replace(component, key, deserialize(value));
+	}
+
+	default Component replace(Component component, String key, Object value) {
+		return component.replaceText(TextReplacementConfig.builder().match(key).replacement(value.toString()).build());
 	}
 
 	default Component replace(Component component, String[] keys, Component... values) {
