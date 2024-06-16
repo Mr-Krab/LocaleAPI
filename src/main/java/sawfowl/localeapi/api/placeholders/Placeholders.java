@@ -72,7 +72,7 @@ public class Placeholders {
 	}
 
 	private static <T> Text applyOther(Text text, T arg, Placeholder<? extends T> placeholder, Component def) {
-		return cast(arg, placeholder).apply(text, arg, def);
+		return cast(placeholder).apply(text, arg, def);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -81,7 +81,7 @@ public class Placeholders {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T> Placeholder<T> cast(T arg, Placeholder<?> placeholder) {
+	private static <T> Placeholder<T> cast(Placeholder<?> placeholder) {
 		return (Placeholder<T>) placeholder;
 	}
 

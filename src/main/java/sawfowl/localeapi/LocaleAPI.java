@@ -194,7 +194,7 @@ public class LocaleAPI {
 				Optional<Statistic> stat = getStatistic(player, statisticKey);
 				statisticKey = "%statistic:" + statisticKey + "%";
 				if(stat.isPresent()) {
-					original.replace(statisticKey, String.valueOf(player.get(org.spongepowered.api.data.Keys.STATISTICS).get().get(stat.get())));
+					original.replace(statisticKey, String.valueOf(player.get(Keys.STATISTICS).get().get(stat.get())));
 				} else original.replace(statisticKey, def == null ? 0 : def);
 				plain = null;
 				statisticKey = null;
