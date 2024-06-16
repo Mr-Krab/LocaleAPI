@@ -250,7 +250,7 @@ public class SerializedItemStackPlainNBT implements PluginComponent {
 		public <T> ComponentUtil putObject(PluginContainer container, String key, T object) {
 			if(!ClassUtils.isPrimitiveOrBasicDataClass(object)) {
 				try {
-					throw new RuntimeException("This method accepts only primitives, or Java base data classes: '" + ClassUtils.getValuesToString() + "'.");
+					throw new IllegalStateException("This method accepts only primitives, or Java base data classes: '" + ClassUtils.getValuesToString() + "'.");
 				} catch (Exception e) {
 				}
 			} else {

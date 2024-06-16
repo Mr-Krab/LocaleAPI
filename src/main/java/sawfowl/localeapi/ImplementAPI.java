@@ -53,13 +53,13 @@ public class ImplementAPI {
 		private Map<String, Class<? extends LocaleReference>> defaultReferences;
 		private List<Locale> locales;
 		private WatchThread watchThread;
-		private Path configDirectory;
-		private Logger logger;
+		private final Path configDirectory;
+		private final Logger logger;
 		private Locale system = Locale.getDefault();
 		private boolean allowSystem = false;
 
 		API(Logger logger, Path path) {
-			service = this;
+			setInstaice();
 			this.logger = logger;
 			configDirectory = path;
 			pluginLocales = new HashMap<String, Map<Locale, PluginLocale>>();
@@ -69,6 +69,10 @@ public class ImplementAPI {
 			watchThread = new WatchThread(this, logger, path);
 			allowSystem = locales.contains(system) || locales.stream().filter(locale -> (locale.toLanguageTag().equals(system.toLanguageTag()))).findFirst().isPresent();
 			Sponge.eventManager().registerListeners(LocaleAPI.getPluginContainer(), this);
+		}
+
+		private void setInstaice() {
+			service = this;
 		}
 
 		private void updateWatch(String pluginID) {
@@ -228,7 +232,7 @@ public class ImplementAPI {
 
 		@Override
 		public void setItemStackSerializerVariant(PluginContainer container, int variant) throws Exception {
-			if(variant < 1 || variant > 3) throw new Exception("The value must not be less than 1 or greater than 3.");
+			if(variant < 1 || variant > 3) throw new IllegalStateException("The value must not be less than 1 or greater than 3.");
 			if(stackSerializers.containsKey(container.metadata().id())) stackSerializers.remove(container.metadata().id());
 			stackSerializers.put(container.metadata().id(), variant);
 		}
