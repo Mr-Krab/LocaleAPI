@@ -18,6 +18,7 @@ public class LocalisedCommentFactory implements Factory<LocalisedComment, Object
 	public Processor<Object> make(LocalisedComment data, Type type) {
 		return (value, destination) -> {
 			if (destination instanceof CommentedConfigurationNodeIntermediary<?> node) {
+				if(node.comment() != null && !node.comment().isEmpty()) return;
 				if(data.plugin() == null || data.path() == null || data.path().length == 0) {
 					if(!data.def().isEmpty()) node.comment(data.def());
 				} else if(LOCALE_SERVICE.localesExist(data.plugin()) && !LOCALE_SERVICE.getOrDefaultLocale(data.plugin(), LOCALE_SERVICE.getSystemOrDefaultLocale()).getLocaleNode((Object[]) data.path()).virtual()) {
