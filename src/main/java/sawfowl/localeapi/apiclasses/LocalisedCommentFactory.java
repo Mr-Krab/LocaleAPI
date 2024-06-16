@@ -19,10 +19,10 @@ public class LocalisedCommentFactory implements Factory<LocalisedComment, Object
 		return (value, destination) -> {
 			if (destination instanceof CommentedConfigurationNodeIntermediary<?> node) {
 				if(data.plugin() == null || data.path() == null || data.path().length == 0) {
-					if(data.def().length() > 0) node.comment(data.def());
+					if(!data.def().isEmpty()) node.comment(data.def());
 				} else if(LOCALE_SERVICE.localesExist(data.plugin()) && !LOCALE_SERVICE.getOrDefaultLocale(data.plugin(), LOCALE_SERVICE.getSystemOrDefaultLocale()).getLocaleNode((Object[]) data.path()).virtual()) {
 					node.comment(LOCALE_SERVICE.getOrDefaultLocale(data.plugin(), LOCALE_SERVICE.getSystemOrDefaultLocale()).getString((Object[]) data.path()));
-				} else if(data.def().length() > 0) node.comment(data.def());
+				} else if(!data.def().isEmpty()) node.comment(data.def());
 			}
 		};
 	}
