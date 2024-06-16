@@ -36,10 +36,10 @@ public class Placeholders {
 		Class<?> clazz = arg.getClass();
 		if(PLACEHOLDERS.containsKey(clazz)) PLACEHOLDERS.get(arg.getClass()).values().forEach(placeholder -> ((Placeholder<T>) placeholder).apply(text, arg, def));
 		for(Class<?> clazz2 : clazz.getClasses()) {
-			if(clazz != clazz2 && PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.get(clazz2).values().forEach(placeholder -> applyOther(text, cast(clazz2, arg), placeholder, def));
+			if(clazz != clazz2 && PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.get(clazz2).values().forEach(placeholder -> applyOther(text, cast(arg), placeholder, def));
 		}
 		for(Class<?> clazz2 : ClassUtils.getAllInterfaces(clazz)) {
-			if(clazz != clazz2 && PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.get(clazz2).values().forEach(placeholder -> applyOther(text, cast(clazz2, arg), placeholder, def));
+			if(clazz != clazz2 && PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.get(clazz2).values().forEach(placeholder -> applyOther(text, cast(arg), placeholder, def));
 		}
 		applySystemPlaceholders(text, def);
 		return text;
@@ -76,7 +76,7 @@ public class Placeholders {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T, C extends T> C cast(Class<C> clazz2, T arg) {
+	private static <T, C extends T> C cast(T arg) {
 		return (C) arg;
 	}
 
