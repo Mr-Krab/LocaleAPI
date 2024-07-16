@@ -5,7 +5,6 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.util.locale.Locales;
 
 public enum EnumLocales {
@@ -1764,8 +1763,12 @@ public enum EnumLocales {
 		return Stream.of(EnumLocales.values()).map(EnumLocales::getDispayName).collect(Collectors.toList());
 	}
 
+	public static boolean exist(String locale) {
+		return Stream.of(EnumLocales.values()).filter(value -> value.getTag().equals(locale)).findFirst().isPresent();
+	}
+
 	public static Locale find(String locale) {
-		return Sponge.game().locale(locale);
+		return Stream.of(EnumLocales.values()).filter(value -> value.getTag().equals(locale)).findFirst().map(l -> l.get()).orElse(getDefault());
 	}
 
 }

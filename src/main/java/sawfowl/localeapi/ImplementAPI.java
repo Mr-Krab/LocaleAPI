@@ -262,6 +262,10 @@ public class ImplementAPI {
 			return defaultReferences.containsKey(pluginID) ? defaultReferences.get(pluginID) : null;
 		}
 
+		void startWatch() {
+			watchThread.getWatchLocales().unfreeze();
+		}
+
 	}
 
 }

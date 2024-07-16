@@ -52,7 +52,6 @@ public class HoconLocale extends AbstractLocale {
 
 	@Override
 	public void saveLocaleNode() {
-		freezeWatcher();
 		try {
 			if(localeReference != null && configurationReference != null) {
 				configurationReference.save();

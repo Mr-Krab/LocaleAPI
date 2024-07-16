@@ -53,7 +53,6 @@ public class YamlLocale extends AbstractLocale {
 
 	@Override
 	public void saveLocaleNode() {
-		freezeWatcher();
 		try {
 			if(localeReference != null && configurationReference != null) {
 				configurationReference.save();

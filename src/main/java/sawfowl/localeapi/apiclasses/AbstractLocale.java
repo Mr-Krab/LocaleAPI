@@ -4,21 +4,16 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.Logger;
 
-import org.spongepowered.api.Sponge;
-import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.util.locale.Locales;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.serialize.SerializationException;
 
 import net.kyori.adventure.text.Component;
 
-import sawfowl.localeapi.LocaleAPI;
 import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.LocaleReference;
 import sawfowl.localeapi.api.LocaleService;
@@ -159,17 +154,6 @@ public abstract class AbstractLocale implements PluginLocale {
 	@Override
 	public boolean fileExists() {
 		return path.toFile().exists();
-	}
-
-	protected void freezeWatcher() {
-		getUpdated().put(pluginID + locale, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()));
-		Sponge.asyncScheduler().submit(Task.builder().plugin(LocaleAPI.getPluginContainer()).delay(3, TimeUnit.SECONDS).execute(() -> {
-			if(getUpdated().containsKey(pluginID + locale)) getUpdated().remove(pluginID + locale);
-		}).build());
-	}
-
-	protected Map<String, Long> getUpdated() {
-		return ((LocaleAPI) LocaleAPI.getPluginContainer().instance()).getUpdated();
 	}
 
 	protected PluginLocale getDefaultLocale() {

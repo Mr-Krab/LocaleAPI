@@ -4,14 +4,13 @@ import java.util.Locale;
 
 import org.spongepowered.api.event.Event;
 
-import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.PluginLocale;
 
 public interface LocaleEvent extends Event {
 
 	public interface Create extends LocaleEvent {
 
-		public ConfigTypes configType();
+		public String configType();
 
 	}
 

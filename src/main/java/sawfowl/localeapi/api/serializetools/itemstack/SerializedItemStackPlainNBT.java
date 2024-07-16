@@ -50,6 +50,7 @@ import sawfowl.localeapi.api.serializetools.SerializeOptions;
  * The class is intended for working with item data when it is necessary to access it before registering item data in the registry.
  */
 @ConfigSerializable
+@Deprecated
 public class SerializedItemStackPlainNBT implements PluginComponent {
 
 	SerializedItemStackPlainNBT(){}

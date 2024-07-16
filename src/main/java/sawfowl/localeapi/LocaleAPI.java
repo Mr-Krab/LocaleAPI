@@ -19,15 +19,14 @@ import java.math.RoundingMode;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
+
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.Server;
 import org.spongepowered.api.Sponge;
@@ -65,7 +64,7 @@ import com.google.inject.Inject;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
-
+import sawfowl.localeapi.ImplementAPI.API;
 import sawfowl.localeapi.api.LocaleService;
 import sawfowl.localeapi.api.Text;
 import sawfowl.localeapi.api.TextUtils;
@@ -82,7 +81,6 @@ public class LocaleAPI {
 	private Logger logger;
 	private LocaleService localeService;
 	private Cause cause;
-	private Map<String, Long> updated = new HashMap<String, Long>();
 	private boolean isPresentRegistry = false;
 
 	@Inject
@@ -125,6 +123,7 @@ public class LocaleAPI {
 		}
 		LocaleServiseEvent.Started startedEvent = new StartedEvent();
 		Sponge.eventManager().post(startedEvent);
+		((API) localeService).startWatch();
 		isPresentRegistry  = RegistryTypes.CURRENCY.find().isPresent();
 	}
 
@@ -140,10 +139,6 @@ public class LocaleAPI {
 
 	public static PluginContainer getPluginContainer() {
 		return container;
-	}
-
-	public Map<String, Long> getUpdated() {
-		return updated;
 	}
 
 	private void registerDefaultPlaceholders() {

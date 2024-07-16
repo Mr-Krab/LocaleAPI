@@ -1,5 +1,7 @@
 package sawfowl.localeapi.api;
 
+import java.util.stream.Stream;
+
 public enum ConfigTypes {
 
 	HOCON(".conf") {
@@ -25,8 +27,13 @@ public enum ConfigTypes {
 		public String toString() {
 			return ".properties";
 		}
-	};
+	},
+	UNKNOWN(""){};
 
 	ConfigTypes(String string) {}
+
+	public static ConfigTypes find(String type) {
+		return Stream.of(ConfigTypes.values()).filter(value -> value.toString().equals(type)).findFirst().orElse(UNKNOWN);
+	}
 
 }

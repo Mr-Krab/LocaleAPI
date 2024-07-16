@@ -7,12 +7,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
@@ -40,6 +42,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 
 import net.kyori.adventure.key.Key;
+
 import sawfowl.localeapi.api.ClassUtils;
 import sawfowl.localeapi.api.serializetools.SerializeOptions;
 
@@ -47,173 +50,230 @@ import sawfowl.localeapi.api.serializetools.SerializeOptions;
  * The class is intended for working with item data when it is necessary to access it before registering item data in the registry.
  */
 @ConfigSerializable
-@Deprecated
-public class SerializedItemStackJsonNbt implements PluginComponent {
+public class SerializedItemStack implements PluginComponent {
 
-	SerializedItemStackJsonNbt(){}
+	SerializedItemStack(){}
 
-		public SerializedItemStackJsonNbt(ItemStack itemStack) {
-			serialize(itemStack);
-		}
+	public SerializedItemStack(ItemStack itemStack) {
+		serialize(itemStack);
+	}
 
-		public SerializedItemStackJsonNbt(BlockState block) {
-			if(block.type().item().isPresent()) {
-				serialize(ItemStack.of(block.type().item().get(), 1));
-				if(block.toContainer().get(DataQuery.of(ComponentUtil.COMPONENTS)).isPresent()) {
-					try {
-						JsonElement json = JsonParser.parseString(DataFormats.JSON.get().write((DataView) block.toContainer().get(DataQuery.of(ComponentUtil.COMPONENTS)).get()));
-						components = json.isJsonObject() ? json.getAsJsonObject() : null;
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			} serialize(ItemStack.of(ItemTypes.AIR.get(), 1));
-		}
-
-		public SerializedItemStackJsonNbt(BlockSnapshot block) {
-			if(block.state().type().item().isPresent()) {
-				serialize(ItemStack.of(block.state().type().item().get(), 1));
-				if(block.toContainer().get(DataQuery.of(ComponentUtil.COMPONENTS)).isPresent()) {
-					try {
-						JsonElement json = JsonParser.parseString(DataFormats.JSON.get().write((DataView) block.toContainer().get(DataQuery.of(ComponentUtil.COMPONENTS)).get()));
-						components = json.isJsonObject() ? json.getAsJsonObject() : null;
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			} serialize(ItemStack.of(ItemTypes.AIR.get(), 1));
-		}
-
-		public SerializedItemStackJsonNbt(String type, int quantity, JsonObject nbt) {
-			itemType = type;
-			itemQuantity = quantity;
-			this.components = nbt;
-		}
-
-		@Setting("ItemType")
-		private String itemType;
-		@Setting("Quantity")
-		private Integer itemQuantity;
-		@Setting("ComponentsMap")
-		private JsonObject components;
-		@Setting("NBT")
-		private JsonObject nbt;
-		private transient ItemStack itemStack;
-		private transient ComponentUtil tagUtil;
-		private transient DataContainer itemContainer = null;
-
-		/**
-		 * Getting {@link ItemStack}
-		 */
-		public ItemStack getItemStack() {
-			if(itemStack != null) return itemStack.copy();
-			if(getItemType().isPresent()) {
-				itemStack = ItemStack.of(getItemType().get());
-				itemStack.setQuantity(itemQuantity);
-				if(itemContainer == null) itemContainer = itemStack.toContainer();
-				if(nbt != null) {
-					try {
-						itemStack = ItemStack.builder()
-								.fromContainer(
-								itemStack.toContainer()
-								.set(DataQuery.of("UnsafeData"), DataFormats.JSON.get().read(nbt.toString()))
-								).build();
-					} catch (InvalidDataException | IOException e) {
-						e.printStackTrace();
-					}
-				}
-				itemStack = ItemStack.builder().fromContainer(itemContainer).build();
-			} else itemStack = ItemStack.empty();
-			itemContainer = null;
-			return itemStack.copy();
-		}
-
-		/**
-		 * Getting {@link ItemType}
-		 */
-		public Optional<ItemType> getItemType() {
-			return Sponge.game().registry(RegistryTypes.ITEM_TYPE).findValue(ResourceKey.resolve(itemType));
-		}
-
-		public String getItemTypeAsString() {
-			return itemType;
-		}
-
-		/**
-		 * The method returns a copy of the item's NBT tag collection in Json format.
-		 */
-		public JsonElement getComponents() {
-			return components == null ? null : components.deepCopy();
-		}
-
-		public Integer getQuantity() {
-			return itemQuantity;
-		}
-
-		/**
-		 * The resulting value can be used to display the item in chat.
-		 */
-		public Key getItemKey() {
-			return getItemType().isPresent() ? Key.key(itemType) : Key.key("air");
-		}
-
-		/**
-		 * Changing {@link ItemStack} volume.
-		 */
-		public void setQuantity(int quantity) {
-			itemQuantity = quantity;
-		}
-
-		/**
-		 * Gaining access to the NBT tags of an item.
-		 */
-		public ComponentUtil getOrCreateComponent() {
-			return tagUtil == null ? tagUtil = new EditNBT() : tagUtil;
-		}
-
-		public SerializedItemStackPlainNBT toSerializedItemStackPlainNBT() {
-			return new SerializedItemStackPlainNBT(itemType, 0, components.toString());
-		}
-
-		@Override
-		public JsonObject toJsonObject() {
-			JsonObject object = new JsonObject();
-			object.addProperty("ItemType", itemType);
-			object.addProperty("Quantity", itemQuantity);
-			if(components != null) object.add("ComponentsMap", components);
-			return object;
-		}
-
-		@Override
-		public String toString() {
-			return  "ItemType: " + itemType +
-					", Quantity: " + itemQuantity + 
-					", ComponentsMap: " + components.toString();
-		}
-
-		private void serialize(ItemStack itemStack) {
-			itemType = RegistryTypes.ITEM_TYPE.get().valueKey(itemStack.type()).asString();
-			itemQuantity = itemStack.quantity();
-			if(itemStack.toContainer().get(DataQuery.of(ComponentUtil.COMPONENTS)).isPresent()) {
+	public SerializedItemStack(BlockState block) {
+		if(block.type().item().isPresent()) {
+			serialize(ItemStack.of(block.type().item().get(), 1));
+			if(block.toContainer().get(DataQuery.of(ComponentUtil.COMPONENTS)).isPresent()) {
 				try {
-					components = JsonParser.parseString(DataFormats.JSON.get().write((DataView) itemStack.toContainer().get(DataQuery.of(ComponentUtil.COMPONENTS)).get())).getAsJsonObject();
+					components = DataFormats.JSON.get().write((DataView) block.toContainer().get(DataQuery.of(ComponentUtil.COMPONENTS)).get());
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
-			this.itemStack = itemStack;
-		}
+		} serialize(ItemStack.of(ItemTypes.AIR.get(), 1));
+	}
 
-		private class EditNBT implements ComponentUtil {
+	public SerializedItemStack(BlockSnapshot block) {
+		if(block.state().type().item().isPresent()) {
+			serialize(ItemStack.of(block.state().type().item().get(), 1));
+			if(block.toContainer().get(DataQuery.of(ComponentUtil.COMPONENTS)).isPresent()) {
+				try {
+					components = DataFormats.JSON.get().write((DataView) block.toContainer().get(DataQuery.of(ComponentUtil.COMPONENTS)).get());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		} serialize(ItemStack.of(ItemTypes.AIR.get(), 1));
+	}
+
+	public SerializedItemStack(String type, int quantity, String nbt) {
+		itemType = type;
+		itemQuantity = quantity;
+		this.components = nbt;
+	}
+
+	@Setting("ItemType")
+	private String itemType;
+	@Setting("Quantity")
+	private Integer itemQuantity;
+	@Setting("PlainComponents")
+	private String components;
+	@Setting("ComponentsMap")
+	private JsonObject jsonComponents;
+	@Setting("NBT")
+	private String nbt;
+	private transient ItemStack itemStack;
+	private transient ComponentUtil tagUtil;
+	private transient DataContainer itemContainer = null;
+
+	public String getItemTypeAsString() {
+		return itemType;
+	}
+
+	/**
+	 * Getting {@link ItemStack} volume.
+	 */
+	public Integer getQuantity() {
+		return itemQuantity;
+	}
+
+	/**
+	 * Get all tags as a string.
+	 */
+	public String getComponentsAsString() {
+		return components != null ? components : "";
+	}
+
+	/**
+	 * The method returns a copy of the item's NBT tag collection in Json format.
+	 */
+	public JsonElement getComponentsAsJson() {
+		return jsonComponents == null ? null : jsonComponents.deepCopy();
+	}
+
+	/**
+	 * Getting {@link ItemStack}
+	 */
+	public ItemStack getItemStack() {
+		if(tagUtil != null) {
+			tagUtil = null;
+		}
+		if(itemStack != null) return itemStack.copy();
+		if(getItemType().isPresent()) {
+			itemStack = ItemStack.of(getItemType().get());
+			itemStack.setQuantity(itemQuantity);
+			if(itemContainer == null) itemContainer = itemStack.toContainer();
+			if(nbt != null && !nbt.equals("")) {
+				try {
+					if(nbt != null && !nbt.equals("")) {
+						itemContainer.set(DataQuery.of("UnsafeData"), DataFormats.JSON.get().read(nbt));
+					}
+					if(components != null && !components.equals("")) {
+						itemContainer.set(DataQuery.of(ComponentUtil.COMPONENTS), DataFormats.JSON.get().read(components));
+					} else if(jsonComponents != null && !jsonComponents.isEmpty()) {
+						itemContainer.set(DataQuery.of(ComponentUtil.COMPONENTS), DataFormats.JSON.get().read(jsonComponents.toString()));
+					}
+				} catch (InvalidDataException | IOException e) {
+					e.printStackTrace();
+				}
+			}
+			itemStack = ItemStack.builder().fromContainer(itemContainer).build();
+		} else itemStack = ItemStack.empty();
+		itemContainer = null;
+		return itemStack.copy();
+	}
+
+	/**
+	 * Getting {@link ItemType}
+	 */
+	public Optional<ItemType> getItemType() {
+		return Sponge.game().registry(RegistryTypes.ITEM_TYPE).findValue(ResourceKey.resolve(itemType));
+	}
+
+	/**
+	 * The resulting value can be used to display the item in chat.
+	 */
+	public Key getItemKey() {
+		return getItemType().isPresent() ? Key.key(itemType) : Key.key("air");
+	}
+
+	/**
+	 * Gaining access to the NBT tags of an item.
+	 * Each time the data is changed, all components will be converted to a single string.
+	 */
+	public ComponentUtil getOrCreateComponent() {
+		return tagUtil == null ? tagUtil = new EditNBT() : tagUtil;
+	}
+
+	/**
+	 * Changing {@link ItemStack} volume.
+	 */
+	public void setQuantity(int quantity) {
+		itemQuantity = quantity;
+	}
+
+	/**
+	 * Convert a string containing component data to a {@link JsonObject} for better readability in configuration.
+	 */
+	public SerializedItemStack toJsonComponents() {
+		if(components != null) jsonComponents = JsonParser.parseString(components).getAsJsonObject();
+		components = null;
+		return this;
+	}
+
+	/**
+	 * Convert existing components data to a single string to reduce the size of the config file.
+	 */
+	public SerializedItemStack toPlainComponents() {
+		if(jsonComponents != null && !jsonComponents.isEmpty()) components = jsonComponents.toString();
+		jsonComponents = null;
+		return this;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(itemQuantity, itemStack, itemType, components);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if(this == obj) return true;
+		if(!(obj instanceof SerializedItemStack)) return false;
+		SerializedItemStack other = (SerializedItemStack) obj;
+		return Objects.equals(itemQuantity, other.itemQuantity) && Objects.equals(itemType, other.itemType) && Objects.equals(components, other.components);
+	}
+
+	public boolean equalsWhithoutQuantity(SerializedItemStack itemStack) {
+		return this == itemStack || (Objects.equals(itemType, itemStack.itemType) && Objects.equals(components, itemStack.components));
+	}
+
+	public boolean equalsWhithoutNBT(SerializedItemStack itemStack) {
+		return this == itemStack || (Objects.equals(itemType, itemStack.itemType) && Objects.equals(itemQuantity, itemStack.itemQuantity));
+	}
+
+	public boolean equalsToItemStack(ItemStack itemStack) {
+		return equals(new SerializedItemStack(itemStack));
+	}
+
+	@Override
+	public String toString() {
+		return  "ItemType: " + itemType +
+				", Quantity: " + itemQuantity + 
+				", ComponentsMap: " + components;
+	}
+
+	private void serialize(ItemStack itemStack) {
+		itemType = RegistryTypes.ITEM_TYPE.get().valueKey(itemStack.type()).asString();
+		itemQuantity = itemStack.quantity();
+		if(itemStack.toContainer().get(DataQuery.of(ComponentUtil.COMPONENTS)).isPresent()) {
+			try {
+				components = DataFormats.JSON.get().write((DataView) (itemContainer = itemStack.toContainer()).get(DataQuery.of(ComponentUtil.COMPONENTS)).get());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		this.itemStack = itemStack;
+	}
+
+	@Override
+	public JsonObject toJsonObject() {
+		JsonObject object = new JsonObject();
+		object.addProperty("ItemType", itemType);
+		object.addProperty("Quantity", itemQuantity);
+		if(components != null) object.addProperty("ComponentsMap", components);
+		return object;
+	}
+
+	class EditNBT implements ComponentUtil {
 
 		EditNBT() {
+			toPlainComponents();
 			checkContainer();
 		}
 
 		private void updateNbt() {
 			itemStack = null;
+			jsonComponents = null;
 			try {
-				components = JsonParser.parseString(DataFormats.JSON.get().write(itemContainer)).getAsJsonObject();
+				components = DataFormats.JSON.get().write(itemContainer);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -343,7 +403,7 @@ public class SerializedItemStackJsonNbt implements PluginComponent {
 		@Override
 		public <T extends PluginComponent> Optional<T> getPluginComponent(Class<T> clazz, PluginContainer container, String key) {
 			try {
-				return Optional.ofNullable(BasicConfigurationNode.root(SerializeOptions.OPTIONS_VARIANT_2).set(components).node(CUSTOM_DATA, PLUGINCOMPONENTS, getPluginId(container), key).get(clazz));
+				return Optional.ofNullable(BasicConfigurationNode.root(SerializeOptions.OPTIONS_VARIANT_2).set(JsonParser.parseString(components)).node(CUSTOM_DATA, PLUGINCOMPONENTS, getPluginId(container), key).get(clazz));
 			} catch (SerializationException | JsonSyntaxException e) {
 				return Optional.empty();
 			}

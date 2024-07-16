@@ -19,13 +19,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
 import sawfowl.localeapi.api.serializetools.SerializeOptions;
-import sawfowl.localeapi.api.serializetools.itemstack.SerializedItemStackPlainNBT;
+import sawfowl.localeapi.api.serializetools.itemstack.SerializedItemStack;
 
 public class ItemStackSerializer implements TypeSerializer<ItemStack> {
 
 	@Override
 	public ItemStack deserialize(Type type, ConfigurationNode node) throws SerializationException {
-		if(!node.node("ComponentsMap").virtual() && !node.node("ComponentsMap").isMap()) return node.get(SerializedItemStackPlainNBT.class).getItemStack();
+		if(!node.node("Components").virtual() && !node.node("Components").isMap()) return node.get(SerializedItemStack.class).getItemStack();
 		if((!node.node("UnsafeData").virtual() && !node.node("UnsafeData").empty() && node.node("UnsafeData").isMap()) || (!node.node("components").virtual() && !node.node("components").empty() && node.node("components").isMap())) return SerializeOptions.SERIALIZER_COLLECTION_VARIANT_3.get(ItemStack.class).deserialize(type, node);
 		return createStack(node);
 	}
@@ -50,12 +50,11 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
 			if(node.node("NBT").isMap()) {
 				try {
 					DataContainer container = itemStack.toContainer().set(DataQuery.of("UnsafeData"), DataFormats.JSON.get().read(node.node("NBT").get(JsonElement.class).toString()));
-					System.out.println("Установка старого NBT. Контейнер со старым NBT -> " + container.toString());
 					itemStack = ItemStack.builder().fromContainer(container).build();
 				} catch (InvalidDataException | IOException e) {
 					e.printStackTrace();
 				}
-			} else itemStack = node.get(SerializedItemStackPlainNBT.class).getItemStack();
+			} else itemStack = node.get(SerializedItemStack.class).getItemStack();
 		}
 		if(!node.node("ComponentsMap").virtual() && !node.node("ComponentsMap").childrenMap().isEmpty()) {
 			if(node.node("ComponentsMap").isMap()) {
@@ -64,7 +63,7 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
 				} catch (InvalidDataException | IOException e) {
 					e.printStackTrace();
 				}
-			} else itemStack = node.get(SerializedItemStackPlainNBT.class).getItemStack();
+			} else itemStack = node.get(SerializedItemStack.class).getItemStack();
 		}
 		return itemStack;
 	}

@@ -74,7 +74,6 @@ public class LegacyLocale extends AbstractLocale {
 
 	@Override
 	public void saveLocaleNode() {
-		freezeWatcher();
 		try {
 			if(fileWriter == null) fileWriter = new FileWriter(localeFile);
 			locale.store(fileWriter, "");
