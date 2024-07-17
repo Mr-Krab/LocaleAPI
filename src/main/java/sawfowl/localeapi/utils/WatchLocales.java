@@ -13,8 +13,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.logging.log4j.Logger;
-
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.Cause;
 import org.spongepowered.api.event.EventContext;
@@ -27,6 +25,7 @@ import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.EnumLocales;
 import sawfowl.localeapi.api.FileUtils;
 import sawfowl.localeapi.api.LocaleService;
+import sawfowl.localeapi.api.Logger;
 import sawfowl.localeapi.api.PluginLocale;
 import sawfowl.localeapi.api.event.LocaleEvent;
 

@@ -21,11 +21,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
 
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.Server;
@@ -48,6 +46,7 @@ import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.network.ServerConnectionState;
 import org.spongepowered.api.registry.RegistryTypes;
+import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.statistic.Statistic;
@@ -66,6 +65,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
 import sawfowl.localeapi.ImplementAPI.API;
 import sawfowl.localeapi.api.LocaleService;
+import sawfowl.localeapi.api.Logger;
 import sawfowl.localeapi.api.Text;
 import sawfowl.localeapi.api.TextUtils;
 import sawfowl.localeapi.api.event.LocaleServiseEvent;
@@ -86,7 +86,7 @@ public class LocaleAPI {
 	@Inject
 	public LocaleAPI(PluginContainer pluginContainer, @ConfigDir(sharedRoot = false) Path configDirectory) {
 		container = pluginContainer;
-		logger = LogManager.getLogger("LocaleAPI");
+		logger = Logger.createApacheLogger("LocaleAPI");
 		localeService = new ImplementAPI().create(logger, configDirectory);
 		cause = Cause.of(EventContext.builder().add(EventContextKeys.PLUGIN, pluginContainer).build(), pluginContainer);
 		if(!configDirectory.toFile().exists()) configDirectory.toFile().mkdir();
@@ -123,8 +123,10 @@ public class LocaleAPI {
 		}
 		LocaleServiseEvent.Started startedEvent = new StartedEvent();
 		Sponge.eventManager().post(startedEvent);
-		((API) localeService).startWatch();
 		isPresentRegistry  = RegistryTypes.CURRENCY.find().isPresent();
+		Sponge.asyncScheduler().submit(Task.builder().plugin(container).delay(5, TimeUnit.SECONDS).execute(() -> 
+			((API) localeService).startWatch()
+		).build());
 	}
 
 	@Listener(order = Order.FIRST)

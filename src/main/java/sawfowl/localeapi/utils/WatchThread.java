@@ -2,9 +2,8 @@ package sawfowl.localeapi.utils;
 
 import java.nio.file.Path;
 
-import org.apache.logging.log4j.Logger;
-
 import sawfowl.localeapi.api.LocaleService;
+import sawfowl.localeapi.api.Logger;
 
 public class WatchThread extends Thread {
 

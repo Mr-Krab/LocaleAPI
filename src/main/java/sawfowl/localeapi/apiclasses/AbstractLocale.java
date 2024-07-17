@@ -6,8 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.Logger;
-
 import org.spongepowered.api.util.locale.Locales;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.serialize.SerializationException;
@@ -17,6 +15,7 @@ import net.kyori.adventure.text.Component;
 import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.LocaleReference;
 import sawfowl.localeapi.api.LocaleService;
+import sawfowl.localeapi.api.Logger;
 import sawfowl.localeapi.api.PluginLocale;
 import sawfowl.localeapi.api.Text;
 import sawfowl.localeapi.api.TextUtils;

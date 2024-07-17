@@ -3,8 +3,6 @@ package sawfowl.localeapi.apiclasses;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import org.apache.logging.log4j.Logger;
-
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.loader.ConfigurationLoader;
@@ -15,6 +13,7 @@ import org.spongepowered.configurate.serialize.SerializationException;
 import sawfowl.localeapi.api.ConfigTypes;
 import sawfowl.localeapi.api.LocaleReference;
 import sawfowl.localeapi.api.LocaleService;
+import sawfowl.localeapi.api.Logger;
 import sawfowl.localeapi.api.serializetools.SerializeOptions;
 
 public class HoconLocale extends AbstractLocale {
