@@ -43,7 +43,7 @@ class Colors {
 		if(message == null) return "";
 		if(message.children().isEmpty()) {
 			if(message.color() == null) return TextUtils.serializeLegacy(message.style(Style.empty()));
-			String string = TextUtils.serializeLegacy(message);
+			String string = TextUtils.serializeLegacy(message).replaceAll("&r", CLEAR);
 			while(string.indexOf('&') != -1 && !string.endsWith("&") && isStyleChar(string.charAt(string.indexOf("&") + 1))) {
 				TextColor color = message.color();
 				string = string.replaceAll("&" + string.charAt(string.indexOf("&") + 1), selectColor(color.red(), color.green(), color.blue()));
