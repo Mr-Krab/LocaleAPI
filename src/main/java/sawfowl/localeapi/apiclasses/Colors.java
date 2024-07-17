@@ -115,7 +115,7 @@ class Colors {
 	}
 
 	private static boolean isStyleChar(char ch) {
-		return "0123456789abcdefklmnor".indexOf(ch) != -1;
+		return "0123456789abcdefklmno".indexOf(ch) != -1;
 	}
 
 }
