@@ -186,28 +186,28 @@ public abstract class AbstractLocale implements PluginLocale {
 		for(Field field : fields) if(field.isAnnotationPresent(Setting.class)) {
 			field.setAccessible(true);
 			String key = field.getAnnotation(Setting.class).value();
-			Object[] nextPath = ArrayUtils.add(path, key);
-			Optional<?> found = getGenericObject(localeConfig, field);
-			if(found.isPresent()) {
+			Object found = getGenericObject(localeConfig, field);
+			if(found != null) {
+				Object[] nextPath = ArrayUtils.add(path, key);
 				if(result |= getLocaleRootNode().node(nextPath).virtual()) {
-					getLocaleRootNode().node(nextPath).set(found.get());
-				} else result |= addIfNotExist(found.get(), nextPath);
+					getLocaleRootNode().node(nextPath).set(found);
+				} else result |= addIfNotExist(found, nextPath);
+				found = null;
+				nextPath = null;
 			}
 			key = null;
-			found = null;
-			nextPath = null;
 		}
 		return result;
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> Optional<T> getGenericObject(Object source, Field field) {
+	private <T> T getGenericObject(Object source, Field field) {
 		try {
-			return Optional.ofNullable((T) field.get(source));
+			return (T) field.get(source);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			e.printStackTrace();
 		}
-		return Optional.empty();
+		return null;
 	}
 
 }
