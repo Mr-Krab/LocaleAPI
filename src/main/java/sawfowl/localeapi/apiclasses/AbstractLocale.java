@@ -197,6 +197,7 @@ public abstract class AbstractLocale implements PluginLocale {
 			}
 			key = null;
 		}
+		fields = null;
 		return result;
 	}
 
