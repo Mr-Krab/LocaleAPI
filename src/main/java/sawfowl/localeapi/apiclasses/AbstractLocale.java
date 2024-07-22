@@ -5,10 +5,10 @@ import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ArrayUtils;
+
 import org.spongepowered.api.util.locale.Locales;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
