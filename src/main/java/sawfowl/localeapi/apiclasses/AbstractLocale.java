@@ -1,13 +1,17 @@
 package sawfowl.localeapi.apiclasses;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.spongepowered.api.util.locale.Locales;
 import org.spongepowered.configurate.ConfigurateException;
+import org.spongepowered.configurate.objectmapping.meta.Setting;
 import org.spongepowered.configurate.serialize.SerializationException;
 
 import net.kyori.adventure.text.Component;
@@ -174,6 +178,36 @@ public abstract class AbstractLocale implements PluginLocale {
 		} catch (ConfigurateException e) {
 			e.printStackTrace();
 		}
+	}
+
+	protected boolean addIfNotExist(Object localeConfig, Object... path) throws SerializationException {
+		Field[] fields = localeConfig.getClass().getDeclaredFields();
+		boolean result = false;
+		for(Field field : fields) if(field.isAnnotationPresent(Setting.class)) {
+			field.setAccessible(true);
+			String key = field.getAnnotation(Setting.class).value();
+			Object[] nextPath = ArrayUtils.add(path, key);
+			Optional<?> found = getGenericObject(localeConfig, field);
+			if(found.isPresent()) {
+				if(result |= getLocaleRootNode().node(nextPath).virtual()) {
+					getLocaleRootNode().node(nextPath).set(found.get());
+				} else result |= addIfNotExist(found.get(), nextPath);
+			}
+			key = null;
+			found = null;
+			nextPath = null;
+		}
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> Optional<T> getGenericObject(Object source, Field field) {
+		try {
+			return Optional.ofNullable((T) field.get(source));
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
+		return Optional.empty();
 	}
 
 }

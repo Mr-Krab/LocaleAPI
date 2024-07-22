@@ -77,6 +77,7 @@ public class JsonLocale extends AbstractLocale {
 		localeReference = (ValueReference<LocaleReference, BasicConfigurationNode>) (configurationReference = configLoader.loadToReference()).referenceTo(reference);
 		if(localeNode != null && !localeNode.empty()) localeReference.node().from(localeNode);
 		localeNode = localeReference.node();
+		if(addIfNotExist(asReference(reference), new Object[] {})) configLoader.save(localeNode);
 	}
 
 	@Override
@@ -84,6 +85,7 @@ public class JsonLocale extends AbstractLocale {
 		setLocaleReference(reference.getClass());
 		localeReference.setAndSave(reference);
 		localeNode = localeReference.node();
+		if(addIfNotExist(reference, new Object[] {})) configLoader.save(localeNode);
 	}
 
 	@SuppressWarnings("unchecked")

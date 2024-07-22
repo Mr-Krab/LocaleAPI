@@ -79,6 +79,7 @@ public class YamlLocale extends AbstractLocale {
 		localeReference = (ValueReference<LocaleReference, CommentedConfigurationNode>) (configurationReference = configLoader.loadToReference()).referenceTo(reference);
 		if(localeNode != null && !localeNode.empty()) localeReference.node().from(localeNode);
 		localeNode = localeReference.node();
+		if(addIfNotExist(asReference(reference), new Object[] {})) configLoader.save(localeNode);
 	}
 
 	@Override
@@ -86,6 +87,7 @@ public class YamlLocale extends AbstractLocale {
 		setLocaleReference(reference.getClass());
 		localeReference.setAndSave(reference);
 		localeNode = localeReference.node();
+		if(addIfNotExist(reference, new Object[] {})) configLoader.save(localeNode);
 	}
 
 	@SuppressWarnings("unchecked")
