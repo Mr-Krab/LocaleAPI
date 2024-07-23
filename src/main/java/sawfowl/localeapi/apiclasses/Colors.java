@@ -2,14 +2,11 @@ package sawfowl.localeapi.apiclasses;
 
 import java.math.BigInteger;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextColor;
 
 import sawfowl.localeapi.api.Text;
@@ -41,21 +38,11 @@ class Colors {
 
 	public static String convertColors(Component message) {
 		if(message == null) return "";
-		if(message.children().isEmpty()) {
-			if(message.color() == null) return TextUtils.serializeLegacy(message.style(Style.empty()));
-			String string = TextUtils.serializeLegacy(message).replaceAll("&r", CLEAR);
-			while(string.indexOf('&') != -1 && !string.endsWith("&") && isStyleChar(string.charAt(string.indexOf("&") + 1))) {
-				TextColor color = message.color();
-				string = string.replaceAll("&" + string.charAt(string.indexOf("&") + 1), selectColor(color.red(), color.green(), color.blue()));
-			}
-			return string + CLEAR;
-		}
-		Map<String, String> replace = new HashMap<String, String>();
-		for(Component component : message.children()) replace.put(TextUtils.serializeLegacy(component), convertColors(component));
-		String m = TextUtils.serializeLegacy(message);
-		for(Entry<String, String> entry : replace.entrySet()) m = m.replace(entry.getKey(), entry.getValue());
-		replace = null;
-		return m + CLEAR;
+		if(!message.children().isEmpty()) {
+			String result = "";
+			for(Component component : message.children()) result += convertColors(component);
+			return result + CLEAR;
+		} else return message.color() == null ? TextUtils.clearDecorations(message) : getAnsiColor(message.color()) + TextUtils.clearDecorations(message) + CLEAR;
 	}
 
 	private static <T, C extends Collection<T>> String convertColors(C list) {
@@ -68,6 +55,10 @@ class Colors {
 
 	private static String convertColors(Optional<?> optional) {
 		return optional.isEmpty() ? optional.toString() : optional.map(o -> convertColors(o)).toString();
+	}
+
+	private static String getAnsiColor(TextColor color) {
+		return selectColor(color.red(), color.green(), color.blue());
 	}
 
 	/**
@@ -112,10 +103,6 @@ class Colors {
 
 		return "\u001B[38;2;" + r + ";" + g + ";" + b + "m";
 
-	}
-
-	private static boolean isStyleChar(char ch) {
-		return "0123456789abcdefklmno".indexOf(ch) != -1;
 	}
 
 }
