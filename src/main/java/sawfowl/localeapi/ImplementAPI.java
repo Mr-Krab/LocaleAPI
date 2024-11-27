@@ -2,7 +2,6 @@ package sawfowl.localeapi;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -93,7 +92,7 @@ public class ImplementAPI {
 				PluginContainer pluginContainer = optPluginContainer.get();
 				for(ConfigTypes configType : ConfigTypes.values()) {
 					String configTypeName = configType.toString();
-					pluginContainer.openResource(URI.create(File.separator + "assets" + File.separator + pluginID + File.separator + "lang" + File.separator + locale.toLanguageTag() + configTypeName)).ifPresent(inputStream -> {
+					pluginContainer.openResource(File.separator + "assets" + File.separator + pluginID + File.separator + "lang" + File.separator + locale.toLanguageTag() + configTypeName).ifPresent(inputStream -> {
 						File localeFile = configDirectory.resolve(pluginID + File.separator + locale.toLanguageTag() + configTypeName).toFile();
 						if(!localeFile.exists()) {
 							try {
